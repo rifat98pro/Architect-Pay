@@ -46,9 +46,14 @@ export default function LandingPage() {
             <br />
             <span className="text-brand-200">with one USDC balance.</span>
           </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-brand-100">
+          <p className="mx-auto mb-4 max-w-2xl text-lg text-brand-100">
             Architect Pay lets you run payroll, send cross-chain USDC payments, and manage employees — all from a single dashboard. Funded from Ethereum, Base, Arbitrum, or Polygon.
           </p>
+          <div className="mb-8">
+            <span className="inline-block rounded-full bg-yellow-400/20 border border-yellow-400/40 px-4 py-1.5 text-sm font-medium text-yellow-200">
+              🧪 Currently live on testnet only
+            </span>
+          </div>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link href="/signup" className="flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-brand-700 shadow-lg hover:bg-brand-50 transition-colors">
               Get started free <ArrowRight className="h-4 w-4" />
