@@ -1,0 +1,28 @@
+diff --git a/node_modules/@circle-fin/app-kit/index.mjs b/node_modules/@circle-fin/app-kit/index.mjs
+index a6345bc..8f5d1f7 100644
+--- a/node_modules/@circle-fin/app-kit/index.mjs
++++ b/node_modules/@circle-fin/app-kit/index.mjs
+@@ -11566,22 +11566,7 @@ const validateBalanceForTransaction = async (params) => {
+  * ```
+  */
+ const validateNativeBalanceForTransaction = async (params) => {
+-    const { adapter, operationContext } = params;
+-    const balancePrepared = await adapter.prepareAction('native.balanceOf', {
+-        walletAddress: operationContext.address,
+-    }, operationContext);
+-    const balance = await balancePrepared.execute();
+-    if (BigInt(balance) === 0n) {
+-        const { chain } = operationContext;
+-        const chainName = extractChainInfo(chain).name;
+-        const nativeSymbol = typeof chain === 'object' && chain !== null && 'nativeCurrency' in chain
+-            ? chain.nativeCurrency.symbol
+-            : undefined;
+-        throw createInsufficientGasError(chainName, nativeSymbol, {
+-            balance: '0',
+-            walletAddress: operationContext.address,
+-        });
+-    }
++    // Patched: skip zero-balance check — Circle Gas Station sponsors gas for SCA wallets
+ };
+ 
+ /**

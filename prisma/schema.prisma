@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime  @default(now())
+
+  wallet       Wallet?
+  payments     Payment[]     @relation("sender")
+  employees    Employee[]
+  payrollRuns  PayrollRun[]
+}
+
+model Wallet {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id])
+
+  circleUserId    String        @unique
+  circleWalletId  String        @unique  // Arc Testnet primary wallet ID
+  walletAddress   String        @unique  // Same address across all chains (SCA counterfactual)
+  walletSetId     String?               // Circle wallet set ID for looking up chain wallets
+
+  createdAt       DateTime      @default(now())
+  chainWallets    ChainWallet[]
+}
+
+model ChainWallet {
+  id             String   @id @default(cuid())
+  walletId       String
+  wallet         Wallet   @relation(fields: [walletId], references: [id])
+  chain          String   // 'ETH-SEPOLIA' | 'BASE-SEPOLIA' | 'ARB-SEPOLIA' | 'MATIC-AMOY'
+  circleWalletId String   @unique
+
+  @@unique([walletId, chain])
+}
+
+model Payment {
+  id               String   @id @default(cuid())
+  senderId         String
+  sender           User     @relation("sender", fields: [senderId], references: [id])
+
+  recipientAddress String
+  recipientLabel   String?
+  amount           String
+  token            String   @default("USDC")
+  destChain        String   @default("Arc_Testnet")
+
+  // "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
+  status           String   @default("PENDING")
+  txHash           String?
+  errorMessage     String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Employee {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  name           String
+  walletAddress  String
+  salary         String         // USDC amount per payroll run
+  active         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  payrollEntries PayrollEntry[]
+}
+
+model PayrollRun {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  status      String         @default("PROCESSING") // PROCESSING | COMPLETED | PARTIAL | FAILED
+  totalAmount String
+  createdAt   DateTime       @default(now())
+  entries     PayrollEntry[]
+}
+
+model PayrollEntry {
+  id           String      @id @default(cuid())
+  payrollRunId String
+  payrollRun   PayrollRun  @relation(fields: [payrollRunId], references: [id])
+  employeeId   String
+  employee     Employee    @relation(fields: [employeeId], references: [id])
+  amount       String
+  status       String      @default("PENDING") // COMPLETED | FAILED
+  txHash       String?
+  errorMessage String?
+}
