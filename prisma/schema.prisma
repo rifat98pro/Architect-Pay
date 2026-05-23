@@ -1,13 +1,11 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
-  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
-  relationMode = "prisma"
 }
 
 model User {
@@ -29,9 +27,9 @@ model Wallet {
   user            User          @relation(fields: [userId], references: [id])
 
   circleUserId    String        @unique
-  circleWalletId  String        @unique  // Arc Testnet primary wallet ID
-  walletAddress   String        @unique  // Same address across all chains (SCA counterfactual)
-  walletSetId     String?               // Circle wallet set ID for looking up chain wallets
+  circleWalletId  String        @unique
+  walletAddress   String        @unique
+  walletSetId     String?
 
   createdAt       DateTime      @default(now())
   chainWallets    ChainWallet[]
@@ -41,7 +39,7 @@ model ChainWallet {
   id             String   @id @default(cuid())
   walletId       String
   wallet         Wallet   @relation(fields: [walletId], references: [id])
-  chain          String   // 'ETH-SEPOLIA' | 'BASE-SEPOLIA' | 'ARB-SEPOLIA' | 'MATIC-AMOY'
+  chain          String
   circleWalletId String   @unique
 
   @@unique([walletId, chain])
@@ -58,7 +56,6 @@ model Payment {
   token            String   @default("USDC")
   destChain        String   @default("Arc_Testnet")
 
-  // "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
   status           String   @default("PENDING")
   txHash           String?
   errorMessage     String?
@@ -73,7 +70,7 @@ model Employee {
   user           User           @relation(fields: [userId], references: [id])
   name           String
   walletAddress  String
-  salary         String         // USDC amount per payroll run
+  salary         String
   active         Boolean        @default(true)
   createdAt      DateTime       @default(now())
   payrollEntries PayrollEntry[]
@@ -83,7 +80,7 @@ model PayrollRun {
   id          String         @id @default(cuid())
   userId      String
   user        User           @relation(fields: [userId], references: [id])
-  status      String         @default("PROCESSING") // PROCESSING | COMPLETED | PARTIAL | FAILED
+  status      String         @default("PROCESSING")
   totalAmount String
   createdAt   DateTime       @default(now())
   entries     PayrollEntry[]
@@ -96,7 +93,7 @@ model PayrollEntry {
   employeeId   String
   employee     Employee    @relation(fields: [employeeId], references: [id])
   amount       String
-  status       String      @default("PENDING") // COMPLETED | FAILED
+  status       String      @default("PENDING")
   txHash       String?
   errorMessage String?
 }
