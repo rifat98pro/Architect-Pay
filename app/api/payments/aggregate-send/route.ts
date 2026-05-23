@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId } from '@/lib/circle'
 import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
-import { computeAggregatePlan } from '@/app/api/payments/aggregate-plan/route'
+import { computeAggregatePlan } from '@/lib/aggregate'
 import { z } from 'zod'
 
 export const maxDuration = 300

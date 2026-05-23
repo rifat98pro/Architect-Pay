@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Send, Loader2, Layers } from 'lucide-react'
-import type { AggregatePlanEntry } from '@/app/api/payments/aggregate-plan/route'
+import type { AggregatePlanEntry } from '@/lib/aggregate'
 
 const CHAINS = [
   { id: 'ALL_CHAINS',   label: 'All Chains (Aggregate)', instant: false },
