@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { sendUsdcPayment, waitForTransaction, getWalletBalance, getOrCreateChainWalletId } from '@/lib/circle'
+import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 import { z } from 'zod'
@@ -101,6 +102,8 @@ export async function POST(req: NextRequest) {
       where: { id: payment.id },
       data:  { status: 'COMPLETED', txHash },
     })
+
+    logPaymentOnChain(wallet.circleWalletId, recipientAddress, amount, label ?? '')
 
     return NextResponse.json({ success: true, paymentId: payment.id })
   } catch (err: unknown) {

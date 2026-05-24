@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId } from '@/lib/circle'
+import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
@@ -117,6 +118,8 @@ export async function POST() {
 
     const finalStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
     await db.payrollRun.update({ where: { id: run.id }, data: { status: finalStatus } })
+
+    if (completed > 0) logPayrollRunOnChain(wallet.circleWalletId, totalAmount, completed)
 
     return NextResponse.json({ runId: run.id, completed, failed, status: finalStatus })
   } catch (err: unknown) {
