@@ -1,7 +1,7 @@
 import { encodeFunctionData } from 'viem'
 import { executeContractCall } from '@/lib/circle'
 
-const CONTRACT_ADDRESS = '0x21bdba30afc2b8205e8a173626346868077572fb'
+const CONTRACT_ADDRESS = '0x052515b1c660c65434c5681e1ca452eded3ac00f'
 
 const RECORD_PAYMENT_ABI = {
   type:            'function' as const,
