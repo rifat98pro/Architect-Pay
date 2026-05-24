@@ -119,7 +119,7 @@ export async function POST() {
     const finalStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
     await db.payrollRun.update({ where: { id: run.id }, data: { status: finalStatus } })
 
-    if (completed > 0) logPayrollRunOnChain(wallet.circleWalletId, totalAmount, completed)
+    if (completed > 0) logPayrollRunOnChain(wallet.circleWalletId, totalAmount.toFixed(6), completed)
 
     return NextResponse.json({ runId: run.id, completed, failed, status: finalStatus })
   } catch (err: unknown) {
