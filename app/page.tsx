@@ -52,7 +52,7 @@ export default function LandingPage() {
           </p>
           <div className="mb-8">
             <span className="inline-block rounded-full bg-yellow-400/20 border border-yellow-400/40 px-4 py-1.5 text-sm font-medium text-yellow-200">
-              🧪 Currently live on testnet only
+               Currently live on testnet only
             </span>
           </div>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
