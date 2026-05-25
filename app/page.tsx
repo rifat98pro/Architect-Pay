@@ -47,7 +47,8 @@ export default function LandingPage() {
             <span className="text-brand-200">with one USDC balance.</span>
           </h1>
           <p className="mx-auto mb-4 max-w-2xl text-lg text-brand-100">
-            Architect Pay lets you run payroll, send cross-chain USDC payments, and manage employees — all from a single dashboard. Funded from Ethereum, Base, Arbitrum, or Polygon.
+            Architect Pay lets you run payroll, send cross-chain USDC payments, and manage employees from a single dashboard
+
           </p>
           <div className="mb-8">
             <span className="inline-block rounded-full bg-yellow-400/20 border border-yellow-400/40 px-4 py-1.5 text-sm font-medium text-yellow-200">
