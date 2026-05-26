@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { LayoutDashboard, Send, History, Users, Banknote, LogOut, ArrowLeftRight, Shuffle } from 'lucide-react'
+import { LayoutDashboard, Send, History, Users, Banknote, LogOut, ArrowLeftRight, Shuffle, Droplets } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -47,6 +47,16 @@ export default function Nav() {
             {label}
           </Link>
         ))}
+
+        <a
+          href="https://faucet.circle.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 hover:text-gray-900"
+        >
+          <Droplets className="h-4 w-4" />
+          Get Faucet
+        </a>
       </nav>
 
       <div className="border-t border-gray-100 pt-4">
