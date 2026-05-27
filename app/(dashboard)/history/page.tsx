@@ -19,10 +19,10 @@ interface Payment {
 }
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
-  COMPLETED:  <CheckCircle2 className="h-4 w-4 text-green-500" />,
-  FAILED:     <XCircle className="h-4 w-4 text-red-500" />,
-  PENDING:    <Clock className="h-4 w-4 text-yellow-500" />,
-  PROCESSING: <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />,
+  COMPLETED:  <CheckCircle2 className="h-4 w-4 text-green-400" />,
+  FAILED:     <XCircle className="h-4 w-4 text-red-400" />,
+  PENDING:    <Clock className="h-4 w-4 text-yellow-400" />,
+  PROCESSING: <RefreshCw className="h-4 w-4 animate-spin text-blue-400" />,
 }
 
 export default function HistoryPage() {
@@ -45,7 +45,7 @@ export default function HistoryPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Payment History</h1>
+      <h1 className="mb-6 text-2xl font-bold text-white">Payment History</h1>
 
       {loading && (
         <div className="flex h-32 items-center justify-center">
@@ -54,29 +54,29 @@ export default function HistoryPage() {
       )}
 
       {!loading && payments.length === 0 && (
-        <div className="card py-12 text-center text-sm text-gray-400">
+        <div className="card py-12 text-center text-sm text-gray-500">
           No payments yet. Send your first payment from the Send Payment page.
         </div>
       )}
 
       {!loading && payments.length > 0 && (
-        <div className="card divide-y divide-gray-100 overflow-hidden p-0">
+        <div className="card divide-y divide-gray-800 overflow-hidden p-0">
           {payments.map((p) => (
             <div key={p.id} className="flex items-center gap-4 px-5 py-4">
               <div className="shrink-0">{STATUS_ICON[p.status]}</div>
               <div className="min-w-0 flex-1">
-                <div className="truncate font-medium text-gray-900">
+                <div className="truncate font-medium text-white">
                   {p.recipientLabel ?? truncateAddress(p.recipientAddress, 6)}
                 </div>
-                <div className="font-mono text-xs text-gray-400">
+                <div className="font-mono text-xs text-gray-500">
                   {truncateAddress(p.recipientAddress, 6)}
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-semibold text-gray-900">
+                <div className="font-semibold text-white">
                   ${formatUSDC(p.amount)} USDC
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-gray-500">
                   {new Date(p.createdAt).toLocaleDateString()}
                 </div>
                 {p.txHash && (

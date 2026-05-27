@@ -28,7 +28,6 @@ export default function PaymentsPage() {
   const [error, setError]                 = useState('')
   const [success, setSuccess]             = useState('')
 
-  // Aggregate plan state
   const [planLoading, setPlanLoading]     = useState(false)
   const [plan, setPlan]                   = useState<AggregatePlanEntry[] | null>(null)
   const [planFeasible, setPlanFeasible]   = useState(true)
@@ -54,7 +53,6 @@ export default function PaymentsPage() {
     ? totalBalance.toFixed(2)
     : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
 
-  // Fetch aggregate plan when in aggregate mode and amount is valid
   const fetchPlan = useCallback(async (amt: string) => {
     const n = parseFloat(amt)
     if (!n || n <= 0) { setPlan(null); return }
@@ -114,24 +112,23 @@ export default function PaymentsPage() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="mb-2 text-2xl font-bold text-gray-900">Send Payment</h1>
-      <p className="mb-6 text-sm text-gray-500">
+      <h1 className="mb-2 text-2xl font-bold text-white">Send Payment</h1>
+      <p className="mb-6 text-sm text-gray-400">
         Recipient always receives USDC on Arc Testnet.
       </p>
 
       <div className="card">
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          <div className="mb-4 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">{error}</div>
         )}
         {success && (
-          <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">{success}</div>
+          <div className="mb-4 rounded-lg bg-green-900/30 px-4 py-3 text-sm text-green-400">{success}</div>
         )}
 
         <form onSubmit={handleSend} className="space-y-5">
 
-          {/* Source chain */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">
               Pay from
             </label>
             <select
@@ -150,20 +147,19 @@ export default function PaymentsPage() {
             </select>
 
             {isAggregate && (
-              <p className="mt-1.5 text-xs text-blue-600">
+              <p className="mt-1.5 text-xs text-blue-400">
                 Combines balances from all chains. CCTP pulls run in parallel, then one final transfer to the recipient.
               </p>
             )}
             {isCrossChain && (
-              <p className="mt-1.5 text-xs text-amber-600">
+              <p className="mt-1.5 text-xs text-amber-400">
                 Cross-chain via CCTP — takes ~2–3 minutes. A small relayer fee (~1%) applies. USDC burns on {selectedChain.label} and mints on Arc Testnet for the recipient.
               </p>
             )}
           </div>
 
-          {/* Recipient */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">
               Recipient wallet address (Arc Testnet)
             </label>
             <input
@@ -178,16 +174,15 @@ export default function PaymentsPage() {
             />
           </div>
 
-          {/* Amount */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">
               Amount (USDC)
-              <span className="ml-2 text-xs font-normal text-gray-400">
+              <span className="ml-2 text-xs font-normal text-gray-500">
                 Available: ${availableBalance}
               </span>
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -202,35 +197,34 @@ export default function PaymentsPage() {
             </div>
           </div>
 
-          {/* Aggregate plan preview */}
           {isAggregate && amount && parseFloat(amount) > 0 && (
-            <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-800">
+            <div className="rounded-lg border border-blue-800 bg-blue-900/20 p-4">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-300">
                 <Layers className="h-4 w-4" />
                 Funding plan
               </div>
               {planLoading ? (
-                <div className="flex items-center gap-2 text-xs text-blue-600">
+                <div className="flex items-center gap-2 text-xs text-blue-400">
                   <Loader2 className="h-3 w-3 animate-spin" /> Computing...
                 </div>
               ) : !planFeasible ? (
-                <p className="text-xs text-red-600">Insufficient total balance across all chains.</p>
+                <p className="text-xs text-red-400">Insufficient total balance across all chains.</p>
               ) : plan ? (
                 <div className="space-y-1.5">
                   {plan.map((entry) => (
                     <div key={entry.chain} className="flex items-center justify-between text-xs">
-                      <span className="text-blue-700">{entry.label}</span>
-                      <span className="font-medium text-blue-900">
+                      <span className="text-blue-400">{entry.label}</span>
+                      <span className="font-medium text-blue-200">
                         ${parseFloat(entry.amount).toFixed(2)} USDC
                         {entry.isCctp && (
                           <span className="ml-1 text-blue-500">(~${parseFloat(entry.fee).toFixed(2)} fee)</span>
                         )}
-                        {!entry.isCctp && <span className="ml-1 text-green-600">(instant)</span>}
+                        {!entry.isCctp && <span className="ml-1 text-green-400">(instant)</span>}
                       </span>
                     </div>
                   ))}
                   {parseFloat(planFee) > 0 && (
-                    <div className="mt-2 border-t border-blue-200 pt-2 text-xs text-blue-600">
+                    <div className="mt-2 border-t border-blue-800 pt-2 text-xs text-blue-400">
                       Total CCTP fees: ~${parseFloat(planFee).toFixed(2)} USDC
                     </div>
                   )}
@@ -239,10 +233,9 @@ export default function PaymentsPage() {
             </div>
           )}
 
-          {/* Label */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Label <span className="text-gray-400">(optional)</span>
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">
+              Label <span className="text-gray-500">(optional)</span>
             </label>
             <input
               type="text"
@@ -255,7 +248,7 @@ export default function PaymentsPage() {
           </div>
 
           {loading && (isCrossChain || isAggregate) && (
-            <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <div className="rounded-lg bg-blue-900/20 px-4 py-3 text-sm text-blue-300">
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 {isAggregate

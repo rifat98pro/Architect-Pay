@@ -69,14 +69,14 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Dashboard</h1>
+      <h1 className="mb-6 text-2xl font-bold text-white">Dashboard</h1>
 
       {/* Total balance */}
-      <div className="card mb-4 bg-gradient-to-br from-brand-600 to-brand-800 text-white">
+      <div className="card mb-4 bg-gradient-to-br from-brand-700 to-brand-900 border-brand-800">
         <div className="mb-1 text-sm font-medium text-brand-100">Total Balance (All Chains)</div>
-        <div className="mb-4 text-4xl font-bold tracking-tight">
+        <div className="mb-4 text-4xl font-bold tracking-tight text-white">
           ${formatUSDC(total)}{' '}
-          <span className="text-2xl font-normal text-brand-200">USDC</span>
+          <span className="text-2xl font-normal text-brand-100">USDC</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-brand-100">
           <span>Wallet address</span>
@@ -93,12 +93,12 @@ export default function DashboardPage() {
           <div key={chain} className="card flex items-center justify-between py-3">
             <div>
               <div className="text-xs font-medium text-gray-500">{CHAIN_LABEL[chain] ?? chain}</div>
-              <div className="mt-0.5 text-lg font-semibold text-gray-900">
-                ${formatUSDC(bal)} <span className="text-sm font-normal text-gray-400">USDC</span>
+              <div className="mt-0.5 text-lg font-semibold text-white">
+                ${formatUSDC(bal)} <span className="text-sm font-normal text-gray-500">USDC</span>
               </div>
             </div>
             {chain === 'ARC-TESTNET' && (
-              <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
+              <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-500">
                 Primary
               </span>
             )}
@@ -118,14 +118,14 @@ export default function DashboardPage() {
       </div>
 
       <div className="card">
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">Your Wallet Address</h2>
-        <div className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700">
+        <h2 className="mb-3 text-sm font-semibold text-gray-300">Your Wallet Address</h2>
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-gray-800 px-4 py-3 font-mono text-sm text-gray-300">
           <span className="truncate">{wallet?.address ?? 'Loading...'}</span>
-          <button onClick={copyAddress} className="shrink-0 text-gray-400 hover:text-brand-600">
+          <button onClick={copyAddress} className="shrink-0 text-gray-500 hover:text-brand-500">
             {copied ? <CheckCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </button>
         </div>
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-gray-500">
           Same address works on Arc Testnet, Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, and Polygon Amoy.
         </p>
       </div>

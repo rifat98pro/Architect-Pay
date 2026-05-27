@@ -68,16 +68,15 @@ export default function EmployeesPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-2 text-2xl font-bold text-gray-900">Employees</h1>
-      <p className="mb-6 text-sm text-gray-500">
+      <h1 className="mb-2 text-2xl font-bold text-white">Employees</h1>
+      <p className="mb-6 text-sm text-gray-400">
         Manage your payroll roster. Each employee will receive their salary in USDC on Arc Testnet.
       </p>
 
-      {/* Add employee form */}
       <div className="card mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-gray-700">Add Employee</h2>
+        <h2 className="mb-4 text-sm font-semibold text-gray-300">Add Employee</h2>
         {error && (
-          <div className="mb-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>
+          <div className="mb-3 rounded-lg bg-red-900/30 px-4 py-2 text-sm text-red-400">{error}</div>
         )}
         <form onSubmit={handleAdd} className="grid gap-3 sm:grid-cols-3">
           <input
@@ -100,7 +99,7 @@ export default function EmployeesPage() {
             required
           />
           <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
             <input
               type="number"
               step="0.01"
@@ -123,38 +122,37 @@ export default function EmployeesPage() {
         </form>
       </div>
 
-      {/* Employee list */}
       {loading ? (
         <div className="flex h-32 items-center justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
         </div>
       ) : employees.length === 0 ? (
-        <div className="card py-12 text-center text-sm text-gray-400">
+        <div className="card py-12 text-center text-sm text-gray-500">
           No employees yet. Add your first employee above.
         </div>
       ) : (
         <div className="card overflow-hidden p-0">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-            <span className="text-sm font-medium text-gray-700">{employees.length} employee{employees.length !== 1 ? 's' : ''}</span>
-            <span className="text-sm font-semibold text-gray-900">Total payroll: ${totalSalary} USDC</span>
+          <div className="flex items-center justify-between border-b border-gray-800 px-5 py-3">
+            <span className="text-sm font-medium text-gray-400">{employees.length} employee{employees.length !== 1 ? 's' : ''}</span>
+            <span className="text-sm font-semibold text-white">Total payroll: ${totalSalary} USDC</span>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-800">
             {employees.map((emp) => (
               <div key={emp.id} className="flex items-center gap-4 px-5 py-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-sm font-semibold text-brand-500">
                   {emp.name[0].toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-gray-900">{emp.name}</div>
-                  <div className="font-mono text-xs text-gray-400">{truncateAddress(emp.walletAddress, 8)}</div>
+                  <div className="font-medium text-white">{emp.name}</div>
+                  <div className="font-mono text-xs text-gray-500">{truncateAddress(emp.walletAddress, 8)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-semibold text-gray-900">${parseFloat(emp.salary).toFixed(2)}</div>
-                  <div className="text-xs text-gray-400">per run</div>
+                  <div className="font-semibold text-white">${parseFloat(emp.salary).toFixed(2)}</div>
+                  <div className="text-xs text-gray-500">per run</div>
                 </div>
                 <button
                   onClick={() => handleDelete(emp.id)}
-                  className="ml-2 rounded-lg p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                  className="ml-2 rounded-lg p-1.5 text-gray-600 transition hover:bg-red-900/20 hover:text-red-400"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
