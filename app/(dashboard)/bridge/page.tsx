@@ -18,8 +18,10 @@ export default function BridgePage() {
   const [loading,   setLoading]   = useState(false)
   const [error,     setError]     = useState('')
   const [success,   setSuccess]   = useState('')
-  const [balances,  setBalances]  = useState<Record<string, string>>({})
+  const [balances,   setBalances]   = useState<Record<string, string>>({})
   const [balLoading, setBalLoading] = useState(true)
+  const [recovering, setRecovering] = useState(false)
+  const [recoverMsg, setRecoverMsg] = useState('')
 
   useEffect(() => {
     fetch('/api/wallet/balance')
@@ -62,6 +64,33 @@ export default function BridgePage() {
       setError(err instanceof Error ? err.message : 'Bridge failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleRecover() {
+    setRecoverMsg('')
+    setError('')
+    setRecovering(true)
+    try {
+      const res  = await fetch('/api/bridge/recover', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Recovery failed')
+      const recovered = data.results?.filter((r: { status: string }) => r.status === 'recovered') ?? []
+      const pending   = data.results?.filter((r: { status: string }) => r.status.startsWith('attestation_pending')) ?? []
+      if (data.results?.length === 0) {
+        setRecoverMsg('No pending transfers found.')
+      } else if (recovered.length > 0) {
+        setRecoverMsg(`Recovered ${recovered.length} transfer(s)! USDC is now in your Arc Testnet wallet.`)
+        fetch('/api/wallet/balance').then(r => r.json()).then(d => { if (d.chainBalances) setBalances(d.chainBalances) }).catch(() => {})
+      } else if (pending.length > 0) {
+        setRecoverMsg('Transfer found but attestation is not ready yet. Try again in a few minutes.')
+      } else {
+        setRecoverMsg(data.message ?? 'No action taken.')
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Recovery failed')
+    } finally {
+      setRecovering(false)
     }
   }
 
@@ -117,8 +146,9 @@ export default function BridgePage() {
                 ))}
               </div>
 
-              {error   && <div className="mb-4 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">{error}</div>}
-              {success && <div className="mb-4 rounded-lg bg-green-900/30 px-4 py-3 text-sm text-green-400">{success}</div>}
+              {error     && <div className="mb-4 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">{error}</div>}
+              {success   && <div className="mb-4 rounded-lg bg-green-900/30 px-4 py-3 text-sm text-green-400">{success}</div>}
+              {recoverMsg && <div className="mb-4 rounded-lg bg-brand-500/10 px-4 py-3 text-sm text-brand-500">{recoverMsg}</div>}
 
               <form onSubmit={handleBridge} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -158,11 +188,24 @@ export default function BridgePage() {
                   </div>
                 </div>
 
-                <button type="submit" disabled={loading} className="btn-primary w-full">
+                <button type="submit" disabled={loading || recovering} className="btn-primary w-full">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shuffle className="h-4 w-4" />}
                   {loading ? 'Bridging...' : `Bridge ${amount ? `$${amount}` : ''} USDC`}
                 </button>
               </form>
+
+              <div className="mt-3 border-t border-gray-800 pt-3">
+                <p className="mb-2 text-xs text-gray-500">Missing USDC from a previous bridge? Recover it here.</p>
+                <button
+                  type="button"
+                  onClick={handleRecover}
+                  disabled={recovering || loading}
+                  className="btn-secondary w-full text-sm"
+                >
+                  {recovering ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {recovering ? 'Scanning for pending transfers...' : 'Recover Pending Transfer'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
