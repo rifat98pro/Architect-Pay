@@ -7,6 +7,15 @@ import { z } from 'zod'
 
 export const maxDuration = 300
 
+// Maps Circle wallet chain IDs → AppKit Blockchain enum values
+const CHAIN_MAP: Record<string, string> = {
+  'ARC-TESTNET':  'Arc_Testnet',
+  'ETH-SEPOLIA':  'Ethereum_Sepolia',
+  'BASE-SEPOLIA': 'Base_Sepolia',
+  'ARB-SEPOLIA':  'Arbitrum_Sepolia',
+  'MATIC-AMOY':   'Polygon_Amoy_Testnet',
+}
+
 const schema = z.object({
   amount:    z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
   fromChain: z.string(),
@@ -29,13 +38,19 @@ export async function POST(req: NextRequest) {
 
   const { amount, fromChain, toChain } = parsed.data
 
+  const kitFrom = CHAIN_MAP[fromChain]
+  const kitTo   = CHAIN_MAP[toChain]
+  if (!kitFrom || !kitTo) {
+    return NextResponse.json({ error: `Unsupported chain: ${!kitFrom ? fromChain : toChain}` }, { status: 400 })
+  }
+
   const wallet = await db.wallet.findUnique({ where: { userId: user.id } })
   if (!wallet) return NextResponse.json({ error: 'Wallet not found' }, { status: 404 })
 
   try {
     const result = await kit.bridge({
-      from: { adapter, chain: fromChain as any, address: wallet.walletAddress },
-      to:   { adapter, chain: toChain as any,   address: wallet.walletAddress },
+      from: { adapter, chain: kitFrom as any, address: wallet.walletAddress },
+      to:   { adapter, chain: kitTo   as any, address: wallet.walletAddress },
       amount,
     })
 
