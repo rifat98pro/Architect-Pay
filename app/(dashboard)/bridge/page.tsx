@@ -1,23 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Shuffle, Wallet, Clock, Loader2 } from 'lucide-react'
 
 const CHAINS = [
-  { id: 'Arc_Testnet',       label: 'Arc Testnet' },
-  { id: 'Ethereum_Sepolia',  label: 'Ethereum Sepolia' },
-  { id: 'Base_Sepolia',      label: 'Base Sepolia' },
-  { id: 'Arbitrum_Sepolia',  label: 'Arbitrum Sepolia' },
-  { id: 'Avalanche_Fuji',    label: 'Avalanche Fuji' },
+  { id: 'ARC-TESTNET',  label: 'Arc Testnet' },
+  { id: 'ETH-SEPOLIA',  label: 'Ethereum Sepolia' },
+  { id: 'BASE-SEPOLIA', label: 'Base Sepolia' },
+  { id: 'ARB-SEPOLIA',  label: 'Arbitrum Sepolia' },
+  { id: 'MATIC-AMOY',   label: 'Polygon Amoy' },
 ]
 
 export default function BridgePage() {
-  const [fromChain, setFromChain] = useState('Ethereum_Sepolia')
-  const [toChain,   setToChain]   = useState('Arc_Testnet')
+  const [fromChain, setFromChain] = useState('ETH-SEPOLIA')
+  const [toChain,   setToChain]   = useState('ARC-TESTNET')
   const [amount,    setAmount]    = useState('')
   const [loading,   setLoading]   = useState(false)
   const [error,     setError]     = useState('')
   const [success,   setSuccess]   = useState('')
+  const [balances,  setBalances]  = useState<Record<string, string>>({})
+  const [balLoading, setBalLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/wallet/balance')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.chainBalances) setBalances(data.chainBalances)
+      })
+      .catch(() => {})
+      .finally(() => setBalLoading(false))
+  }, [])
+
+  function balanceFor(chainId: string) {
+    const val = balances[chainId]
+    if (balLoading) return '...'
+    if (!val || val === '0') return '0.00'
+    return parseFloat(val).toFixed(2)
+  }
 
   async function handleBridge(e: React.FormEvent) {
     e.preventDefault()
@@ -34,6 +53,11 @@ export default function BridgePage() {
       if (!res.ok) throw new Error(data.error ?? 'Bridge failed')
       setSuccess(`Bridge successful! ${data.steps?.length ?? 0} steps completed.`)
       setAmount('')
+      // Refresh balances after bridge
+      fetch('/api/wallet/balance')
+        .then((r) => r.json())
+        .then((data) => { if (data.chainBalances) setBalances(data.chainBalances) })
+        .catch(() => {})
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Bridge failed')
     } finally {
@@ -75,7 +99,23 @@ export default function BridgePage() {
             </div>
             <div className="flex-1">
               <h2 className="text-base font-semibold text-white mb-1">Architect Pay Wallet Bridge</h2>
-              <p className="text-sm text-gray-400 mb-5">Bridge USDC across chains directly from your Architect Pay balance.</p>
+              <p className="text-sm text-gray-400 mb-4">Bridge USDC across chains directly from your Architect Pay balance.</p>
+
+              {/* Chain Balances */}
+              <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {CHAINS.map((c) => (
+                  <div key={c.id} className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2">
+                    <p className="text-xs text-gray-400 truncate">{c.label}</p>
+                    <p className="text-sm font-semibold text-white">
+                      {balLoading ? (
+                        <span className="text-gray-500">...</span>
+                      ) : (
+                        <>{balanceFor(c.id)} <span className="text-xs font-normal text-gray-400">USDC</span></>
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
 
               {error   && <div className="mb-4 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">{error}</div>}
               {success && <div className="mb-4 rounded-lg bg-green-900/30 px-4 py-3 text-sm text-green-400">{success}</div>}
@@ -83,13 +123,17 @@ export default function BridgePage() {
               <form onSubmit={handleBridge} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-400">From</label>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-400">
+                      From <span className="text-brand-500">{balanceFor(fromChain)} USDC</span>
+                    </label>
                     <select value={fromChain} onChange={(e) => setFromChain(e.target.value)} className="input-base" disabled={loading}>
                       {CHAINS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-400">To</label>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-400">
+                      To <span className="text-brand-500">{balanceFor(toChain)} USDC</span>
+                    </label>
                     <select value={toChain} onChange={(e) => setToChain(e.target.value)} className="input-base" disabled={loading}>
                       {CHAINS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                     </select>
