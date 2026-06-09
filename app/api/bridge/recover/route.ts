@@ -61,7 +61,7 @@ export async function POST() {
   })
 
   const latestBlock = await ethClient.getBlockNumber()
-  const fromBlock   = latestBlock > 50000n ? latestBlock - 50000n : 0n // last ~7 days
+  const fromBlock   = latestBlock > BigInt(50000) ? latestBlock - BigInt(50000) : BigInt(0)
 
   const logs = await ethClient.getLogs({
     address:   ETH_SEPOLIA_TRANSMITTER,
