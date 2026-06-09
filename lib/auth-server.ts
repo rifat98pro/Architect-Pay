@@ -3,7 +3,7 @@ import { db } from '@/lib/db'
 
 export async function getUserFromRequest(request?: Request) {
   // Try cookie first (server components / API routes with cookies)
-  const cookieToken = getSessionToken()
+  const cookieToken = await getSessionToken()
   if (cookieToken) {
     const payload = verifyToken(cookieToken)
     if (payload) {

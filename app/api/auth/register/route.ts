@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     })
 
     const token = signToken({ userId: user.id, email: user.email })
-    setSessionCookie(token)
+    await setSessionCookie(token)
 
     return NextResponse.json({ ok: true, name: user.name, email: user.email }, { status: 201 })
   } catch (err: unknown) {

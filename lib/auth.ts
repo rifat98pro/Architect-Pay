@@ -30,20 +30,23 @@ export function verifyToken(token: string): SessionPayload | null {
   }
 }
 
-export function setSessionCookie(token: string) {
-  cookies().set(COOKIE_NAME, token, {
+export async function setSessionCookie(token: string) {
+  const jar = await cookies()
+  jar.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
     path: '/',
   })
 }
 
-export function clearSessionCookie() {
-  cookies().delete(COOKIE_NAME)
+export async function clearSessionCookie() {
+  const jar = await cookies()
+  jar.delete(COOKIE_NAME)
 }
 
-export function getSessionToken(): string | undefined {
-  return cookies().get(COOKIE_NAME)?.value
+export async function getSessionToken(): Promise<string | undefined> {
+  const jar = await cookies()
+  return jar.get(COOKIE_NAME)?.value
 }
