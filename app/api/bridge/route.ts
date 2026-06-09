@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     if (result.state === 'error') {
       const failedStep = result.steps.find((s: any) => s.state === 'error')
-      const msg = failedStep?.error?.message ?? 'Bridge failed'
+      const msg = (failedStep?.error as { message?: string } | undefined)?.message ?? 'Bridge failed'
       return NextResponse.json({ error: msg, burnTxHash }, { status: 500 })
     }
 
