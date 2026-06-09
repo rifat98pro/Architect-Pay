@@ -54,7 +54,21 @@ export async function POST(req: NextRequest) {
       amount,
     })
 
-    return NextResponse.json({ success: true, steps: result.steps })
+    const burnStep = result.steps.find((s: any) => s.name?.toLowerCase().includes('burn') || s.type?.toLowerCase().includes('burn'))
+    const burnTxHash = burnStep?.txHash ?? null
+    const useForwarder = result.destination?.useForwarder ?? false
+
+    if (result.state === 'error') {
+      const failedStep = result.steps.find((s: any) => s.state === 'error')
+      const msg = failedStep?.error?.message ?? 'Bridge failed'
+      return NextResponse.json({ error: msg, burnTxHash }, { status: 500 })
+    }
+
+    const message = result.state === 'pending'
+      ? `Transfer initiated${useForwarder ? ' — Circle\'s relayer is processing the Arc Testnet mint, USDC should arrive in 1-3 minutes.' : ' — awaiting confirmation.'}`
+      : `Bridge successful! USDC transferred to Arc Testnet.`
+
+    return NextResponse.json({ success: true, state: result.state, message, burnTxHash, steps: result.steps.length })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Bridge failed'
     return NextResponse.json({ error: message }, { status: 500 })

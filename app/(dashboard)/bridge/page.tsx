@@ -51,7 +51,7 @@ export default function BridgePage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Bridge failed')
-      setSuccess(`Bridge successful! ${data.steps?.length ?? 0} steps completed.`)
+      setSuccess(data.message ?? 'Bridge successful!')
       setAmount('')
       // Refresh balances after bridge
       fetch('/api/wallet/balance')
