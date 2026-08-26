@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { LayoutDashboard, Send, History, Users, Banknote, LogOut, ArrowLeftRight, Shuffle, Droplets } from 'lucide-react'
+import { LayoutDashboard, Send, History, Users, Banknote, LogOut, Droplets } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -12,8 +12,7 @@ const navItems = [
   { href: '/payments',  label: 'Send Payment', icon: Send },
   { href: '/employees', label: 'Employees',    icon: Users },
   { href: '/payroll',   label: 'Payroll',      icon: Banknote },
-  { href: '/swap',      label: 'Swap',         icon: ArrowLeftRight },
-  { href: '/bridge',    label: 'Bridge',       icon: Shuffle },
+
   { href: '/history',   label: 'History',      icon: History },
 ]
 
