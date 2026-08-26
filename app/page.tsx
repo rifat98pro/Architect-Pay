@@ -289,7 +289,7 @@ export default function LandingPage() {
                   ['POST', '/api/payroll/run'],
                   ['GET',  '/api/payroll/runs'],
                 ].map(([method, route]) => (
-                  <li key={route} className="flex items-center gap-3">
+                  <li key={`${method}-${route}`} className="flex items-center gap-3">
                     <span className={`w-14 shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-bold ${
                       method === 'GET' ? 'bg-green-900 text-green-400' :
                       method === 'POST' ? 'bg-blue-900 text-blue-400' :
