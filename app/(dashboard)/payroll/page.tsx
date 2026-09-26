@@ -74,7 +74,7 @@ export default function PayrollPage() {
   const totalSalary  = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const arcBalance   = parseFloat(chainBalances['ARC-TESTNET'] ?? '0')
-  const canRun       = employees.length > 0 && totalBalance >= totalSalary
+  const canRun       = !!businessId && employees.length > 0 && totalBalance >= totalSalary
   const needsCctp    = canRun && arcBalance < totalSalary
 
   async function handleRun() {
@@ -102,7 +102,7 @@ export default function PayrollPage() {
     <div className="max-w-3xl">
       <h1 className="mb-2 text-2xl font-bold text-white">Run Payroll</h1>
 
-      {businesses.length > 0 && (
+      {businesses.length > 0 ? (
         <div className="mb-6 flex items-center gap-3">
           <label className="text-sm text-gray-400 whitespace-nowrap">Business:</label>
           <select
@@ -110,16 +110,16 @@ export default function PayrollPage() {
             onChange={(e) => setBusinessId(e.target.value)}
             className="input-base flex-1 max-w-xs text-sm"
           >
-            <option value="">All Businesses</option>
+            <option value="">— Select a business —</option>
             {businesses.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
         </div>
-      )}
-
-      {!businesses.length && (
-        <p className="mb-6 text-sm text-gray-400">Pay all active employees from your Arc Testnet balance.</p>
+      ) : (
+        <p className="mb-6 text-sm text-gray-400">
+          Create a business first from the <a href="/businesses" className="text-brand-500 hover:underline">Businesses</a> page, then add employees to run payroll.
+        </p>
       )}
 
       <div className="card mb-6">
@@ -160,9 +160,14 @@ export default function PayrollPage() {
           </div>
         )}
 
-        {employees.length === 0 && (
+        {!businessId && businesses.length > 0 && (
           <p className="mb-4 text-center text-sm text-gray-500">
-            Add employees first from the <a href="/employees" className="text-brand-500 hover:underline">Employees</a> page.
+            Select a business above to load its employees.
+          </p>
+        )}
+        {businessId && employees.length === 0 && (
+          <p className="mb-4 text-center text-sm text-gray-500">
+            No employees in this business yet. Add them from the <a href="/businesses" className="text-brand-500 hover:underline">Businesses</a> page.
           </p>
         )}
 
