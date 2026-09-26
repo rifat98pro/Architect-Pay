@@ -34,11 +34,9 @@ export default function Nav() {
             <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-brand-500/30 to-navy-800/30 blur-sm" />
             <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
           </div>
-          <span
-            className="text-base font-bold"
-            style={{ background: 'linear-gradient(90deg, #ffffff 0%, #2aabab 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          >
-            Architect Pay
+          <span className="text-base font-bold">
+            <span style={{ color: '#5b8fd4' }}>Architect</span>
+            <span style={{ color: '#2aabab' }}> Pay</span>
           </span>
         </div>
         <div className="mt-1 flex items-center gap-1.5 px-0.5">
