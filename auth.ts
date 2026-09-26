@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { createCircleWallet } from '@/lib/circle'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(db),
   providers: [
     Google({
