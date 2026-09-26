@@ -63,7 +63,7 @@ export default function PayrollPage() {
 
   useEffect(() => {
     if (user) loadData()
-  }, [user])
+  }, [user?.id])
 
   const totalSalary  = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)

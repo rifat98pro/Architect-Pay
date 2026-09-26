@@ -36,7 +36,7 @@ export default function EmployeesPage() {
       .then((r) => r.json())
       .then((d) => setEmployees(d.employees ?? []))
       .finally(() => setLoading(false))
-  }, [user])
+  }, [user?.id])
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()

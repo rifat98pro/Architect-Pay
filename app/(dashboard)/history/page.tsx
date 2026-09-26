@@ -41,7 +41,7 @@ export default function HistoryPage() {
       .then((r) => r.json())
       .then((data) => setPayments(data.payments ?? []))
       .finally(() => setLoading(false))
-  }, [user])
+  }, [user?.id])
 
   return (
     <div className="max-w-3xl">

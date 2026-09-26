@@ -34,11 +34,11 @@ export default function DashboardPage() {
   }, [authLoading, user, router])
 
   useEffect(() => {
-    if (!user) return
+    if (!user?.id) return
     fetch('/api/wallet/balance')
       .then(async (r) => { const data = await r.json(); if (r.ok) setWallet(data) })
       .finally(() => setLoading(false))
-  }, [user])
+  }, [user?.id])
 
   async function refresh() {
     setLoading(true)

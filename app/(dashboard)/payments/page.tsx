@@ -42,7 +42,7 @@ export default function PaymentsPage() {
     fetch('/api/wallet/balance')
       .then((r) => r.json())
       .then((data) => setChainBalances(data.chainBalances ?? {}))
-  }, [user])
+  }, [user?.id])
 
   const isAggregate     = sourceChain === 'ALL_CHAINS'
   const isCrossChain    = !isAggregate && sourceChain !== 'ARC-TESTNET'
