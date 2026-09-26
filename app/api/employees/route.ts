@@ -10,14 +10,17 @@ const schema = z.object({
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address'),
   salary:        z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
   role:          z.string().max(100).optional(),
+  businessId:    z.string().optional(),
 })
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const businessId = req.nextUrl.searchParams.get('businessId') ?? undefined
+
   const employees = await db.employee.findMany({
-    where:   { userId: user.id, active: true },
+    where:   { userId: user.id, active: true, ...(businessId ? { businessId } : {}) },
     orderBy: { createdAt: 'asc' },
   })
 

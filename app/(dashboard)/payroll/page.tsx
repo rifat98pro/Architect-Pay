@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
+import { useBusiness } from '@/context/business-context'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
@@ -35,6 +36,7 @@ const RUN_STATUS: Record<string, { icon: React.ReactNode; label: string; classNa
 export default function PayrollPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { selectedId: businessId, selected: business } = useBusiness()
 
   const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
   const [employees,  setEmployees]  = useState<{ id: string; salary: string }[]>([])
@@ -49,10 +51,11 @@ export default function PayrollPage() {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
 
-  async function loadData() {
+  async function loadData(bizId?: string | null) {
+    const empUrl = bizId ? `/api/employees?businessId=${bizId}` : '/api/employees'
     const [balRes, empRes, runRes] = await Promise.all([
       fetch('/api/wallet/balance').then((r) => r.json()),
-      fetch('/api/employees').then((r) => r.json()),
+      fetch(empUrl).then((r) => r.json()),
       fetch('/api/payroll/runs').then((r) => r.json()),
     ])
     setChainBalances(balRes.chainBalances ?? {})
@@ -62,8 +65,8 @@ export default function PayrollPage() {
   }
 
   useEffect(() => {
-    if (user) loadData()
-  }, [user?.id])
+    if (user?.id) loadData(businessId)
+  }, [user?.id, businessId])
 
   const totalSalary  = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
@@ -76,7 +79,11 @@ export default function PayrollPage() {
     setSuccess('')
     setRunning(true)
     try {
-      const res  = await fetch('/api/payroll/run', { method: 'POST' })
+      const res  = await fetch('/api/payroll/run', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ businessId: businessId ?? null }),
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setSuccess(`Payroll complete — ${data.completed} paid, ${data.failed} failed.`)
@@ -90,9 +97,13 @@ export default function PayrollPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-2 text-2xl font-bold text-white">Run Payroll</h1>
+      <h1 className="mb-1 text-2xl font-bold text-white">
+        {business ? `${business.name} — Payroll` : 'Run Payroll'}
+      </h1>
       <p className="mb-6 text-sm text-gray-400">
-        Pay all active employees at once from your Arc Testnet balance.
+        {business
+          ? `Pay all active employees in ${business.name} from your Arc Testnet balance.`
+          : 'Pay all active employees across all businesses from your Arc Testnet balance.'}
       </p>
 
       <div className="card mb-6">

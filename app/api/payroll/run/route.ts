@@ -9,9 +9,12 @@ import { computeAggregatePlan } from '@/lib/aggregate'
 
 export const maxDuration = 300
 
-export async function POST() {
+export async function POST(req: Request) {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body       = await req.json().catch(() => ({}))
+  const businessId = body.businessId as string | undefined
 
   const wallet = await db.wallet.findUnique({
     where:   { userId: user.id },
@@ -19,7 +22,9 @@ export async function POST() {
   })
   if (!wallet) return NextResponse.json({ error: 'Wallet not found' }, { status: 404 })
 
-  const employees = await db.employee.findMany({ where: { userId: user.id, active: true } })
+  const employees = await db.employee.findMany({
+    where: { userId: user.id, active: true, ...(businessId ? { businessId } : {}) },
+  })
   if (employees.length === 0) {
     return NextResponse.json({ error: 'No active employees' }, { status: 400 })
   }
@@ -51,6 +56,7 @@ export async function POST() {
   const run = await db.payrollRun.create({
     data: {
       userId:      user.id,
+      businessId:  businessId ?? null,
       status:      'PROCESSING',
       totalAmount: totalAmount.toFixed(6),
       entries: {

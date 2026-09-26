@@ -63,6 +63,17 @@ model User {
   payments     Payment[]    @relation("sender")
   employees    Employee[]
   payrollRuns  PayrollRun[]
+  businesses   Business[]
+}
+
+model Business {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  name        String
+  createdAt   DateTime     @default(now())
+  employees   Employee[]
+  payrollRuns PayrollRun[]
 }
 
 model Wallet {
@@ -112,6 +123,8 @@ model Employee {
   id             String         @id @default(cuid())
   userId         String
   user           User           @relation(fields: [userId], references: [id])
+  businessId     String?
+  business       Business?      @relation(fields: [businessId], references: [id])
   name           String
   walletAddress  String
   salary         String
@@ -125,6 +138,8 @@ model PayrollRun {
   id          String         @id @default(cuid())
   userId      String
   user        User           @relation(fields: [userId], references: [id])
+  businessId  String?
+  business    Business?      @relation(fields: [businessId], references: [id])
   status      String         @default("PROCESSING")
   totalAmount String
   createdAt   DateTime       @default(now())

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
+import { useBusiness } from '@/context/business-context'
 
 interface Employee {
   id:            string
@@ -24,6 +25,7 @@ interface EditState {
 export default function EmployeesPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { selectedId: businessId, selected: business } = useBusiness()
 
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading]     = useState(true)
@@ -47,11 +49,13 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    fetch('/api/employees')
+    setLoading(true)
+    const url = businessId ? `/api/employees?businessId=${businessId}` : '/api/employees'
+    fetch(url)
       .then((r) => r.json())
       .then((d) => setEmployees(d.employees ?? []))
       .finally(() => setLoading(false))
-  }, [user?.id])
+  }, [user?.id, businessId])
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
@@ -61,7 +65,7 @@ export default function EmployeesPage() {
       const res = await fetch('/api/employees', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, walletAddress: address, salary, role: role || undefined }),
+        body:    JSON.stringify({ name, walletAddress: address, salary, role: role || undefined, businessId: businessId ?? undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(JSON.stringify(data.error))
@@ -133,9 +137,13 @@ export default function EmployeesPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-2 text-2xl font-bold text-white">Employees</h1>
+      <h1 className="mb-1 text-2xl font-bold text-white">
+        {business ? business.name : 'All Employees'}
+      </h1>
       <p className="mb-6 text-sm text-gray-400">
-        Manage your payroll roster. Each employee will receive their salary in USDC on Arc Testnet.
+        {business
+          ? `Managing employees for ${business.name}. Select a business from the sidebar to switch.`
+          : 'Showing all employees across businesses. Select a business from the sidebar to filter.'}
       </p>
 
       {/* Add Employee */}
