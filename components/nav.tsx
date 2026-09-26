@@ -34,8 +34,8 @@ export default function Nav() {
             <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-brand-500/30 to-navy-800/30 blur-sm" />
             <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
           </div>
-          <span className="text-base font-bold">
-            <span style={{ color: '#5b8fd4' }}>Architect</span>
+          <span className="text-base font-bold tracking-tight">
+            <span style={{ color: '#4a7fc8' }}>Architect</span>
             <span style={{ color: '#2aabab' }}> Pay</span>
           </span>
         </div>
