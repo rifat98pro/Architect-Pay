@@ -12,7 +12,6 @@ const navItems = [
   { href: '/payments',  label: 'Send Payment', icon: Send },
   { href: '/employees', label: 'Employees',    icon: Users },
   { href: '/payroll',   label: 'Payroll',      icon: Banknote },
-
   { href: '/history',   label: 'History',      icon: History },
 ]
 
@@ -21,53 +20,93 @@ export default function Nav() {
   const { logout, user } = useAuth()
 
   return (
-    <aside className="flex h-screen w-56 flex-col border-r border-gray-800 bg-gray-900 px-3 py-6">
+    <aside
+      className="flex h-screen w-56 flex-col px-3 py-6"
+      style={{
+        background: 'linear-gradient(180deg, #0b1829 0%, #081422 60%, #060f1c 100%)',
+        borderRight: '1px solid rgba(42,171,171,0.12)',
+      }}
+    >
+      {/* Logo */}
       <div className="mb-8 px-3">
         <div className="flex items-center gap-2.5">
-          <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="rounded-lg object-contain" />
-          <span className="text-base font-bold text-brand-500">Architect Pay</span>
+          <div className="relative">
+            <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-brand-500/30 to-navy-800/30 blur-sm" />
+            <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
+          </div>
+          <span
+            className="text-base font-bold"
+            style={{ background: 'linear-gradient(90deg, #ffffff 0%, #2aabab 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          >
+            Architect Pay
+          </span>
         </div>
-        <div className="mt-1 text-xs text-gray-500">Arc Testnet</div>
+        <div className="mt-1 flex items-center gap-1.5 px-0.5">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand-500 shadow-[0_0_6px_rgba(42,171,171,0.8)]" />
+          <span className="text-xs text-gray-500">Arc Testnet</span>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-1">
-        {navItems.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition',
-              pathname === href
-                ? 'bg-brand-500/10 text-brand-500'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-white',
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </Link>
-        ))}
+      {/* Nav links */}
+      <nav className="flex-1 space-y-0.5">
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                active
+                  ? 'text-brand-400'
+                  : 'text-gray-400 hover:text-white',
+              )}
+              style={active ? {
+                background: 'linear-gradient(90deg, rgba(42,171,171,0.12) 0%, rgba(42,171,171,0.04) 100%)',
+                borderLeft: '2px solid #2aabab',
+                paddingLeft: '10px',
+                boxShadow: 'inset 0 0 20px rgba(42,171,171,0.05)',
+              } : {}}
+            >
+              <Icon
+                className={cn(
+                  'h-4 w-4 transition-all duration-200',
+                  active ? 'text-brand-400 drop-shadow-[0_0_6px_rgba(42,171,171,0.6)]' : 'group-hover:text-brand-500',
+                )}
+              />
+              {label}
+            </Link>
+          )
+        })}
+
+        {/* Divider */}
+        <div className="my-2 mx-3 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
 
         <a
           href="https://faucet.circle.com/"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition hover:bg-gray-800 hover:text-white"
+          className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-800/50 hover:text-white"
         >
-          <Droplets className="h-4 w-4" />
+          <Droplets className="h-4 w-4 group-hover:text-brand-500 transition" />
           Get Faucet
         </a>
       </nav>
 
-      <div className="border-t border-gray-800 pt-4">
+      {/* User + logout */}
+      <div
+        className="mt-4 rounded-xl p-3"
+        style={{ background: 'rgba(42,171,171,0.04)', border: '1px solid rgba(42,171,171,0.08)' }}
+      >
         {user && (
-          <div className="mb-3 px-3">
+          <div className="mb-3">
             <div className="text-sm font-medium text-white truncate">{user.name ?? user.email}</div>
             <div className="text-xs text-gray-500 truncate">{user.email}</div>
           </div>
         )}
         <button
           onClick={logout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-800 hover:text-white"
+          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-800/60 hover:text-white"
         >
           <LogOut className="h-4 w-4" />
           Sign out

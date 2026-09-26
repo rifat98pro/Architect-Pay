@@ -72,17 +72,28 @@ export default function DashboardPage() {
       <h1 className="mb-6 text-2xl font-bold text-white">Dashboard</h1>
 
       {/* Total balance */}
-      <div className="card mb-4 bg-gradient-to-br from-brand-700 to-brand-900 border-brand-800">
-        <div className="mb-1 text-sm font-medium text-brand-100">Total Balance (All Chains)</div>
+      <div
+        className="card mb-4 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #0b1e47 0%, #0b2c2c 100%)',
+          border: '1px solid rgba(42,171,171,0.25)',
+          boxShadow: '0 0 40px rgba(42,171,171,0.1), 0 4px 24px rgba(11,30,71,0.4)',
+        }}
+      >
+        {/* Glow orb */}
+        <div className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-brand-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-navy-800/30 blur-2xl" />
+
+        <div className="mb-1 text-sm font-medium text-gray-400">Total Balance (All Chains)</div>
         <div className="mb-4 text-4xl font-bold tracking-tight text-white">
           ${formatUSDC(total)}{' '}
-          <span className="text-2xl font-normal text-brand-100">USDC</span>
+          <span className="text-2xl font-normal text-brand-400">USDC</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-brand-100">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
           <span>Wallet address</span>
-          <span className="font-mono text-xs">{wallet ? truncateAddress(wallet.address, 6) : '—'}</span>
-          <button onClick={copyAddress} className="rounded p-1 hover:bg-white/10">
-            {copied ? <CheckCheck className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+          <span className="font-mono text-xs text-gray-300">{wallet ? truncateAddress(wallet.address, 6) : '—'}</span>
+          <button onClick={copyAddress} className="rounded p-1 hover:bg-brand-500/10 text-gray-500 hover:text-brand-400 transition">
+            {copied ? <CheckCheck className="h-3.5 w-3.5 text-brand-400" /> : <Copy className="h-3.5 w-3.5" />}
           </button>
         </div>
       </div>
