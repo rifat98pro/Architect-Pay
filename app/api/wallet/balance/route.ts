@@ -4,6 +4,8 @@ import { db } from '@/lib/db'
 import { createCircleWallet, getWalletBalance, getAllChainBalances, syncChainWallets } from '@/lib/circle'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

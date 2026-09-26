@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
+
+export const dynamic = 'force-dynamic'
 import { z } from 'zod'
 
 const schema = z.object({
