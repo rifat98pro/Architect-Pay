@@ -16,6 +16,7 @@ export async function GET() {
       entries: {
         include: { employee: { select: { name: true, walletAddress: true } } },
       },
+      business: { select: { name: true } },
     },
   })
 
