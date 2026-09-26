@@ -14,7 +14,10 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <Image src="/logo.png" alt="Architect Pay" width={36} height={36} className="object-contain rounded-lg" />
-            <span className="text-xl font-bold text-brand-600">Architect Pay</span>
+            <span className="text-xl font-bold">
+            <span style={{ color: '#1B3A6B' }}>Architect</span>
+            <span style={{ color: '#2aabab' }}> Pay</span>
+          </span>
           </div>
 
           <nav className="hidden items-center gap-8 text-sm font-medium text-gray-600 md:flex">
@@ -36,17 +39,17 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 px-6 py-28 text-white">
+      <section className="px-6 py-28 text-white" style={{ background: 'linear-gradient(135deg, #060e28 0%, #0b1e47 50%, #0b2c2c 100%)' }}>
         <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-100">
+          <div className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-300">
             Powered by Circle CCTP V2 · Arc Testnet
           </div>
           <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight">
             Pay employees globally
             <br />
-            <span className="text-brand-200">with one USDC balance.</span>
+            <span className="text-brand-400">with one USDC balance.</span>
           </h1>
-          <p className="mx-auto mb-4 max-w-2xl text-lg text-brand-100">
+          <p className="mx-auto mb-4 max-w-2xl text-lg text-gray-300">
             Architect Pay lets you run payroll, send cross-chain USDC payments, and manage employees from a single dashboard
 
           </p>
@@ -56,7 +59,7 @@ export default function LandingPage() {
             </span>
           </div>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup" className="flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-brand-700 shadow-lg hover:bg-brand-50 transition-colors">
+            <Link href="/signup" className="flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-navy-900 shadow-lg hover:bg-gray-100 transition-colors" style={{ color: '#0b1e47' }}>
               Get started free <ArrowRight className="h-4 w-4" />
             </Link>
             <a href="#how-it-works" className="flex items-center gap-2 rounded-xl border border-white/30 px-7 py-3.5 text-base font-medium text-white hover:bg-white/10 transition-colors">
