@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { UserPlus, Trash2, Loader2, Pencil, Check, X } from 'lucide-react'
+import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
 
 interface Employee {
@@ -35,6 +35,7 @@ export default function EmployeesPage() {
   const [salary,  setSalary]  = useState('')
   const [role,    setRole]    = useState('')
 
+  const [copiedId,     setCopiedId]     = useState<string | null>(null)
   const [editingId,    setEditingId]    = useState<string | null>(null)
   const [editState,    setEditState]    = useState<EditState | null>(null)
   const [editSaving,   setEditSaving]   = useState(false)
@@ -115,6 +116,12 @@ export default function EmployeesPage() {
     } finally {
       setEditSaving(false)
     }
+  }
+
+  function copyAddress(id: string, address: string) {
+    navigator.clipboard.writeText(address)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
   }
 
   async function handleDelete(id: string) {
@@ -278,7 +285,18 @@ export default function EmployeesPage() {
                     {emp.role && (
                       <div className="text-xs font-medium text-brand-400">{emp.role}</div>
                     )}
-                    <div className="font-mono text-xs text-gray-500">{truncateAddress(emp.walletAddress, 8)}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-xs text-gray-500">{truncateAddress(emp.walletAddress, 8)}</span>
+                      <button
+                        onClick={() => copyAddress(emp.id, emp.walletAddress)}
+                        className="rounded p-0.5 text-gray-600 transition hover:text-brand-400"
+                        title="Copy wallet address"
+                      >
+                        {copiedId === emp.id
+                          ? <CheckCheck className="h-3 w-3 text-brand-400" />
+                          : <Copy className="h-3 w-3" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="font-semibold text-white">${parseFloat(emp.salary).toFixed(2)}</div>
