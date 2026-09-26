@@ -112,7 +112,7 @@ export default function PayrollPage() {
             onChange={(e) => setBusinessId(e.target.value)}
             className="input-base flex-1 max-w-xs text-sm"
           >
-            <option value="">— Select a business —</option>
+            <option value="">Select a business</option>
             {businesses.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
