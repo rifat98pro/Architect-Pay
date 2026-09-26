@@ -55,7 +55,7 @@ export default function DashboardPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  if (authLoading || loading) {
+  if (loading && !wallet) {
     return (
       <div className="flex h-64 items-center justify-center">
         <RefreshCw className="h-6 w-6 animate-spin text-brand-500" />
