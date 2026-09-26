@@ -13,6 +13,7 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.3",
     "@circle-fin/adapter-circle-wallets": "^1.3.2",
     "@circle-fin/adapter-viem-v2": "^1.0.0",
     "@circle-fin/app-kit": "^1.7.0",
@@ -29,6 +30,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.400.0",
     "next": "^16.2.7",
+    "next-auth": "^5.0.0-beta.32",
     "react": "^18",
     "react-dom": "^18",
     "solc": "^0.8.35",
