@@ -35,7 +35,7 @@ export default function Nav() {
             <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
           </div>
           <span className="text-base font-bold tracking-tight">
-            <span style={{ color: '#4a7fc8' }}>Architect</span>
+            <span style={{ color: '#4169e1' }}>Architect</span>
             <span style={{ color: '#2aabab' }}> Pay</span>
           </span>
         </div>
