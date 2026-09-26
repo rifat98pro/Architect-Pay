@@ -9,6 +9,7 @@ const schema = z.object({
   name:          z.string().min(1).max(100),
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address'),
   salary:        z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
+  role:          z.string().max(100).optional(),
 })
 
 export async function GET() {
