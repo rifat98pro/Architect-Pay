@@ -4,80 +4,20 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { useBusiness } from '@/context/business-context'
-import { LayoutDashboard, Send, History, Users, Banknote, LogOut, Droplets, Building2, Plus, ChevronDown, Trash2, Pencil, Check, X } from 'lucide-react'
+import { LayoutDashboard, Send, History, Building2, Banknote, LogOut, Droplets } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/payments',  label: 'Send Payment', icon: Send },
-  { href: '/employees', label: 'Employees',    icon: Users },
-  { href: '/payroll',   label: 'Payroll',      icon: Banknote },
-  { href: '/history',   label: 'History',      icon: History },
+  { href: '/dashboard',  label: 'Dashboard',    icon: LayoutDashboard },
+  { href: '/payments',   label: 'Send Payment', icon: Send },
+  { href: '/businesses', label: 'Businesses',   icon: Building2 },
+  { href: '/payroll',    label: 'Payroll',       icon: Banknote },
+  { href: '/history',    label: 'History',       icon: History },
 ]
 
 export default function Nav() {
-  const pathname = usePathname()
+  const pathname    = usePathname()
   const { logout, user } = useAuth()
-  const { businesses, selectedId, selected, setSelectedId, refresh } = useBusiness()
-
-  const [bizOpen,     setBizOpen]     = useState(false)
-  const [newBizName,  setNewBizName]  = useState('')
-  const [addingBiz,   setAddingBiz]   = useState(false)
-  const [showAdd,     setShowAdd]     = useState(false)
-  const [renamingId,  setRenamingId]  = useState<string | null>(null)
-  const [renameValue, setRenameValue] = useState('')
-  const [renameSaving,setRenameSaving]= useState(false)
-
-  async function createBusiness() {
-    if (!newBizName.trim()) return
-    setAddingBiz(true)
-    try {
-      const res  = await fetch('/api/businesses', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: newBizName.trim() }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        await refresh()
-        setSelectedId(data.business.id)
-        setNewBizName('')
-        setShowAdd(false)
-        setBizOpen(false)
-      }
-    } finally {
-      setAddingBiz(false)
-    }
-  }
-
-  async function deleteBusiness(id: string) {
-    await fetch(`/api/businesses/${id}`, { method: 'DELETE' })
-    if (selectedId === id) setSelectedId(null)
-    await refresh()
-  }
-
-  function startRename(biz: { id: string; name: string }) {
-    setRenamingId(biz.id)
-    setRenameValue(biz.name)
-  }
-
-  async function saveRename(id: string) {
-    if (!renameValue.trim()) return
-    setRenameSaving(true)
-    try {
-      await fetch(`/api/businesses/${id}`, {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: renameValue.trim() }),
-      })
-      await refresh()
-      setRenamingId(null)
-    } finally {
-      setRenameSaving(false)
-    }
-  }
 
   return (
     <aside
@@ -88,7 +28,7 @@ export default function Nav() {
       }}
     >
       {/* Logo */}
-      <div className="mb-4 px-3">
+      <div className="mb-8 px-3">
         <div className="flex items-center gap-2.5">
           <div className="relative">
             <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-brand-500/30 to-navy-800/30 blur-sm" />
@@ -105,143 +45,10 @@ export default function Nav() {
         </div>
       </div>
 
-      {/* Business selector */}
-      <div className="mb-4 px-1 relative">
-        <button
-          onClick={() => setBizOpen((v) => !v)}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition hover:bg-gray-800/40"
-          style={{ border: '1px solid rgba(42,171,171,0.15)' }}
-        >
-          <Building2 className="h-3.5 w-3.5 shrink-0 text-brand-500" />
-          <span className="flex-1 truncate text-xs font-medium text-gray-300">
-            {selected ? selected.name : 'All Businesses'}
-          </span>
-          <ChevronDown className={cn('h-3 w-3 text-gray-500 transition-transform', bizOpen && 'rotate-180')} />
-        </button>
-
-        {bizOpen && (
-          <div
-            className="absolute left-1 right-1 top-full z-50 mt-1 rounded-xl py-1 shadow-xl"
-            style={{ background: '#0d1926', border: '1px solid rgba(42,171,171,0.2)' }}
-          >
-            {/* All option */}
-            <button
-              onClick={() => { setSelectedId(null); setBizOpen(false) }}
-              className={cn(
-                'flex w-full items-center gap-2 px-3 py-2 text-xs transition hover:bg-brand-500/10',
-                !selectedId ? 'text-brand-400' : 'text-gray-400',
-              )}
-            >
-              <span className="flex-1 text-left">All Businesses</span>
-              {!selectedId && <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />}
-            </button>
-
-            {businesses.map((biz) => (
-              <div key={biz.id} className="px-2 py-0.5">
-                {renamingId === biz.id ? (
-                  <div className="flex items-center gap-1">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={renameValue}
-                      onChange={(e) => setRenameValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveRename(biz.id)
-                        if (e.key === 'Escape') setRenamingId(null)
-                      }}
-                      className="input-base flex-1 py-1 text-xs"
-                      maxLength={100}
-                    />
-                    <button
-                      onClick={() => saveRename(biz.id)}
-                      disabled={renameSaving}
-                      className="rounded p-1 text-brand-400 hover:text-brand-300 transition"
-                    >
-                      <Check className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => setRenamingId(null)}
-                      className="rounded p-1 text-gray-500 hover:text-gray-300 transition"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => { setSelectedId(biz.id); setBizOpen(false) }}
-                      className={cn(
-                        'flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition hover:bg-brand-500/10',
-                        selectedId === biz.id ? 'text-brand-400' : 'text-gray-400',
-                      )}
-                    >
-                      <span className="flex-1 truncate text-left">{biz.name}</span>
-                      {selectedId === biz.id && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />}
-                    </button>
-                    <button
-                      onClick={() => startRename(biz)}
-                      className="rounded p-1 text-gray-600 hover:text-brand-400 transition"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => deleteBusiness(biz.id)}
-                      className="rounded p-1 text-gray-600 hover:text-red-400 transition"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            <div className="mx-2 my-1 h-px bg-gray-800" />
-
-            {showAdd ? (
-              <div className="px-2 pb-2">
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Business name"
-                  value={newBizName}
-                  onChange={(e) => setNewBizName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && createBusiness()}
-                  className="input-base mb-1.5 w-full text-xs py-1.5"
-                  maxLength={100}
-                />
-                <div className="flex gap-1">
-                  <button
-                    onClick={createBusiness}
-                    disabled={addingBiz || !newBizName.trim()}
-                    className="btn-primary flex-1 py-1 text-xs"
-                  >
-                    {addingBiz ? 'Adding...' : 'Add'}
-                  </button>
-                  <button
-                    onClick={() => { setShowAdd(false); setNewBizName('') }}
-                    className="btn-secondary py-1 text-xs px-2"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAdd(true)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 transition hover:text-brand-400"
-              >
-                <Plus className="h-3 w-3" />
-                New Business
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Nav links */}
       <nav className="flex-1 space-y-0.5">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href
+          const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
               key={href}

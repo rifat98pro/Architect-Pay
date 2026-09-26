@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
-import { useBusiness } from '@/context/business-context'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
@@ -36,7 +35,9 @@ const RUN_STATUS: Record<string, { icon: React.ReactNode; label: string; classNa
 export default function PayrollPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  const { selectedId: businessId, selected: business } = useBusiness()
+
+  const [businesses,  setBusinesses]  = useState<{ id: string; name: string }[]>([])
+  const [businessId,  setBusinessId]  = useState<string>('')
 
   const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
   const [employees,  setEmployees]  = useState<{ id: string; salary: string }[]>([])
@@ -51,21 +52,23 @@ export default function PayrollPage() {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
 
-  async function loadData(bizId?: string | null) {
+  async function loadData(bizId?: string) {
     const empUrl = bizId ? `/api/employees?businessId=${bizId}` : '/api/employees'
-    const [balRes, empRes, runRes] = await Promise.all([
+    const [balRes, empRes, runRes, bizRes] = await Promise.all([
       fetch('/api/wallet/balance').then((r) => r.json()),
       fetch(empUrl).then((r) => r.json()),
       fetch('/api/payroll/runs').then((r) => r.json()),
+      fetch('/api/businesses').then((r) => r.json()),
     ])
     setChainBalances(balRes.chainBalances ?? {})
     setEmployees(empRes.employees ?? [])
     setRuns(runRes.runs ?? [])
+    setBusinesses(bizRes.businesses ?? [])
     setLoading(false)
   }
 
   useEffect(() => {
-    if (user?.id) loadData(businessId)
+    if (user?.id) loadData(businessId || undefined)
   }, [user?.id, businessId])
 
   const totalSalary  = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
@@ -97,14 +100,27 @@ export default function PayrollPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-1 text-2xl font-bold text-white">
-        {business ? `${business.name} — Payroll` : 'Run Payroll'}
-      </h1>
-      <p className="mb-6 text-sm text-gray-400">
-        {business
-          ? `Pay all active employees in ${business.name} from your Arc Testnet balance.`
-          : 'Pay all active employees across all businesses from your Arc Testnet balance.'}
-      </p>
+      <h1 className="mb-2 text-2xl font-bold text-white">Run Payroll</h1>
+
+      {businesses.length > 0 && (
+        <div className="mb-6 flex items-center gap-3">
+          <label className="text-sm text-gray-400 whitespace-nowrap">Business:</label>
+          <select
+            value={businessId}
+            onChange={(e) => setBusinessId(e.target.value)}
+            className="input-base flex-1 max-w-xs text-sm"
+          >
+            <option value="">All Businesses</option>
+            {businesses.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {!businesses.length && (
+        <p className="mb-6 text-sm text-gray-400">Pay all active employees from your Arc Testnet balance.</p>
+      )}
 
       <div className="card mb-6">
         {error   && <div className="mb-4 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">{error}</div>}
