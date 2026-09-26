@@ -53,17 +53,19 @@ export default function PayrollPage() {
   }, [authLoading, user, router])
 
   async function loadData(bizId?: string) {
-    const empUrl = bizId ? `/api/employees?businessId=${bizId}` : '/api/employees'
-    const [balRes, empRes, runRes, bizRes] = await Promise.all([
-      fetch('/api/wallet/balance').then((r) => r.json()),
-      fetch(empUrl).then((r) => r.json()),
-      fetch('/api/payroll/runs').then((r) => r.json()),
-      fetch('/api/businesses').then((r) => r.json()),
-    ])
-    setChainBalances(balRes.chainBalances ?? {})
-    setEmployees(empRes.employees ?? [])
-    setRuns(runRes.runs ?? [])
-    setBusinesses(bizRes.businesses ?? [])
+    const fetches: Promise<void>[] = [
+      fetch('/api/wallet/balance').then((r) => r.json()).then((d) => setChainBalances(d.chainBalances ?? {})),
+      fetch('/api/payroll/runs').then((r) => r.json()).then((d) => setRuns(d.runs ?? [])),
+      fetch('/api/businesses').then((r) => r.json()).then((d) => setBusinesses(d.businesses ?? [])),
+    ]
+    if (bizId) {
+      fetches.push(
+        fetch(`/api/employees?businessId=${bizId}`).then((r) => r.json()).then((d) => setEmployees(d.employees ?? []))
+      )
+    } else {
+      setEmployees([])
+    }
+    await Promise.all(fetches)
     setLoading(false)
   }
 
