@@ -31,8 +31,9 @@ export default function PaymentsPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
-  const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
-  const [sourceChain, setSourceChain]     = useState('ARC-TESTNET')
+  const [chainBalances, setChainBalances]         = useState<Record<string, string>>({})
+  const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
+  const [sourceChain, setSourceChain]             = useState('ARC-TESTNET')
   const [destChain, setDestChain]         = useState('ARC-TESTNET')
   const [token, setToken]                 = useState<'USDC' | 'EURC'>('USDC')
   const [amount, setAmount]               = useState('')
@@ -62,7 +63,10 @@ export default function PaymentsPage() {
     if (!user?.id) return
     fetch('/api/wallet/balance')
       .then((r) => r.json())
-      .then((data) => setChainBalances(data.chainBalances ?? {}))
+      .then((data) => {
+        setChainBalances(data.chainBalances ?? {})
+        setEurcChainBalances(data.eurcChainBalances ?? {})
+      })
   }, [user?.id])
 
   // Username lookup (debounced)
@@ -96,10 +100,18 @@ export default function PaymentsPage() {
   const isCrossChain      = !isAggregate && (sourceChain !== destChain)
   const selectedSrcChain  = SOURCE_CHAINS.find((c) => c.id === sourceChain)!
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
+  const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
+
   const totalBalance  = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const availableBalance = isAggregate
     ? totalBalance.toFixed(2)
-    : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
+    : token === 'EURC'
+      ? parseFloat(eurcChainBalances[sourceChain] ?? '0').toFixed(2)
+      : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
+
+  const filteredDestChains = token === 'EURC'
+    ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id))
+    : DEST_CHAINS
 
   const fetchPlan = useCallback(async (amt: string) => {
     const n = parseFloat(amt)
@@ -122,10 +134,21 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [isAggregate, amount, user, fetchPlan])
 
-  // Reset destChain when switching to aggregate mode
+  // Reset destChain when switching to aggregate mode or to EURC
   useEffect(() => {
     if (sourceChain === 'ALL_CHAINS') setDestChain('ARC-TESTNET')
   }, [sourceChain])
+
+  useEffect(() => {
+    if (token === 'EURC') {
+      if (!['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'].includes(destChain)) {
+        setDestChain('ARC-TESTNET')
+      }
+      if (!['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'].includes(sourceChain)) {
+        setSourceChain('ARC-TESTNET')
+      }
+    }
+  }, [token, destChain, sourceChain])
 
   const canSend = recipientMode === 'wallet'
     ? /^0x[a-fA-F0-9]{40}$/.test(walletAddress)
@@ -153,7 +176,7 @@ export default function PaymentsPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Payment failed')
 
-      setSuccess(`${amount} USDC sent successfully!`)
+      setSuccess(`${amount} ${token} sent successfully!`)
       setWalletAddress('')
       setUsernameInput('')
       setResolvedAddress('')
@@ -165,6 +188,7 @@ export default function PaymentsPage() {
 
       const bal = await fetch('/api/wallet/balance').then((r) => r.json())
       setChainBalances(bal.chainBalances ?? {})
+      setEurcChainBalances(bal.eurcChainBalances ?? {})
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Payment failed')
     } finally {
@@ -198,11 +222,15 @@ export default function PaymentsPage() {
               className="input-base"
               disabled={loading}
             >
-              {SOURCE_CHAINS.map((c) => (
+              {SOURCE_CHAINS
+                .filter((c) => token === 'EURC' ? c.id !== 'ALL_CHAINS' && ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'].includes(c.id) : true)
+                .map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.id === 'ALL_CHAINS'
                     ? `All Chains — $${totalBalance.toFixed(2)} USDC total`
-                    : `${c.label} — $${parseFloat(chainBalances[c.id] ?? '0').toFixed(2)} USDC`}
+                    : token === 'EURC'
+                      ? `${c.label} — ${parseFloat(eurcChainBalances[c.id] ?? '0').toFixed(2)} EURC`
+                      : `${c.label} — $${parseFloat(chainBalances[c.id] ?? '0').toFixed(2)} USDC`}
                 </option>
               ))}
             </select>
@@ -223,14 +251,14 @@ export default function PaymentsPage() {
                 className="input-base"
                 disabled={loading}
               >
-                {DEST_CHAINS.map((c) => (
+                {filteredDestChains.map((c) => (
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
               {isCrossChain ? (
                 <p className="mt-1.5 text-xs text-amber-400">
                   Cross-chain via CCTP — takes ~2–3 minutes. A small relayer fee (~1%) applies.
-                  USDC burns on {selectedSrcChain.label} and mints on {selectedDestChain.label}.
+                  {token} burns on {selectedSrcChain.label} and mints on {selectedDestChain.label}.
                 </p>
               ) : (
                 <p className="mt-1.5 text-xs text-green-400">
@@ -356,7 +384,7 @@ export default function PaymentsPage() {
             <label className="mb-1.5 block text-sm font-medium text-gray-300">
               Amount ({token})
               <span className="ml-2 text-xs font-normal text-gray-500">
-                Available: ${availableBalance}
+                Available: {token === 'EURC' ? '' : '$'}{availableBalance}
               </span>
             </label>
             <div className="relative">
@@ -448,7 +476,7 @@ export default function PaymentsPage() {
               ? 'Sending...'
               : isAggregate
                 ? `Aggregate & Send ${amount ? `$${amount}` : ''} USDC`
-                : `Send ${amount ? `$${amount}` : ''} USDC`}
+                : `Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
           </button>
         </form>
       </div>

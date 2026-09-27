@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
         fromWalletId: sourceWalletId,
         toAddress:    recipientAddress,
         amount,
+        token,
       })
       txHash = result.txHash ?? await waitForTransaction(result.id)
     } else {

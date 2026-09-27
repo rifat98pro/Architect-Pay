@@ -16,10 +16,17 @@ const CHAIN_LABEL: Record<string, string> = {
 }
 
 interface WalletData {
-  address:       string
-  balance:       string
-  eurcBalance:   string
-  chainBalances: Record<string, string>
+  address:           string
+  balance:           string
+  eurcBalance:       string
+  eurcChainBalances: Record<string, string>
+  chainBalances:     Record<string, string>
+}
+
+const EURC_CHAIN_LABEL: Record<string, string> = {
+  'ARC-TESTNET':  'Arc Testnet',
+  'ETH-SEPOLIA':  'Ethereum Sepolia',
+  'BASE-SEPOLIA': 'Base Sepolia',
 }
 
 export default function DashboardPage() {
@@ -92,7 +99,7 @@ export default function DashboardPage() {
         </div>
         {parseFloat(wallet?.eurcBalance ?? '0') > 0 && (
           <div className="mb-3 text-lg font-semibold text-blue-400">
-            {parseFloat(wallet?.eurcBalance ?? '0').toFixed(2)}{' '}
+            +{parseFloat(wallet?.eurcBalance ?? '0').toFixed(2)}{' '}
             <span className="text-base font-normal text-blue-500">EURC</span>
           </div>
         )}
@@ -105,7 +112,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Per-chain balances */}
+      {/* Per-chain USDC balances */}
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">USDC Balances</div>
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {Object.entries(wallet?.chainBalances ?? {}).map(([chain, bal]) => (
           <div key={chain} className="card flex items-center justify-between py-3">
@@ -117,6 +125,31 @@ export default function DashboardPage() {
             </div>
             {chain === 'ARC-TESTNET' && (
               <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-500">
+                Primary
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Per-chain EURC balances */}
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-500/70">EURC Balances</div>
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {Object.entries(wallet?.eurcChainBalances ?? {}).map(([chain, bal]) => (
+          <div
+            key={chain}
+            className="card flex items-center justify-between py-3"
+            style={{ border: '1px solid rgba(59,130,246,0.15)' }}
+          >
+            <div>
+              <div className="text-xs font-medium text-gray-500">{EURC_CHAIN_LABEL[chain] ?? chain}</div>
+              <div className="mt-0.5 text-lg font-semibold text-white">
+                {parseFloat(bal).toFixed(2)}{' '}
+                <span className="text-sm font-normal text-blue-500">EURC</span>
+              </div>
+            </div>
+            {chain === 'ARC-TESTNET' && (
+              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
                 Primary
               </span>
             )}

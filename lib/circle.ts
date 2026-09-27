@@ -200,23 +200,25 @@ export async function getAllChainBalances(
 }
 
 /**
- * Send USDC directly from a Circle wallet to any address on the same chain.
- * Used for Arc Testnet → Arc Testnet payments (instant, no CCTP needed).
+ * Send USDC or EURC directly from a Circle wallet to any address on the same chain.
+ * Used for same-chain payments (instant, no CCTP needed).
  */
 export async function sendUsdcPayment({
   fromWalletId,
   toAddress,
   amount,
+  token = 'USDC',
 }: {
   fromWalletId: string
   toAddress:    string
   amount:       string
+  token?:       'USDC' | 'EURC'
 }): Promise<{ id: string; txHash: string | null }> {
   const client = getClient()
 
   const balRes = await client.getWalletTokenBalance({ id: fromWalletId })
-  const usdc = (balRes.data?.tokenBalances ?? []).find((b) => b.token?.symbol === 'USDC')
-  if (!usdc?.token?.id) throw new Error('USDC not found in wallet — fund it via the Circle faucet first')
+  const usdc = (balRes.data?.tokenBalances ?? []).find((b) => b.token?.symbol === token)
+  if (!usdc?.token?.id) throw new Error(`${token} not found in wallet — fund it via the Circle faucet first`)
 
   const txRes = await client.createTransaction({
     walletId:           fromWalletId,
