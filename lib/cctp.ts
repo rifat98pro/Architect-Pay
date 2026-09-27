@@ -1,13 +1,10 @@
 'use server'
 
-import { encodeFunctionData, keccak256, pad } from 'viem'
+import { encodeFunctionData, pad } from 'viem'
 import { executeContractCall, waitForTransaction } from '@/lib/circle'
 import { SOURCE_CHAIN_META, ARC_TESTNET_CONFIG, type CctpSourceChain } from '@/lib/cctp-chains'
 
 const IRIS_API = 'https://iris-api-sandbox.circle.com'
-
-// MessageSent(bytes) event topic
-const MESSAGE_SENT_TOPIC = '0x2fa9ca894982930190727e75500a97d8dc500233a5065e0f3126c48fbe0343c0'
 
 const APPROVE_ABI = {
   type:             'function' as const,
@@ -92,54 +89,6 @@ async function pollAttestationByTxHash(srcDomain: number, burnTxHash: string): P
   throw new Error('Iris attestation timed out after 10 minutes')
 }
 
-// ── EURC helpers (new, per Arc CCTP docs) ─────────────────────────────────────
-
-async function extractMessageBytes(rpcUrl: string, burnTxHash: string): Promise<string> {
-  const LIMIT = 30
-  const DELAY = 3_000
-
-  for (let i = 0; i < LIMIT; i++) {
-    try {
-      const res  = await fetch(rpcUrl, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ jsonrpc: '2.0', method: 'eth_getTransactionReceipt', params: [burnTxHash], id: 1 }),
-      })
-      const data = await res.json() as { result?: { logs?: Array<{ topics: string[]; data: string }> } }
-      const log  = (data.result?.logs ?? []).find(
-        (l) => l.topics[0]?.toLowerCase() === MESSAGE_SENT_TOPIC,
-      )
-      if (log?.data) {
-        // ABI-encoded bytes: 32-byte offset + 32-byte length + data
-        const hex    = log.data.startsWith('0x') ? log.data.slice(2) : log.data
-        const length = parseInt(hex.slice(64, 128), 16)
-        return '0x' + hex.slice(128, 128 + length * 2)
-      }
-    } catch { /* RPC blip */ }
-    await new Promise((r) => setTimeout(r, DELAY))
-  }
-  throw new Error('MessageSent event not found in burn tx receipt after 90 s')
-}
-
-async function pollAttestationByMsgHash(messageBytes: string): Promise<string> {
-  const messageHash = keccak256(messageBytes as `0x${string}`)
-  const url   = `${IRIS_API}/v2/attestations/${messageHash}`
-  const LIMIT = 120
-  const DELAY = 5_000
-
-  for (let i = 0; i < LIMIT; i++) {
-    try {
-      const res = await fetch(url)
-      if (res.ok) {
-        const data = await res.json() as { status: string; attestation?: string }
-        if (data.status === 'complete' && data.attestation) return data.attestation
-      }
-    } catch { /* network blip */ }
-    await new Promise((r) => setTimeout(r, DELAY))
-  }
-  throw new Error('Iris attestation timed out after 10 minutes')
-}
-
 // ── Main transfer function ─────────────────────────────────────────────────────
 
 export async function cctpTransfer({
@@ -174,79 +123,53 @@ export async function cctpTransfer({
   const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
   const zeroCaller  = pad('0x0', { size: 32 })
 
-  if (token === 'EURC') {
-    // ── EURC: 7-arg depositForBurn with maxFee=0 (standard free tier) ────────
-    // EURC has no paid-relayer support on testnet — passing maxFee>0 causes
-    // ESTIMATION_ERROR. Use standard finality (2000) with zero fee.
+  // ── shared path for USDC and EURC ─────────────────────────────────────────
+  // Iris EURC fee endpoint doesn't exist on testnet — use USDC tiers for
+  // finalityThreshold. EURC always uses maxFee=0 (no paid relayers on testnet).
+  const { feeAmount: usdcFee, totalToApprove: usdcApprove, finalityThreshold } = await getFee(srcMeta.cctpDomain, dstDomain, amountMicro)
 
-    // Step 1: approve (exact amount, no fee added)
-    const approveTxId = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, amountMicro] }),
-    })
-    await waitForTransaction(approveTxId)
-    console.log(`[cctp/eurc] approve confirmed on ${sourceChain}`)
+  const feeAmount     = token === 'EURC' ? BigInt(0) : usdcFee
+  const totalToApprove = token === 'EURC' ? amountMicro : usdcApprove
+  console.log(`[cctp/${token.toLowerCase()}] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} feeAmount=${feeAmount} threshold=${finalityThreshold}`)
 
-    // Step 2: depositForBurn with maxFee=0, standard finality threshold
-    const burnTxId = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_V2_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, BigInt(0), 2000] }),
-    })
-    const burnTxHash = await waitForTransaction(burnTxId)
-    console.log(`[cctp/eurc] burn confirmed: ${burnTxHash}`)
+  // Step 1: approve
+  const approveTxId = await executeContractCall({
+    walletId:        sourceWalletId,
+    contractAddress: burnToken,
+    callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
+  })
+  console.log(`[cctp/${token.toLowerCase()}] approve tx: ${approveTxId}`)
+  await waitForTransaction(approveTxId).catch((e: Error) => {
+    throw new Error(`[step1-approve] ${e.message}`)
+  })
+  console.log(`[cctp/${token.toLowerCase()}] approve confirmed on ${sourceChain}`)
 
-    // Step 3: extract MessageSent bytes → attestation by message hash
-    const messageBytes = await extractMessageBytes(srcMeta.rpcUrl, burnTxHash)
-    const attestation  = await pollAttestationByMsgHash(messageBytes)
+  // Step 2: depositForBurn (7-arg CCTP V2)
+  const burnTxId = await executeContractCall({
+    walletId:        sourceWalletId,
+    contractAddress: srcMeta.tokenMessengerV2,
+    callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_V2_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
+  })
+  console.log(`[cctp/${token.toLowerCase()}] burn tx: ${burnTxId}`)
+  const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => {
+    throw new Error(`[step2-depositForBurn] ${e.message}`)
+  })
+  console.log(`[cctp/${token.toLowerCase()}] burn confirmed: ${burnTxHash}`)
 
-    // Step 4: receiveMessage
-    const mintTxId = await executeContractCall({
-      walletId:        receiverWalletId,
-      contractAddress: destTransmitter,
-      callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [messageBytes as `0x${string}`, attestation as `0x${string}`] }),
-    })
-    const mintTxHash = await waitForTransaction(mintTxId)
-    console.log(`[cctp/eurc] mint confirmed: ${mintTxHash}`)
+  // Step 3: poll attestation by tx hash (works for both USDC and EURC)
+  const { message, attestation } = await pollAttestationByTxHash(srcMeta.cctpDomain, burnTxHash)
 
-    return { burnTxHash, mintTxHash }
+  // Step 4: receiveMessage
+  const mintTxId = await executeContractCall({
+    walletId:        receiverWalletId,
+    contractAddress: destTransmitter,
+    callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
+  })
+  console.log(`[cctp/${token.toLowerCase()}] mint tx: ${mintTxId}`)
+  const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => {
+    throw new Error(`[step4-receiveMessage] ${e.message}`)
+  })
+  console.log(`[cctp/${token.toLowerCase()}] mint confirmed: ${mintTxHash}`)
 
-  } else {
-    // ── USDC: original 7-arg + tx-hash attestation (was working, unchanged) ─
-
-    const { feeAmount, totalToApprove, finalityThreshold } = await getFee(srcMeta.cctpDomain, dstDomain, amountMicro)
-    console.log(`[cctp/usdc] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} fee: ${feeAmount} micro`)
-
-    // Step 1: approve
-    const approveTxId = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
-    })
-    await waitForTransaction(approveTxId)
-
-    // Step 2: depositForBurn (7-arg CCTP V2)
-    const burnTxId = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_V2_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
-    })
-    const burnTxHash = await waitForTransaction(burnTxId)
-    console.log(`[cctp/usdc] burn confirmed: ${burnTxHash}`)
-
-    // Step 3: poll attestation by tx hash
-    const { message, attestation } = await pollAttestationByTxHash(srcMeta.cctpDomain, burnTxHash)
-
-    // Step 4: receiveMessage
-    const mintTxId = await executeContractCall({
-      walletId:        receiverWalletId,
-      contractAddress: destTransmitter,
-      callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
-    })
-    const mintTxHash = await waitForTransaction(mintTxId)
-    console.log(`[cctp/usdc] mint confirmed: ${mintTxHash}`)
-
-    return { burnTxHash, mintTxHash }
-  }
+  return { burnTxHash, mintTxHash }
 }
