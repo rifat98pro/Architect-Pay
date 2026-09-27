@@ -97,13 +97,12 @@ export default function PaymentsPage() {
   const recipientAddress = recipientMode === 'wallet' ? walletAddress : resolvedAddress
 
   const isAggregate       = sourceChain === 'ALL_CHAINS'
-  // Arc Testnet can only send same-chain — cross-chain CCTP from Arc is not yet supported
-  // by Circle's Gas Station (paymaster won't cover ERC-20 approve calls on Arc)
-  const arcSourceLocked   = sourceChain === 'ARC-TESTNET'
-  const isCrossChain      = !isAggregate && !arcSourceLocked && (sourceChain !== destChain)
+  const isCrossChain      = !isAggregate && (sourceChain !== destChain)
   const selectedSrcChain  = SOURCE_CHAINS.find((c) => c.id === sourceChain)!
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
   const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
+  // EURC cross-chain from ETH-Sepolia/Base-Sepolia fails (Gas Station doesn't whitelist EURC approve there)
+  const eurcSrcBlocked = token === 'EURC' && isCrossChain && (sourceChain === 'ETH-SEPOLIA' || sourceChain === 'BASE-SEPOLIA')
 
   const totalBalance  = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const availableBalance = isAggregate
@@ -112,11 +111,9 @@ export default function PaymentsPage() {
       ? parseFloat(eurcChainBalances[sourceChain] ?? '0').toFixed(2)
       : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
 
-  const filteredDestChains = arcSourceLocked
-    ? DEST_CHAINS.filter((c) => c.id === 'ARC-TESTNET')
-    : token === 'EURC'
-      ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id))
-      : DEST_CHAINS
+  const filteredDestChains = token === 'EURC'
+    ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id))
+    : DEST_CHAINS
 
   const fetchPlan = useCallback(async (amt: string) => {
     const n = parseFloat(amt)
@@ -139,9 +136,9 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [isAggregate, amount, user, fetchPlan])
 
-  // Reset destChain when switching to aggregate mode, Arc source, or EURC
+  // Reset destChain when switching to aggregate mode
   useEffect(() => {
-    if (sourceChain === 'ALL_CHAINS' || sourceChain === 'ARC-TESTNET') setDestChain('ARC-TESTNET')
+    if (sourceChain === 'ALL_CHAINS') setDestChain('ARC-TESTNET')
   }, [sourceChain])
 
   useEffect(() => {
@@ -260,9 +257,9 @@ export default function PaymentsPage() {
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
-              {arcSourceLocked ? (
-                <p className="mt-1.5 text-xs text-gray-500">
-                  Cross-chain from Arc coming soon. Arc wallet currently supports same-chain transfers only.
+              {eurcSrcBlocked ? (
+                <p className="mt-1.5 text-xs text-red-400">
+                  EURC cross-chain from {selectedSrcChain.label} is not yet supported. Use Arc Testnet as the source instead.
                 </p>
               ) : isCrossChain ? (
                 <p className="mt-1.5 text-xs text-amber-400">
@@ -475,7 +472,7 @@ export default function PaymentsPage() {
 
           <button
             type="submit"
-            disabled={loading || !canSend || !amount || (isAggregate && (!planFeasible || planLoading))}
+            disabled={loading || !canSend || !amount || eurcSrcBlocked || (isAggregate && (!planFeasible || planLoading))}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
             {loading
