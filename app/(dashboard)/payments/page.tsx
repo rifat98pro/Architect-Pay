@@ -101,9 +101,9 @@ export default function PaymentsPage() {
   const selectedSrcChain  = SOURCE_CHAINS.find((c) => c.id === sourceChain)!
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
   const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
-  // EURC CCTPx: only Arc as source is supported (uses CrossChainTokenService).
-  // ETH-Sepolia/Base-Sepolia as source blocked — their TokenManagers not covered by Gas Station.
-  const eurcSrcBlocked = token === 'EURC' && isCrossChain && sourceChain !== 'ARC-TESTNET'
+  // EURC CCTPx supported on Arc, ETH-Sepolia, Base-Sepolia (all have CCTS + TokenManager deployed).
+  // ARB-Sepolia / Polygon Amoy are not EURC chains — block those.
+  const eurcSrcBlocked = token === 'EURC' && isCrossChain && !EURC_CHAINS.includes(sourceChain)
 
   const totalBalance  = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const availableBalance = isAggregate
@@ -260,7 +260,7 @@ export default function PaymentsPage() {
               </select>
               {eurcSrcBlocked ? (
                 <p className="mt-1.5 text-xs text-red-400">
-                  EURC cross-chain from {selectedSrcChain.label} is not supported. Switch to Arc Testnet as the source.
+                  EURC cross-chain is not supported from {selectedSrcChain.label}. Use Arc Testnet, Ethereum Sepolia, or Base Sepolia.
                 </p>
               ) : isCrossChain ? (
                 <p className="mt-1.5 text-xs text-amber-400">
