@@ -34,19 +34,6 @@ const DEPOSIT_FOR_BURN_V2_ABI = {
   outputs: [],
 }
 
-// EURC path: 4-arg version per Arc CCTP docs (no fee params)
-const DEPOSIT_FOR_BURN_ABI = {
-  type:            'function' as const,
-  name:            'depositForBurn',
-  stateMutability: 'nonpayable' as const,
-  inputs: [
-    { name: 'amount',            type: 'uint256' },
-    { name: 'destinationDomain', type: 'uint32'  },
-    { name: 'mintRecipient',     type: 'bytes32' },
-    { name: 'burnToken',         type: 'address' },
-  ],
-  outputs: [],
-}
 
 const RECEIVE_MESSAGE_ABI = {
   type:            'function' as const,
@@ -188,9 +175,11 @@ export async function cctpTransfer({
   const zeroCaller  = pad('0x0', { size: 32 })
 
   if (token === 'EURC') {
-    // ── EURC: 4-arg depositForBurn + message-hash attestation (Arc docs) ────
+    // ── EURC: 7-arg depositForBurn with maxFee=0 (standard free tier) ────────
+    // EURC has no paid-relayer support on testnet — passing maxFee>0 causes
+    // ESTIMATION_ERROR. Use standard finality (2000) with zero fee.
 
-    // Step 1: approve
+    // Step 1: approve (exact amount, no fee added)
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
@@ -199,11 +188,11 @@ export async function cctpTransfer({
     await waitForTransaction(approveTxId)
     console.log(`[cctp/eurc] approve confirmed on ${sourceChain}`)
 
-    // Step 2: depositForBurn (4-arg)
+    // Step 2: depositForBurn with maxFee=0, standard finality threshold
     const burnTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken] }),
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_V2_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, BigInt(0), 2000] }),
     })
     const burnTxHash = await waitForTransaction(burnTxId)
     console.log(`[cctp/eurc] burn confirmed: ${burnTxHash}`)
