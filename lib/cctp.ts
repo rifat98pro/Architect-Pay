@@ -114,82 +114,80 @@ async function pollAttestation(srcDomain: number, burnTxHash: string): Promise<{
 export async function cctpTransfer({
   sourceChain,
   sourceWalletId,
+  destChain,
+  destWalletId,
   arcWalletId,
   recipientAddress,
   amount,
 }: {
   sourceChain:      CctpSourceChain
-  sourceWalletId:   string   // Circle wallet ID on the source chain
-  arcWalletId:      string   // Circle wallet ID on Arc Testnet (for receiveMessage)
-  recipientAddress: string   // Where USDC should land on Arc Testnet
-  amount:           string   // Human-readable e.g. "10.50"
+  sourceWalletId:   string
+  destChain?:       CctpSourceChain   // if omitted, destination is Arc Testnet
+  destWalletId?:    string            // Circle wallet ID on destination chain (for receiveMessage)
+  arcWalletId:      string
+  recipientAddress: string
+  amount:           string
 }): Promise<{ burnTxHash: string; mintTxHash: string }> {
-  const chain       = SOURCE_CHAIN_META[sourceChain]
+  const srcMeta  = SOURCE_CHAIN_META[sourceChain]
+  const dstMeta  = destChain ? SOURCE_CHAIN_META[destChain] : null
+  const dstDomain = dstMeta ? dstMeta.cctpDomain : ARC_TESTNET_CONFIG.cctpDomain
+  const receiverWalletId = destWalletId ?? arcWalletId
+
   const amountMicro = toMicroUsdc(amount)
   const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
   const zeroCaller  = pad('0x0', { size: 32 })
 
-  // Fetch fee from Iris — prefer free standard transfer (finalityThreshold=2000)
   const { feeAmount, totalToApprove, finalityThreshold } = await getFee(
-    chain.cctpDomain,
-    ARC_TESTNET_CONFIG.cctpDomain,
+    srcMeta.cctpDomain,
+    dstDomain,
     amountMicro,
   )
-  console.log(`[cctp] fee: ${feeAmount} micro-USDC, threshold: ${finalityThreshold}`)
+  console.log(`[cctp] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} fee: ${feeAmount} micro-USDC`)
 
-  // ── Step 1: Approve TokenMessengerV2 to spend USDC (amount + fee) ───────────
-  console.log(`[cctp] approve ${amount} USDC on ${sourceChain}`)
+  // Step 1: Approve
   const approveCallData = encodeFunctionData({
     abi: [APPROVE_ABI],
     functionName: 'approve',
-    args: [chain.tokenMessengerV2, totalToApprove],
+    args: [srcMeta.tokenMessengerV2, totalToApprove],
   })
   const approveTxId = await executeContractCall({
     walletId:        sourceWalletId,
-    contractAddress: chain.usdcAddress,
+    contractAddress: srcMeta.usdcAddress,
     callData:        approveCallData,
   })
   await waitForTransaction(approveTxId)
-  console.log(`[cctp] approve confirmed`)
 
-  // ── Step 2: depositForBurn ───────────────────────────────────────────────────
-  console.log(`[cctp] depositForBurn on ${sourceChain}`)
+  // Step 2: depositForBurn
   const burnCallData = encodeFunctionData({
     abi: [DEPOSIT_FOR_BURN_ABI],
     functionName: 'depositForBurn',
-    args: [
-      amountMicro,
-      ARC_TESTNET_CONFIG.cctpDomain,
-      recipient32,
-      chain.usdcAddress,
-      zeroCaller,
-      feeAmount,
-      finalityThreshold,
-    ],
+    args: [amountMicro, dstDomain, recipient32, srcMeta.usdcAddress, zeroCaller, feeAmount, finalityThreshold],
   })
   const burnTxId = await executeContractCall({
     walletId:        sourceWalletId,
-    contractAddress: chain.tokenMessengerV2,
+    contractAddress: srcMeta.tokenMessengerV2,
     callData:        burnCallData,
   })
   const burnTxHash = await waitForTransaction(burnTxId)
   console.log(`[cctp] burn confirmed: ${burnTxHash}`)
 
-  // ── Step 3: Poll Iris for attestation ───────────────────────────────────────
-  console.log(`[cctp] waiting for attestation...`)
-  const { message, attestation } = await pollAttestation(chain.cctpDomain, burnTxHash)
-  console.log(`[cctp] attestation ready`)
+  // Step 3: Poll Iris
+  const { message, attestation } = await pollAttestation(srcMeta.cctpDomain, burnTxHash)
 
-  // ── Step 4: receiveMessage on Arc Testnet ────────────────────────────────────
-  console.log(`[cctp] receiveMessage on Arc Testnet`)
+  // Step 4: receiveMessage on destination chain
   const mintCallData = encodeFunctionData({
     abi: [RECEIVE_MESSAGE_ABI],
     functionName: 'receiveMessage',
     args: [message as `0x${string}`, attestation as `0x${string}`],
   })
+
+  const destTransmitterAddress = dstMeta
+    ? dstMeta.messageTransmitterV2
+    : ARC_TESTNET_CONFIG.messageTransmitterV2
+
   const mintTxId = await executeContractCall({
-    walletId:        arcWalletId,
-    contractAddress: ARC_TESTNET_CONFIG.messageTransmitterV2,
+    walletId:        receiverWalletId,
+    contractAddress: destTransmitterAddress,
     callData:        mintCallData,
   })
   const mintTxHash = await waitForTransaction(mintTxId)

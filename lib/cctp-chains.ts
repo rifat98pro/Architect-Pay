@@ -3,34 +3,39 @@ export type CctpSourceChain = (typeof CCTP_SOURCE_CHAINS)[number]
 export type AnyChain = CctpSourceChain | 'ARC-TESTNET'
 
 export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
-  label:            string
-  cctpDomain:       number
-  usdcAddress:      `0x${string}`
-  tokenMessengerV2: `0x${string}`
+  label:                string
+  cctpDomain:           number
+  usdcAddress:          `0x${string}`
+  tokenMessengerV2:     `0x${string}`
+  messageTransmitterV2: `0x${string}`
 }> = {
   'ETH-SEPOLIA': {
-    label:            'Ethereum Sepolia',
-    cctpDomain:       0,
-    usdcAddress:      '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238',
-    tokenMessengerV2: '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    label:                'Ethereum Sepolia',
+    cctpDomain:           0,
+    usdcAddress:          '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238',
+    tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
   },
   'BASE-SEPOLIA': {
-    label:            'Base Sepolia',
-    cctpDomain:       6,
-    usdcAddress:      '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-    tokenMessengerV2: '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    label:                'Base Sepolia',
+    cctpDomain:           6,
+    usdcAddress:          '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+    tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
   },
   'ARB-SEPOLIA': {
-    label:            'Arbitrum Sepolia',
-    cctpDomain:       3,
-    usdcAddress:      '0x75faf114eafb1bdbe2f0316df893fd58ce46aa4d',
-    tokenMessengerV2: '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    label:                'Arbitrum Sepolia',
+    cctpDomain:           3,
+    usdcAddress:          '0x75faf114eafb1bdbe2f0316df893fd58ce46aa4d',
+    tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
   },
   'MATIC-AMOY': {
-    label:            'Polygon Amoy',
-    cctpDomain:       7,
-    usdcAddress:      '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582',
-    tokenMessengerV2: '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    label:                'Polygon Amoy',
+    cctpDomain:           7,
+    usdcAddress:          '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582',
+    tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
   },
 }
 

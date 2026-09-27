@@ -7,13 +7,21 @@ import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle } from 'lu
 import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
 
-const CHAINS = [
+const SOURCE_CHAINS = [
   { id: 'ALL_CHAINS',   label: 'All Chains (Aggregate)', instant: false },
   { id: 'ARC-TESTNET',  label: 'Arc Testnet',            instant: true  },
   { id: 'ETH-SEPOLIA',  label: 'Ethereum Sepolia',       instant: false },
   { id: 'BASE-SEPOLIA', label: 'Base Sepolia',            instant: false },
   { id: 'ARB-SEPOLIA',  label: 'Arbitrum Sepolia',        instant: false },
   { id: 'MATIC-AMOY',   label: 'Polygon Amoy',            instant: false },
+]
+
+const DEST_CHAINS = [
+  { id: 'ARC-TESTNET',  label: 'Arc Testnet'       },
+  { id: 'ETH-SEPOLIA',  label: 'Ethereum Sepolia'  },
+  { id: 'BASE-SEPOLIA', label: 'Base Sepolia'       },
+  { id: 'ARB-SEPOLIA',  label: 'Arbitrum Sepolia'  },
+  { id: 'MATIC-AMOY',   label: 'Polygon Amoy'      },
 ]
 
 type RecipientMode = 'wallet' | 'username'
@@ -25,6 +33,7 @@ export default function PaymentsPage() {
 
   const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
   const [sourceChain, setSourceChain]     = useState('ARC-TESTNET')
+  const [destChain, setDestChain]         = useState('ARC-TESTNET')
   const [amount, setAmount]               = useState('')
   const [label, setLabel]                 = useState('')
   const [loading, setLoading]             = useState(false)
@@ -82,9 +91,11 @@ export default function PaymentsPage() {
 
   const recipientAddress = recipientMode === 'wallet' ? walletAddress : resolvedAddress
 
-  const isAggregate   = sourceChain === 'ALL_CHAINS'
-  const isCrossChain  = !isAggregate && sourceChain !== 'ARC-TESTNET'
-  const selectedChain = CHAINS.find((c) => c.id === sourceChain)!
+  const isAggregate       = sourceChain === 'ALL_CHAINS'
+  const isCrossChain      = !isAggregate && (sourceChain !== destChain)
+  const arcToNonArc       = sourceChain === 'ARC-TESTNET' && destChain !== 'ARC-TESTNET'
+  const selectedSrcChain  = SOURCE_CHAINS.find((c) => c.id === sourceChain)!
+  const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
   const totalBalance  = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const availableBalance = isAggregate
     ? totalBalance.toFixed(2)
@@ -126,7 +137,7 @@ export default function PaymentsPage() {
       const endpoint = isAggregate ? '/api/payments/aggregate-send' : '/api/payments/send'
       const body     = isAggregate
         ? { recipientAddress, amount, label }
-        : { recipientAddress, amount, label, sourceChain }
+        : { recipientAddress, amount, label, sourceChain, destChain }
 
       const res  = await fetch(endpoint, {
         method:  'POST',
@@ -160,7 +171,7 @@ export default function PaymentsPage() {
     <div className="max-w-xl">
       <h1 className="mb-2 text-2xl font-bold text-white">Send Payment</h1>
       <p className="mb-6 text-sm text-gray-400">
-        Recipient always receives USDC on Arc Testnet.
+        Send USDC to any wallet or Architect Pay user across multiple chains.
       </p>
 
       <div className="card">
@@ -182,7 +193,7 @@ export default function PaymentsPage() {
               className="input-base"
               disabled={loading}
             >
-              {CHAINS.map((c) => (
+              {SOURCE_CHAINS.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.id === 'ALL_CHAINS'
                     ? `All Chains — $${totalBalance.toFixed(2)} USDC total`
@@ -195,12 +206,40 @@ export default function PaymentsPage() {
                 Combines balances from all chains. CCTP pulls run in parallel, then one final transfer to the recipient.
               </p>
             )}
-            {isCrossChain && (
-              <p className="mt-1.5 text-xs text-amber-400">
-                Cross-chain via CCTP — takes ~2–3 minutes. A small relayer fee (~1%) applies. USDC burns on {selectedChain.label} and mints on Arc Testnet for the recipient.
-              </p>
-            )}
           </div>
+
+          {/* Destination chain */}
+          {!isAggregate && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-300">Receive on</label>
+              <select
+                value={destChain}
+                onChange={(e) => setDestChain(e.target.value)}
+                className="input-base"
+                disabled={loading}
+              >
+                {DEST_CHAINS.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+              {arcToNonArc && (
+                <p className="mt-1.5 text-xs text-red-400">
+                  Sending from Arc to other chains is not yet supported. Switch &quot;Pay from&quot; to a non-Arc chain.
+                </p>
+              )}
+              {isCrossChain && !arcToNonArc && (
+                <p className="mt-1.5 text-xs text-amber-400">
+                  Cross-chain via CCTP — takes ~2–3 minutes. A small relayer fee (~1%) applies.
+                  USDC burns on {selectedSrcChain.label} and mints on {selectedDestChain.label} for the recipient.
+                </p>
+              )}
+              {!isCrossChain && sourceChain === 'ARC-TESTNET' && (
+                <p className="mt-1.5 text-xs text-green-400">
+                  Instant transfer on Arc Testnet — no fees.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Recipient */}
           <div>
@@ -362,7 +401,7 @@ export default function PaymentsPage() {
                 <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 {isAggregate
                   ? <span>Aggregating from multiple chains via CCTP (~2–3 min per chain, running in parallel), then sending to recipient. Do not close this window.</span>
-                  : <span>Cross-chain transfer in progress (~2–3 min): approving → burning → attesting → minting on Arc. Do not close this window.</span>
+                  : <span>Cross-chain transfer in progress (~2–3 min): burning on {selectedSrcChain.label} → attesting → minting on {selectedDestChain.label}. Do not close this window.</span>
                 }
               </div>
             </div>
@@ -370,7 +409,7 @@ export default function PaymentsPage() {
 
           <button
             type="submit"
-            disabled={loading || !canSend || !amount || (isAggregate && (!planFeasible || planLoading))}
+            disabled={loading || !canSend || !amount || arcToNonArc || (isAggregate && (!planFeasible || planLoading))}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
             {loading
