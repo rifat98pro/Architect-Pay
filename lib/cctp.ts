@@ -1,7 +1,7 @@
 'use server'
 
 import { encodeFunctionData, pad } from 'viem'
-import { executeContractCall, waitForTransaction } from '@/lib/circle'
+import { executeContractCall, waitForTransaction, getWalletBalances } from '@/lib/circle'
 import { SOURCE_CHAIN_META, ARC_TESTNET_CONFIG, type CctpSourceChain } from '@/lib/cctp-chains'
 
 const IRIS_API = 'https://iris-api-sandbox.circle.com'
@@ -143,6 +143,15 @@ export async function cctpTransfer({
   let burnCallData: `0x${string}`
 
   if (token === 'EURC') {
+    // Pre-flight balance check: depositForBurn gas estimation fails silently if
+    // the wallet has insufficient EURC — catch it here with a clear message.
+    const { eurc: eurcBalance } = await getWalletBalances(sourceWalletId)
+    const eurcBalanceMicro = BigInt(Math.round(parseFloat(eurcBalance) * 1_000_000))
+    console.log(`[cctp/eurc] wallet EURC balance: ${eurcBalance} (need ${amount})`)
+    if (eurcBalanceMicro < amountMicro) {
+      throw new Error(`Insufficient EURC on ${sourceChain}: have ${eurcBalance}, need ${amount}`)
+    }
+
     totalToApprove = amountMicro
     burnCallData = encodeFunctionData({
       abi: [DEPOSIT_FOR_BURN_ABI],
