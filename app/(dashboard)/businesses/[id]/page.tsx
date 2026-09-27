@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck, ArrowLeft } from 'lucide-react'
+import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck, ArrowLeft, AtSign, Wallet, CheckCircle2, XCircle } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 interface Employee {
   id:            string
@@ -33,6 +34,14 @@ export default function BusinessEmployeesPage() {
   const [salary,  setSalary]  = useState('')
   const [role,    setRole]    = useState('')
 
+  type WalletMode = 'address' | 'username'
+  type LookupState = 'idle' | 'loading' | 'found' | 'notfound'
+  const [walletMode,       setWalletMode]       = useState<WalletMode>('address')
+  const [usernameInput,    setUsernameInput]    = useState('')
+  const [lookupState,      setLookupState]      = useState<LookupState>('idle')
+  const [resolvedAddress,  setResolvedAddress]  = useState('')
+  const [resolvedName,     setResolvedName]     = useState('')
+
   const [copiedId,      setCopiedId]      = useState<string | null>(null)
   const [editingId,     setEditingId]     = useState<string | null>(null)
   const [editState,     setEditState]     = useState<EditState | null>(null)
@@ -56,20 +65,43 @@ export default function BusinessEmployeesPage() {
     }).finally(() => setLoading(false))
   }, [user?.id, bizId])
 
+  // Live username lookup for add form
+  useEffect(() => {
+    const raw = usernameInput.trim().replace(/^@/, '')
+    if (walletMode !== 'username' || !raw || raw.length < 3) {
+      setLookupState('idle'); setResolvedAddress(''); setResolvedName(''); return
+    }
+    setLookupState('loading')
+    const t = setTimeout(async () => {
+      try {
+        const res  = await fetch(`/api/users/lookup?username=${encodeURIComponent(raw)}`)
+        const data = await res.json()
+        if (res.ok && data.found) {
+          setLookupState('found'); setResolvedAddress(data.walletAddress); setResolvedName(data.displayName)
+        } else {
+          setLookupState('notfound'); setResolvedAddress(''); setResolvedName('')
+        }
+      } catch { setLookupState('notfound') }
+    }, 500)
+    return () => clearTimeout(t)
+  }, [usernameInput, walletMode])
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSaving(true)
+    const finalAddress = walletMode === 'username' ? resolvedAddress : address
     try {
       const res = await fetch('/api/employees', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, walletAddress: address, salary, role: role || undefined, businessId: bizId }),
+        body:    JSON.stringify({ name, walletAddress: finalAddress, salary, role: role || undefined, businessId: bizId }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(JSON.stringify(data.error))
       setEmployees((prev) => [...prev, data.employee])
-      setName(''); setAddress(''); setSalary(''); setRole('')
+      setName(''); setAddress(''); setUsernameInput(''); setSalary(''); setRole('')
+      setResolvedAddress(''); setResolvedName(''); setLookupState('idle')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add employee')
     } finally {
@@ -145,12 +177,61 @@ export default function BusinessEmployeesPage() {
         <form onSubmit={handleAdd} className="grid gap-3 sm:grid-cols-2">
           <input type="text" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} className="input-base" required maxLength={100} />
           <input type="text" placeholder="Employee role (e.g. Engineer)" value={role} onChange={(e) => setRole(e.target.value)} className="input-base" maxLength={100} />
-          <input type="text" placeholder="Wallet address (0x...)" value={address} onChange={(e) => setAddress(e.target.value)} className="input-base font-mono text-xs" pattern="^0x[a-fA-F0-9]{40}$" title="Valid EVM address" required />
+          <div className="sm:col-span-2">
+            <div
+              className="mb-2 flex gap-1 rounded-xl p-1"
+              style={{ background: '#0d1926', border: '1px solid rgba(42,171,171,0.12)' }}
+            >
+              <button type="button" onClick={() => setWalletMode('address')}
+                className={cn('flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-all',
+                  walletMode === 'address' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300')}>
+                <Wallet className="h-3 w-3" /> Wallet Address
+              </button>
+              <button type="button" onClick={() => setWalletMode('username')}
+                className={cn('flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-all',
+                  walletMode === 'username' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300')}>
+                <AtSign className="h-3 w-3" /> Architect Pay Username
+              </button>
+            </div>
+            {walletMode === 'address' ? (
+              <input type="text" placeholder="Wallet address (0x...)" value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="input-base font-mono text-xs" pattern="^0x[a-fA-F0-9]{40}$" title="Valid EVM address" required />
+            ) : (
+              <div>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">@</span>
+                  <input type="text" placeholder="username" value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                    className="input-base pl-8 text-sm" autoComplete="off" required />
+                </div>
+                {lookupState === 'loading' && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Looking up...
+                  </div>
+                )}
+                {lookupState === 'found' && (
+                  <div className="mt-1.5 flex items-center gap-2 rounded-lg bg-green-900/20 px-3 py-1.5 text-xs">
+                    <CheckCircle2 className="h-3 w-3 text-green-400 shrink-0" />
+                    <span className="font-medium text-green-300">{resolvedName}</span>
+                    <span className="text-gray-500 font-mono">{resolvedAddress.slice(0,8)}…{resolvedAddress.slice(-6)}</span>
+                  </div>
+                )}
+                {lookupState === 'notfound' && usernameInput.length >= 3 && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-red-400">
+                    <XCircle className="h-3 w-3 shrink-0" /> User not found.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="relative">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
             <input type="number" step="0.01" min="0.01" placeholder="Salary (USDC)" value={salary} onChange={(e) => setSalary(e.target.value)} className="input-base pl-7" required />
           </div>
-          <button type="submit" disabled={saving} className="btn-primary sm:col-span-2 flex items-center justify-center gap-2">
+          <button type="submit"
+            disabled={saving || (walletMode === 'username' && lookupState !== 'found')}
+            className="btn-primary sm:col-span-2 flex items-center justify-center gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
             {saving ? 'Adding...' : 'Add Employee'}
           </button>

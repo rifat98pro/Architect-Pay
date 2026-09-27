@@ -53,7 +53,9 @@ model User {
   name          String?
   image         String?
   emailVerified DateTime?
-  passwordHash  String?   // kept nullable for migration safety
+  passwordHash  String?
+  username      String?   @unique
+  displayName   String?
 
   createdAt DateTime @default(now())
 
