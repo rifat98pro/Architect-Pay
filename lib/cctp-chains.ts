@@ -1,6 +1,6 @@
-export const CCTP_SOURCE_CHAINS = ['ETH-SEPOLIA', 'BASE-SEPOLIA', 'ARB-SEPOLIA', 'MATIC-AMOY'] as const
+export const CCTP_SOURCE_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA', 'ARB-SEPOLIA', 'MATIC-AMOY'] as const
 export type CctpSourceChain = (typeof CCTP_SOURCE_CHAINS)[number]
-export type AnyChain = CctpSourceChain | 'ARC-TESTNET'
+export type AnyChain = CctpSourceChain
 
 export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
   label:                string
@@ -9,6 +9,13 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
   tokenMessengerV2:     `0x${string}`
   messageTransmitterV2: `0x${string}`
 }> = {
+  'ARC-TESTNET': {
+    label:                'Arc Testnet',
+    cctpDomain:           26,
+    usdcAddress:          '0x3600000000000000000000000000000000000000',
+    tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
+  },
   'ETH-SEPOLIA': {
     label:                'Ethereum Sepolia',
     cctpDomain:           0,
@@ -39,15 +46,12 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
   },
 }
 
-export const ARC_TESTNET_CONFIG = {
-  label:                'Arc Testnet',
-  cctpDomain:           26,
-  messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275' as `0x${string}`,
-}
+// Kept for backward compatibility — same data as SOURCE_CHAIN_META['ARC-TESTNET']
+export const ARC_TESTNET_CONFIG = SOURCE_CHAIN_META['ARC-TESTNET']
 
-export const ALL_CHAINS: AnyChain[] = ['ARC-TESTNET', ...CCTP_SOURCE_CHAINS]
+export const ALL_CHAINS: CctpSourceChain[] = [...CCTP_SOURCE_CHAINS]
 
-export const CHAIN_LABEL: Record<AnyChain, string> = {
+export const CHAIN_LABEL: Record<CctpSourceChain, string> = {
   'ARC-TESTNET':  'Arc Testnet',
   'ETH-SEPOLIA':  'Ethereum Sepolia',
   'BASE-SEPOLIA': 'Base Sepolia',

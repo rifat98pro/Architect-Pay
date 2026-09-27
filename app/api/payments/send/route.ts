@@ -9,16 +9,14 @@ import { z } from 'zod'
 
 export const maxDuration = 300 // 5-minute timeout for CCTP cross-chain flow
 
-const ALL_CHAINS = ['ARC-TESTNET', ...CCTP_SOURCE_CHAINS] as const
-
 const schema = z.object({
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address'),
   amount: z
     .string()
     .regex(/^\d+(\.\d{1,6})?$/, 'Amount must be a valid number')
     .refine((v) => parseFloat(v) > 0, 'Amount must be greater than 0'),
-  sourceChain: z.enum(ALL_CHAINS).default('ARC-TESTNET'),
-  destChain:   z.enum(ALL_CHAINS).default('ARC-TESTNET'),
+  sourceChain: z.enum(CCTP_SOURCE_CHAINS).default('ARC-TESTNET'),
+  destChain:   z.enum(CCTP_SOURCE_CHAINS).default('ARC-TESTNET'),
   label: z.string().max(100).optional(),
 })
 
@@ -34,13 +32,6 @@ export async function POST(req: NextRequest) {
 
   const { recipientAddress, amount, sourceChain, destChain, label } = parsed.data
 
-  // Arc → non-Arc outbound CCTP not yet configured (needs Arc TokenMessenger address)
-  if (sourceChain === 'ARC-TESTNET' && destChain !== 'ARC-TESTNET') {
-    return NextResponse.json(
-      { error: 'Sending from Arc to other chains is not yet supported. Use a non-Arc source chain to send to other destinations.' },
-      { status: 400 },
-    )
-  }
   const amountNum = parseFloat(amount)
 
   const wallet = await db.wallet.findUnique({
@@ -99,7 +90,6 @@ export async function POST(req: NextRequest) {
       txHash = result.txHash ?? await waitForTransaction(result.id)
     } else {
       // ── Cross-chain: CCTP transfer to destChain ─────────────────────────────
-      // destChain is guaranteed non-Arc here (Arc→non-Arc is blocked above)
       const destWalletId = destChain === 'ARC-TESTNET'
         ? wallet.circleWalletId
         : await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain as CctpSourceChain)

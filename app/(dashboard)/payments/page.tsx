@@ -93,7 +93,6 @@ export default function PaymentsPage() {
 
   const isAggregate       = sourceChain === 'ALL_CHAINS'
   const isCrossChain      = !isAggregate && (sourceChain !== destChain)
-  const arcToNonArc       = sourceChain === 'ARC-TESTNET' && destChain !== 'ARC-TESTNET'
   const selectedSrcChain  = SOURCE_CHAINS.find((c) => c.id === sourceChain)!
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
   const totalBalance  = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
@@ -122,11 +121,9 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [isAggregate, amount, user, fetchPlan])
 
-  // Reset destChain when source changes (Arc can only send to Arc)
+  // Reset destChain when switching to aggregate mode
   useEffect(() => {
-    if (sourceChain === 'ARC-TESTNET' || sourceChain === 'ALL_CHAINS') {
-      setDestChain('ARC-TESTNET')
-    }
+    if (sourceChain === 'ALL_CHAINS') setDestChain('ARC-TESTNET')
   }, [sourceChain])
 
   const canSend = recipientMode === 'wallet'
@@ -215,8 +212,8 @@ export default function PaymentsPage() {
             )}
           </div>
 
-          {/* Destination chain — only relevant when source is a non-Arc chain */}
-          {!isAggregate && sourceChain !== 'ARC-TESTNET' && (
+          {/* Destination chain */}
+          {!isAggregate && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-300">Receive on</label>
               <select
@@ -229,15 +226,14 @@ export default function PaymentsPage() {
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
-              {isCrossChain && (
+              {isCrossChain ? (
                 <p className="mt-1.5 text-xs text-amber-400">
                   Cross-chain via CCTP — takes ~2–3 minutes. A small relayer fee (~1%) applies.
-                  USDC burns on {selectedSrcChain.label} and mints on {selectedDestChain.label} for the recipient.
+                  USDC burns on {selectedSrcChain.label} and mints on {selectedDestChain.label}.
                 </p>
-              )}
-              {!isCrossChain && (
+              ) : (
                 <p className="mt-1.5 text-xs text-green-400">
-                  Same-chain transfer — instant, no fees.
+                  Same-chain — instant transfer, no fees.
                 </p>
               )}
             </div>
