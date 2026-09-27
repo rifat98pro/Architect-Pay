@@ -248,13 +248,13 @@ export default function PaymentsPage() {
               />
             ) : (
               <div>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">@</span>
+                <div className="flex items-center input-base overflow-hidden p-0">
+                  <span className="flex h-full items-center px-3 text-sm text-gray-500 border-r border-gray-700 bg-gray-800/50">@</span>
                   <input
                     type="text"
                     value={usernameInput}
                     onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    className="input-base pl-9"
+                    className="flex-1 bg-transparent px-3 py-2.5 text-white outline-none placeholder:text-gray-600"
                     placeholder="username"
                     autoComplete="off"
                     required

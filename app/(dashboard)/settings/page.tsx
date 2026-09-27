@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Loader2, Check, AtSign, User } from 'lucide-react'
+import { Loader2, Check, AtSign } from 'lucide-react'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -82,17 +82,14 @@ export default function SettingsPage() {
             <label className="mb-1.5 block text-sm font-medium text-gray-300">
               Display name
             </label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="input-base pl-9"
-                placeholder="Your name"
-                maxLength={50}
-              />
-            </div>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="input-base"
+              placeholder="Your name"
+              maxLength={50}
+            />
           </div>
 
           <div>
@@ -100,13 +97,13 @@ export default function SettingsPage() {
               Username
               <span className="ml-2 text-xs font-normal text-gray-500">lowercase letters, numbers, underscores only</span>
             </label>
-            <div className="relative">
-              <AtSign className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <div className="flex items-center gap-0 input-base overflow-hidden p-0">
+              <span className="flex h-full items-center px-3 text-sm text-gray-500 border-r border-gray-700 bg-gray-800/50">@</span>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                className="input-base pl-10 font-mono"
+                className="flex-1 bg-transparent px-3 py-2.5 font-mono text-white outline-none placeholder:text-gray-600"
                 placeholder="yourname"
                 minLength={3}
                 maxLength={30}

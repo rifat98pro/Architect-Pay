@@ -199,11 +199,12 @@ export default function BusinessEmployeesPage() {
                 className="input-base font-mono text-xs" pattern="^0x[a-fA-F0-9]{40}$" title="Valid EVM address" required />
             ) : (
               <div>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">@</span>
+                <div className="flex items-center input-base overflow-hidden p-0">
+                  <span className="flex h-full items-center px-3 text-sm text-gray-500 border-r border-gray-700 bg-gray-800/50">@</span>
                   <input type="text" placeholder="username" value={usernameInput}
                     onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    className="input-base pl-9 text-sm" autoComplete="off" required />
+                    className="flex-1 bg-transparent px-3 py-2.5 text-sm text-white outline-none placeholder:text-gray-600"
+                    autoComplete="off" required />
                 </div>
                 {lookupState === 'loading' && (
                   <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
