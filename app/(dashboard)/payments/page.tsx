@@ -97,7 +97,10 @@ export default function PaymentsPage() {
   const recipientAddress = recipientMode === 'wallet' ? walletAddress : resolvedAddress
 
   const isAggregate       = sourceChain === 'ALL_CHAINS'
-  const isCrossChain      = !isAggregate && (sourceChain !== destChain)
+  // Arc Testnet can only send same-chain — cross-chain CCTP from Arc is not yet supported
+  // by Circle's Gas Station (paymaster won't cover ERC-20 approve calls on Arc)
+  const arcSourceLocked   = sourceChain === 'ARC-TESTNET'
+  const isCrossChain      = !isAggregate && !arcSourceLocked && (sourceChain !== destChain)
   const selectedSrcChain  = SOURCE_CHAINS.find((c) => c.id === sourceChain)!
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
   const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
@@ -109,9 +112,11 @@ export default function PaymentsPage() {
       ? parseFloat(eurcChainBalances[sourceChain] ?? '0').toFixed(2)
       : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
 
-  const filteredDestChains = token === 'EURC'
-    ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id))
-    : DEST_CHAINS
+  const filteredDestChains = arcSourceLocked
+    ? DEST_CHAINS.filter((c) => c.id === 'ARC-TESTNET')
+    : token === 'EURC'
+      ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id))
+      : DEST_CHAINS
 
   const fetchPlan = useCallback(async (amt: string) => {
     const n = parseFloat(amt)
@@ -134,9 +139,9 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [isAggregate, amount, user, fetchPlan])
 
-  // Reset destChain when switching to aggregate mode or to EURC
+  // Reset destChain when switching to aggregate mode, Arc source, or EURC
   useEffect(() => {
-    if (sourceChain === 'ALL_CHAINS') setDestChain('ARC-TESTNET')
+    if (sourceChain === 'ALL_CHAINS' || sourceChain === 'ARC-TESTNET') setDestChain('ARC-TESTNET')
   }, [sourceChain])
 
   useEffect(() => {
@@ -255,7 +260,11 @@ export default function PaymentsPage() {
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
-              {isCrossChain ? (
+              {arcSourceLocked ? (
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Cross-chain from Arc coming soon. Arc wallet currently supports same-chain transfers only.
+                </p>
+              ) : isCrossChain ? (
                 <p className="mt-1.5 text-xs text-amber-400">
                   Cross-chain via CCTP — takes ~2–3 minutes. A small relayer fee (~1%) applies.
                   {token} burns on {selectedSrcChain.label} and mints on {selectedDestChain.label}.

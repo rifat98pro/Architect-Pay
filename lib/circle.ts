@@ -282,6 +282,7 @@ export async function waitForTransaction(txId: string): Promise<string> {
 
     if (state === 'FAILED' || state === 'CANCELLED') {
       const err = (tx?.errorReason as string) ?? state
+      console.error(`[circle] tx ${txId} failed:`, JSON.stringify(tx))
       throw new Error(`Transaction ${txId} ${state}: ${err}`)
     }
     if (state === 'CONFIRMED' || state === 'COMPLETE') return txHash ?? txId
