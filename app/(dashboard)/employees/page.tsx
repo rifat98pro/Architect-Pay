@@ -181,7 +181,6 @@ export default function EmployeesPage() {
             required
           />
           <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
             <input
               type="number"
               step="0.01"
@@ -189,9 +188,10 @@ export default function EmployeesPage() {
               placeholder="Salary (USDC)"
               value={salary}
               onChange={(e) => setSalary(e.target.value)}
-              className="input-base pl-7"
+              className="input-base pr-8"
               required
             />
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
           </div>
           <button
             type="submit"
@@ -252,7 +252,6 @@ export default function EmployeesPage() {
                       className="input-base font-mono text-xs"
                     />
                     <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -260,8 +259,9 @@ export default function EmployeesPage() {
                         value={editState.salary}
                         onChange={(e) => setEditState({ ...editState, salary: e.target.value })}
                         placeholder="Salary (USDC)"
-                        className="input-base pl-7 text-sm"
+                        className="input-base pr-8 text-sm"
                       />
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
                     </div>
                   </div>
                   <div className="flex gap-2">

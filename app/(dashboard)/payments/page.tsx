@@ -292,7 +292,6 @@ export default function PaymentsPage() {
               </span>
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -300,10 +299,11 @@ export default function PaymentsPage() {
                 max={availableBalance}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="input-base pl-7"
+                className="input-base pr-8"
                 placeholder="0.00"
                 required
               />
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
             </div>
           </div>
 
