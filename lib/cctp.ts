@@ -47,13 +47,18 @@ function toMicroUsdc(amount: string): bigint {
  * Returns { feeAmount, totalToApprove, finalityThreshold }.
  * Prefers standard transfer (free, finalityThreshold=2000) over fast (paid).
  */
-async function getFee(srcDomain: number, dstDomain: number, amountMicro: bigint): Promise<{
+async function getFee(srcDomain: number, dstDomain: number, amountMicro: bigint, token: 'USDC' | 'EURC' = 'USDC'): Promise<{
   feeAmount:          bigint
   totalToApprove:     bigint
   finalityThreshold:  number
 }> {
-  const url = `${IRIS_API}/v2/burn/USDC/fees/${srcDomain}/${dstDomain}`
-  const res  = await fetch(url)
+  // Try token-specific fee endpoint; EURC may fall back to USDC pricing if not found
+  let url = `${IRIS_API}/v2/burn/${token}/fees/${srcDomain}/${dstDomain}`
+  let res = await fetch(url)
+  if (!res.ok && token === 'EURC') {
+    url = `${IRIS_API}/v2/burn/USDC/fees/${srcDomain}/${dstDomain}`
+    res = await fetch(url)
+  }
   if (!res.ok) throw new Error(`Failed to fetch CCTP fee: ${res.status}`)
 
   const tiers = await res.json() as Array<{ finalityThreshold: number; minimumFee: number }>
@@ -119,19 +124,24 @@ export async function cctpTransfer({
   arcWalletId,
   recipientAddress,
   amount,
+  token = 'USDC',
 }: {
   sourceChain:      CctpSourceChain
   sourceWalletId:   string
-  destChain?:       CctpSourceChain   // if omitted, destination is Arc Testnet
-  destWalletId?:    string            // Circle wallet ID on destination chain (for receiveMessage)
+  destChain?:       CctpSourceChain
+  destWalletId?:    string
   arcWalletId:      string
   recipientAddress: string
   amount:           string
+  token?:           'USDC' | 'EURC'
 }): Promise<{ burnTxHash: string; mintTxHash: string }> {
   const srcMeta  = SOURCE_CHAIN_META[sourceChain]
   const dstMeta  = destChain ? SOURCE_CHAIN_META[destChain] : null
   const dstDomain = dstMeta ? dstMeta.cctpDomain : ARC_TESTNET_CONFIG.cctpDomain
   const receiverWalletId = destWalletId ?? arcWalletId
+
+  const burnToken = token === 'EURC' ? srcMeta.eurcAddress : srcMeta.usdcAddress
+  if (!burnToken) throw new Error(`${token} is not supported on ${sourceChain}`)
 
   const amountMicro = toMicroUsdc(amount)
   const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
@@ -141,8 +151,9 @@ export async function cctpTransfer({
     srcMeta.cctpDomain,
     dstDomain,
     amountMicro,
+    token,
   )
-  console.log(`[cctp] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} fee: ${feeAmount} micro-USDC`)
+  console.log(`[cctp] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} ${token} fee: ${feeAmount} micro`)
 
   // Step 1: Approve
   const approveCallData = encodeFunctionData({
@@ -152,7 +163,7 @@ export async function cctpTransfer({
   })
   const approveTxId = await executeContractCall({
     walletId:        sourceWalletId,
-    contractAddress: srcMeta.usdcAddress,
+    contractAddress: burnToken,
     callData:        approveCallData,
   })
   await waitForTransaction(approveTxId)
@@ -161,7 +172,7 @@ export async function cctpTransfer({
   const burnCallData = encodeFunctionData({
     abi: [DEPOSIT_FOR_BURN_ABI],
     functionName: 'depositForBurn',
-    args: [amountMicro, dstDomain, recipient32, srcMeta.usdcAddress, zeroCaller, feeAmount, finalityThreshold],
+    args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold],
   })
   const burnTxId = await executeContractCall({
     walletId:        sourceWalletId,

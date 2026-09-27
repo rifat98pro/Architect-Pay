@@ -17,6 +17,7 @@ const schema = z.object({
     .refine((v) => parseFloat(v) > 0, 'Amount must be greater than 0'),
   sourceChain: z.enum(CCTP_SOURCE_CHAINS).default('ARC-TESTNET'),
   destChain:   z.enum(CCTP_SOURCE_CHAINS).default('ARC-TESTNET'),
+  token:       z.enum(['USDC', 'EURC']).default('USDC'),
   label: z.string().max(100).optional(),
 })
 
@@ -30,7 +31,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { recipientAddress, amount, sourceChain, destChain, label } = parsed.data
+  const { recipientAddress, amount, sourceChain, destChain, token, label } = parsed.data
+
+  // Validate EURC chain support
+  if (token === 'EURC') {
+    const { EURC_CCTP_CHAINS } = await import('@/lib/cctp-chains')
+    if (!EURC_CCTP_CHAINS.includes(sourceChain as never) || !EURC_CCTP_CHAINS.includes(destChain as never)) {
+      return NextResponse.json(
+        { error: 'EURC is only supported on Arc Testnet, Ethereum Sepolia, and Base Sepolia.' },
+        { status: 400 },
+      )
+    }
+  }
 
   const amountNum = parseFloat(amount)
 
@@ -57,10 +69,12 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Balance check ───────────────────────────────────────────────────────────
-  const available = parseFloat(await getWalletBalance(sourceWalletId))
+  const { getWalletBalances } = await import('@/lib/circle')
+  const bals = await getWalletBalances(sourceWalletId)
+  const available = parseFloat(token === 'EURC' ? bals.eurc : bals.usdc)
   if (available < amountNum) {
     return NextResponse.json(
-      { error: `Insufficient balance on ${sourceChain}. Available: $${available.toFixed(2)} USDC` },
+      { error: `Insufficient ${token} balance on ${sourceChain}. Available: ${available.toFixed(2)} ${token}` },
       { status: 400 },
     )
   }
@@ -72,6 +86,7 @@ export async function POST(req: NextRequest) {
       recipientAddress,
       recipientLabel:   label,
       amount,
+      token,
       status:           'PROCESSING',
       destChain,
     },
@@ -102,6 +117,7 @@ export async function POST(req: NextRequest) {
         arcWalletId:      wallet.circleWalletId,
         recipientAddress,
         amount,
+        token,
       })
       txHash = mintTxHash
     }

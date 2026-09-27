@@ -34,6 +34,7 @@ export default function PaymentsPage() {
   const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
   const [sourceChain, setSourceChain]     = useState('ARC-TESTNET')
   const [destChain, setDestChain]         = useState('ARC-TESTNET')
+  const [token, setToken]                 = useState<'USDC' | 'EURC'>('USDC')
   const [amount, setAmount]               = useState('')
   const [label, setLabel]                 = useState('')
   const [loading, setLoading]             = useState(false)
@@ -141,7 +142,7 @@ export default function PaymentsPage() {
       const endpoint = isAggregate ? '/api/payments/aggregate-send' : '/api/payments/send'
       const body     = isAggregate
         ? { recipientAddress, amount, label }
-        : { recipientAddress, amount, label, sourceChain, destChain }
+        : { recipientAddress, amount, label, sourceChain, destChain, token }
 
       const res  = await fetch(endpoint, {
         method:  'POST',
@@ -320,10 +321,40 @@ export default function PaymentsPage() {
             )}
           </div>
 
+          {/* Token selector */}
+          {!isAggregate && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-300">Token</label>
+              <div
+                className="flex gap-1 rounded-xl p-1"
+                style={{ background: '#0d1926', border: '1px solid rgba(42,171,171,0.12)' }}
+              >
+                {(['USDC', 'EURC'] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setToken(t)}
+                    className={cn(
+                      'flex flex-1 items-center justify-center rounded-lg py-2 text-sm font-medium transition-all',
+                      token === t ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300',
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              {token === 'EURC' && (sourceChain === 'ARB-SEPOLIA' || sourceChain === 'MATIC-AMOY' || destChain === 'ARB-SEPOLIA' || destChain === 'MATIC-AMOY') && (
+                <p className="mt-1.5 text-xs text-red-400">
+                  EURC is only available on Arc Testnet, Ethereum Sepolia, and Base Sepolia.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Amount */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-300">
-              Amount (USDC)
+              Amount ({token})
               <span className="ml-2 text-xs font-normal text-gray-500">
                 Available: ${availableBalance}
               </span>
@@ -336,11 +367,11 @@ export default function PaymentsPage() {
                 max={availableBalance}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="input-base pr-8"
+                className="input-base pr-14"
                 placeholder="0.00"
                 required
               />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{token}</span>
             </div>
           </div>
 
