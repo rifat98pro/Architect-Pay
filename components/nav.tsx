@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { LayoutDashboard, Send, History, Building2, Banknote, LogOut, Droplets, Settings, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Send, History, Building2, Banknote, LogOut, Droplets, Settings, MessageSquare, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/businesses', label: 'Businesses',   icon: Building2 },
   { href: '/payroll',    label: 'Payroll',       icon: Banknote },
   { href: '/history',    label: 'History',       icon: History },
+  { href: '/swap',       label: 'Swap',          icon: ArrowUpDown },
   { href: '/settings',   label: 'Settings',      icon: Settings },
   { href: '/feedback',   label: 'Feedback',      icon: MessageSquare },
 ]

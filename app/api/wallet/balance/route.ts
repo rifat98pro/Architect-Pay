@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
-import { createCircleWallet, getWalletBalance, getAllChainBalances, syncChainWallets } from '@/lib/circle'
+import { createCircleWallet, getWalletBalance, getWalletBalances, getAllChainBalances, syncChainWallets } from '@/lib/circle'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 
 export const dynamic = 'force-dynamic'
@@ -61,11 +61,15 @@ export async function GET() {
     }
   }
 
-  const balances = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
+  const [balances, arcTokenBalances] = await Promise.all([
+    getAllChainBalances(wallet.circleWalletId, chainWalletIds),
+    getWalletBalances(wallet.circleWalletId),
+  ])
 
   return NextResponse.json({
     address:       wallet.walletAddress,
     balance:       balances['ARC-TESTNET'] ?? '0',
+    eurcBalance:   arcTokenBalances.eurc,
     chainBalances: balances,
   })
 }

@@ -80,3 +80,29 @@ export async function spendFromUnifiedBalance({
     },
   })
 }
+
+/**
+ * Swap EURC ↔ USDC on Arc Testnet via the Circle App Kit.
+ * tokenIn/tokenOut: 'EURC' | 'USDC'
+ */
+export async function swapTokens({
+  walletAddress,
+  tokenIn,
+  tokenOut,
+  amountIn,
+}: {
+  walletAddress: string
+  tokenIn:       'EURC' | 'USDC'
+  tokenOut:      'EURC' | 'USDC'
+  amountIn:      string
+}) {
+  const adapter = buildCircleAdapter()
+
+  return kit.swap({
+    from:    { adapter, chain: 'Arc_Testnet', address: walletAddress },
+    tokenIn,
+    tokenOut,
+    amountIn,
+    config:  { slippageBps: 100, allowanceStrategy: 'approve' },
+  })
+}

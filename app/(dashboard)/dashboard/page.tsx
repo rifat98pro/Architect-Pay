@@ -18,6 +18,7 @@ const CHAIN_LABEL: Record<string, string> = {
 interface WalletData {
   address:       string
   balance:       string
+  eurcBalance:   string
   chainBalances: Record<string, string>
 }
 
@@ -85,10 +86,16 @@ export default function DashboardPage() {
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-navy-800/30 blur-2xl" />
 
         <div className="mb-1 text-sm font-medium text-gray-400">Total Balance (All Chains)</div>
-        <div className="mb-4 text-4xl font-bold tracking-tight text-white">
+        <div className="mb-1 text-4xl font-bold tracking-tight text-white">
           ${formatUSDC(total)}{' '}
           <span className="text-2xl font-normal text-brand-400">USDC</span>
         </div>
+        {parseFloat(wallet?.eurcBalance ?? '0') > 0 && (
+          <div className="mb-3 text-lg font-semibold text-blue-400">
+            {parseFloat(wallet?.eurcBalance ?? '0').toFixed(2)}{' '}
+            <span className="text-base font-normal text-blue-500">EURC</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <span>Wallet address</span>
           <span className="font-mono text-xs text-gray-300">{wallet ? truncateAddress(wallet.address, 6) : '—'}</span>

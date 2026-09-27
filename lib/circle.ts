@@ -165,6 +165,19 @@ export async function getWalletBalance(circleWalletId: string): Promise<string> 
 }
 
 /**
+ * Get both USDC and EURC balances for a wallet in a single API call.
+ */
+export async function getWalletBalances(circleWalletId: string): Promise<{ usdc: string; eurc: string }> {
+  const client   = getClient()
+  const res      = await client.getWalletTokenBalance({ id: circleWalletId })
+  const balances = res.data?.tokenBalances ?? []
+  return {
+    usdc: balances.find((b) => b.token?.symbol === 'USDC')?.amount ?? '0',
+    eurc: balances.find((b) => b.token?.symbol === 'EURC')?.amount ?? '0',
+  }
+}
+
+/**
  * Get USDC balances across all chains for a wallet.
  * Returns a map of chain -> balance string.
  */
