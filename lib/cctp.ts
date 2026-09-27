@@ -14,7 +14,7 @@ const APPROVE_ABI = {
   outputs:          [{ name: '', type: 'bool' }],
 }
 
-// USDC path: original CCTP V2 extended signature (was working)
+// USDC: CCTP V2 extended 7-arg signature (working)
 const DEPOSIT_FOR_BURN_V2_ABI = {
   type:            'function' as const,
   name:            'depositForBurn',
@@ -27,6 +27,20 @@ const DEPOSIT_FOR_BURN_V2_ABI = {
     { name: 'destinationCaller',    type: 'bytes32' },
     { name: 'maxFee',               type: 'uint256' },
     { name: 'minFinalityThreshold', type: 'uint32'  },
+  ],
+  outputs: [],
+}
+
+// EURC: Arc docs show 4-arg signature — 7-arg causes ESTIMATION_ERROR for EURC
+const DEPOSIT_FOR_BURN_ABI = {
+  type:            'function' as const,
+  name:            'depositForBurn',
+  stateMutability: 'nonpayable' as const,
+  inputs: [
+    { name: 'amount',            type: 'uint256' },
+    { name: 'destinationDomain', type: 'uint32'  },
+    { name: 'mintRecipient',     type: 'bytes32' },
+    { name: 'burnToken',         type: 'address' },
   ],
   outputs: [],
 }
@@ -123,16 +137,30 @@ export async function cctpTransfer({
   const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
   const zeroCaller  = pad('0x0', { size: 32 })
 
-  // ── shared path for USDC and EURC ─────────────────────────────────────────
-  // Iris EURC fee endpoint doesn't exist on testnet — use USDC tiers for
-  // finalityThreshold. EURC always uses maxFee=0 (no paid relayers on testnet).
-  const { feeAmount: usdcFee, totalToApprove: usdcApprove, finalityThreshold } = await getFee(srcMeta.cctpDomain, dstDomain, amountMicro)
-
-  const feeAmount     = token === 'EURC' ? BigInt(0) : usdcFee
-  const totalToApprove = token === 'EURC' ? amountMicro : usdcApprove
-  console.log(`[cctp/${token.toLowerCase()}] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} feeAmount=${feeAmount} threshold=${finalityThreshold}`)
-
   // Step 1: approve
+  // EURC: approve exact amount (no relayer fee). USDC: approve amount + fee.
+  let totalToApprove: bigint
+  let burnCallData: `0x${string}`
+
+  if (token === 'EURC') {
+    totalToApprove = amountMicro
+    burnCallData = encodeFunctionData({
+      abi: [DEPOSIT_FOR_BURN_ABI],
+      functionName: 'depositForBurn',
+      args: [amountMicro, dstDomain, recipient32, burnToken],
+    })
+    console.log(`[cctp/eurc] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} 4-arg depositForBurn`)
+  } else {
+    const { feeAmount, totalToApprove: usdcApprove, finalityThreshold } = await getFee(srcMeta.cctpDomain, dstDomain, amountMicro)
+    totalToApprove = usdcApprove
+    burnCallData = encodeFunctionData({
+      abi: [DEPOSIT_FOR_BURN_V2_ABI],
+      functionName: 'depositForBurn',
+      args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold],
+    })
+    console.log(`[cctp/usdc] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} fee=${feeAmount} threshold=${finalityThreshold}`)
+  }
+
   const approveTxId = await executeContractCall({
     walletId:        sourceWalletId,
     contractAddress: burnToken,
@@ -144,11 +172,11 @@ export async function cctpTransfer({
   })
   console.log(`[cctp/${token.toLowerCase()}] approve confirmed on ${sourceChain}`)
 
-  // Step 2: depositForBurn (7-arg CCTP V2)
+  // Step 2: depositForBurn
   const burnTxId = await executeContractCall({
     walletId:        sourceWalletId,
     contractAddress: srcMeta.tokenMessengerV2,
-    callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_V2_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
+    callData:        burnCallData,
   })
   console.log(`[cctp/${token.toLowerCase()}] burn tx: ${burnTxId}`)
   const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => {
@@ -156,7 +184,7 @@ export async function cctpTransfer({
   })
   console.log(`[cctp/${token.toLowerCase()}] burn confirmed: ${burnTxHash}`)
 
-  // Step 3: poll attestation by tx hash (works for both USDC and EURC)
+  // Step 3: poll attestation by tx hash
   const { message, attestation } = await pollAttestationByTxHash(srcMeta.cctpDomain, burnTxHash)
 
   // Step 4: receiveMessage
