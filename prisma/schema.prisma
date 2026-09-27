@@ -66,6 +66,8 @@ model User {
   employees    Employee[]
   payrollRuns  PayrollRun[]
   businesses   Business[]
+  feedbacks    Feedback[]
+  bugReports   BugReport[]
 }
 
 model Business {
@@ -158,4 +160,23 @@ model PayrollEntry {
   status       String      @default("PENDING")
   txHash       String?
   errorMessage String?
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  category  String   @default("general")
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model BugReport {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  description String
+  steps       String?
+  createdAt   DateTime @default(now())
 }
