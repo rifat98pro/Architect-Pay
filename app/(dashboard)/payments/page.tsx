@@ -122,6 +122,13 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [isAggregate, amount, user, fetchPlan])
 
+  // Reset destChain when source changes (Arc can only send to Arc)
+  useEffect(() => {
+    if (sourceChain === 'ARC-TESTNET' || sourceChain === 'ALL_CHAINS') {
+      setDestChain('ARC-TESTNET')
+    }
+  }, [sourceChain])
+
   const canSend = recipientMode === 'wallet'
     ? /^0x[a-fA-F0-9]{40}$/.test(walletAddress)
     : lookupState === 'found'
@@ -208,8 +215,8 @@ export default function PaymentsPage() {
             )}
           </div>
 
-          {/* Destination chain */}
-          {!isAggregate && (
+          {/* Destination chain — only relevant when source is a non-Arc chain */}
+          {!isAggregate && sourceChain !== 'ARC-TESTNET' && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-300">Receive on</label>
               <select
@@ -222,20 +229,15 @@ export default function PaymentsPage() {
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
-              {arcToNonArc && (
-                <p className="mt-1.5 text-xs text-red-400">
-                  Sending from Arc to other chains is not yet supported. Switch &quot;Pay from&quot; to a non-Arc chain.
-                </p>
-              )}
-              {isCrossChain && !arcToNonArc && (
+              {isCrossChain && (
                 <p className="mt-1.5 text-xs text-amber-400">
                   Cross-chain via CCTP — takes ~2–3 minutes. A small relayer fee (~1%) applies.
                   USDC burns on {selectedSrcChain.label} and mints on {selectedDestChain.label} for the recipient.
                 </p>
               )}
-              {!isCrossChain && sourceChain === 'ARC-TESTNET' && (
+              {!isCrossChain && (
                 <p className="mt-1.5 text-xs text-green-400">
-                  Instant transfer on Arc Testnet — no fees.
+                  Same-chain transfer — instant, no fees.
                 </p>
               )}
             </div>
@@ -409,7 +411,7 @@ export default function PaymentsPage() {
 
           <button
             type="submit"
-            disabled={loading || !canSend || !amount || arcToNonArc || (isAggregate && (!planFeasible || planLoading))}
+            disabled={loading || !canSend || !amount || (isAggregate && (!planFeasible || planLoading))}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
             {loading
