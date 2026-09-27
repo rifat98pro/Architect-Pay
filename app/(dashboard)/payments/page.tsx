@@ -254,7 +254,7 @@ export default function PaymentsPage() {
                     type="text"
                     value={usernameInput}
                     onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    className="input-base pl-8"
+                    className="input-base pl-9"
                     placeholder="username"
                     autoComplete="off"
                     required

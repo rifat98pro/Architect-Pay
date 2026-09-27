@@ -106,7 +106,7 @@ export default function SettingsPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                className="input-base pl-9 font-mono"
+                className="input-base pl-10 font-mono"
                 placeholder="yourname"
                 minLength={3}
                 maxLength={30}

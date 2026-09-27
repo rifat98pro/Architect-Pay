@@ -203,7 +203,7 @@ export default function BusinessEmployeesPage() {
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">@</span>
                   <input type="text" placeholder="username" value={usernameInput}
                     onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    className="input-base pl-8 text-sm" autoComplete="off" required />
+                    className="input-base pl-9 text-sm" autoComplete="off" required />
                 </div>
                 {lookupState === 'loading' && (
                   <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
