@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { getOrCreateChainWalletId } from '@/lib/circle'
-import { cctpTransfer } from '@/lib/cctp'
+import { cctpBurn } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 import { z } from 'zod'
 
@@ -41,16 +41,16 @@ export async function POST(req: NextRequest) {
     const sourceWalletId = cached?.circleWalletId
       ?? await getOrCreateChainWalletId(wallet.id, wallet.walletSetId, sourceChain as CctpSourceChain)
 
-    // CCTP: burn on source chain, mint to user's own Arc Testnet wallet
-    const { mintTxHash } = await cctpTransfer({
+    // CCTP: burn on source chain — cron job completes the mint to Arc
+    await cctpBurn({
       sourceChain:      sourceChain as CctpSourceChain,
       sourceWalletId,
       arcWalletId:      wallet.circleWalletId,
-      recipientAddress: wallet.walletAddress, // mint to user's own Arc wallet
+      recipientAddress: wallet.walletAddress,
       amount,
     })
 
-    return NextResponse.json({ success: true, mintTxHash })
+    return NextResponse.json({ success: true, status: 'processing' })
   } catch (err: unknown) {
     console.error('[wallet/deposit]', err)
     const message = err instanceof Error ? err.message : String(err)

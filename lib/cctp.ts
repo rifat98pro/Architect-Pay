@@ -136,9 +136,10 @@ async function getCctpxQuote(srcDomain: number, dstDomain: number, amountMicro: 
   return { signedQuote: data.signedQuote }
 }
 
-// ── Main transfer function ─────────────────────────────────────────────────────
+// ── Phase 1: Burn (approve + burn) ────────────────────────────────────────────
+// Returns quickly so the API route can respond before Vercel's 60s timeout.
 
-export async function cctpTransfer({
+export async function cctpBurn({
   sourceChain,
   sourceWalletId,
   destChain,
@@ -156,7 +157,7 @@ export async function cctpTransfer({
   recipientAddress: string
   amount:           string
   token?:           'USDC' | 'EURC'
-}): Promise<{ burnTxHash: string; mintTxHash: string }> {
+}): Promise<{ burnTxHash: string; srcDomain: number; receiverWalletId: string; destTransmitter: string }> {
   const srcMeta          = SOURCE_CHAIN_META[sourceChain]
   const dstMeta          = destChain ? SOURCE_CHAIN_META[destChain] : null
   const dstDomain        = dstMeta ? dstMeta.cctpDomain : ARC_TESTNET_CONFIG.cctpDomain
@@ -166,32 +167,23 @@ export async function cctpTransfer({
   const zeroCaller       = pad('0x0', { size: 32 })
 
   if (token === 'EURC') {
-    // ── EURC: CrossChainTokenService (CCTPx) flow ─────────────────────────────
-    // EURC does NOT use TokenMessengerV2/depositForBurn — it uses CCTS/crossChainTransfer.
-    // Standard finality (2000) has feeTotalAmount=0 so no native token value needed.
-    const eurcAddress    = srcMeta.eurcAddress
-    const tokenManager   = srcMeta.eurcTokenManager
+    const eurcAddress  = srcMeta.eurcAddress
+    const tokenManager = srcMeta.eurcTokenManager
     if (!eurcAddress)  throw new Error(`EURC is not supported on ${sourceChain}`)
     if (!tokenManager) throw new Error(`EURC TokenManager not configured for ${sourceChain}`)
 
-    console.log(`[cctp/eurc] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} via CCTPx`)
+    console.log(`[cctp/eurc] burn phase: ${sourceChain} → ${destChain ?? 'ARC-TESTNET'}`)
 
-    // Step 1: approve TokenManager (not TokenMessengerV2)
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: eurcAddress,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
     })
-    console.log(`[cctp/eurc] approve tx: ${approveTxId}`)
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
-    console.log('[cctp/eurc] approve confirmed')
 
-    // Step 2: get CCTPx quote (standard finality, fee=0)
     const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
-    // Step 3: crossChainTransfer on CCTS
-    // destinationAddress = raw packed 20-byte address (NOT 32-byte padded)
-    const destAddress = encodePacked(['address'], [recipientAddress as `0x${string}`])
+    const destAddress  = encodePacked(['address'], [recipientAddress as `0x${string}`])
     const transferTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: CCTS_ADDRESS,
@@ -199,44 +191,23 @@ export async function cctpTransfer({
         abi: [CROSS_CHAIN_TRANSFER_ABI],
         functionName: 'crossChainTransfer',
         args: [
-          EURC_CCTPX_TOKEN_ID,
-          amountMicro,
-          dstDomain,
-          destAddress,
-          zeroCaller,
-          2000,                        // standard finality
+          EURC_CCTPX_TOKEN_ID, amountMicro, dstDomain, destAddress, zeroCaller,
+          2000,
           { signedQuote, refundAddress: '0x0000000000000000000000000000000000000000' },
-          false,
-          '0x',
+          false, '0x',
         ],
       }),
     })
-    console.log(`[cctp/eurc] transfer tx: ${transferTxId}`)
-    const burnTxHash = await waitForTransaction(transferTxId).catch((e: Error) => { throw new Error(`[step3-crossChainTransfer] ${e.message}`) })
-    console.log(`[cctp/eurc] transfer confirmed: ${burnTxHash}`)
-
-    // Step 4: poll attestation by tx hash
-    const { message, attestation } = await pollAttestationByTxHash(srcMeta.cctpDomain, burnTxHash)
-
-    // Step 5: receiveMessage on destination
-    const mintTxId = await executeContractCall({
-      walletId:        receiverWalletId,
-      contractAddress: destTransmitter,
-      callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
-    })
-    console.log(`[cctp/eurc] mint tx: ${mintTxId}`)
-    const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[step5-receiveMessage] ${e.message}`) })
-    console.log(`[cctp/eurc] mint confirmed: ${mintTxHash}`)
-
-    return { burnTxHash, mintTxHash }
+    const burnTxHash = await waitForTransaction(transferTxId).catch((e: Error) => { throw new Error(`[step2-crossChainTransfer] ${e.message}`) })
+    console.log(`[cctp/eurc] burn confirmed: ${burnTxHash}`)
+    return { burnTxHash, srcDomain: srcMeta.cctpDomain, receiverWalletId, destTransmitter }
 
   } else {
-    // ── USDC: standard CCTP V2 7-arg + tx-hash attestation ────────────────────
-    const burnToken  = srcMeta.usdcAddress
+    const burnToken   = srcMeta.usdcAddress
     const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
 
     const { feeAmount, totalToApprove, finalityThreshold } = await getFee(srcMeta.cctpDomain, dstDomain, amountMicro)
-    console.log(`[cctp/usdc] ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} fee=${feeAmount} threshold=${finalityThreshold}`)
+    console.log(`[cctp/usdc] burn phase: ${sourceChain} → ${destChain ?? 'ARC-TESTNET'} fee=${feeAmount}`)
 
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
@@ -252,17 +223,41 @@ export async function cctpTransfer({
     })
     const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => { throw new Error(`[step2-depositForBurn] ${e.message}`) })
     console.log(`[cctp/usdc] burn confirmed: ${burnTxHash}`)
-
-    const { message, attestation } = await pollAttestationByTxHash(srcMeta.cctpDomain, burnTxHash)
-
-    const mintTxId = await executeContractCall({
-      walletId:        receiverWalletId,
-      contractAddress: destTransmitter,
-      callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
-    })
-    const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[step4-receiveMessage] ${e.message}`) })
-    console.log(`[cctp/usdc] mint confirmed: ${mintTxHash}`)
-
-    return { burnTxHash, mintTxHash }
+    return { burnTxHash, srcDomain: srcMeta.cctpDomain, receiverWalletId, destTransmitter }
   }
+}
+
+// ── Phase 2: Mint (attestation + receiveMessage) ───────────────────────────────
+// Called by the cron job once Iris issues the attestation.
+
+export async function cctpMint({
+  burnTxHash,
+  srcDomain,
+  receiverWalletId,
+  destTransmitter,
+}: {
+  burnTxHash:       string
+  srcDomain:        number
+  receiverWalletId: string
+  destTransmitter:  string
+}): Promise<string> {
+  const { message, attestation } = await pollAttestationByTxHash(srcDomain, burnTxHash)
+
+  const mintTxId = await executeContractCall({
+    walletId:        receiverWalletId,
+    contractAddress: destTransmitter,
+    callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
+  })
+  const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[mint-receiveMessage] ${e.message}`) })
+  console.log(`[cctp] mint confirmed: ${mintTxHash}`)
+  return mintTxHash
+}
+
+// ── Combined (burn + mint) — for flows that need synchronous completion ────────
+// Used by aggregate-send and payroll where the mint must finish before next step.
+
+export async function cctpTransfer(params: Parameters<typeof cctpBurn>[0]): Promise<{ burnTxHash: string; mintTxHash: string }> {
+  const burn = await cctpBurn(params)
+  const mintTxHash = await cctpMint(burn)
+  return { burnTxHash: burn.burnTxHash, mintTxHash }
 }

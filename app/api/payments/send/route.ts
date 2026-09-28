@@ -3,7 +3,7 @@ import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { sendUsdcPayment, waitForTransaction, getWalletBalance, getOrCreateChainWalletId } from '@/lib/circle'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
-import { cctpTransfer } from '@/lib/cctp'
+import { cctpBurn } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 import { z } from 'zod'
 
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
         ? wallet.circleWalletId
         : await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain as CctpSourceChain)
 
-      const { mintTxHash } = await cctpTransfer({
+      const burn = await cctpBurn({
         sourceChain:      sourceChain as CctpSourceChain,
         sourceWalletId,
         destChain:        destChain === 'ARC-TESTNET' ? undefined : destChain as CctpSourceChain,
@@ -120,7 +120,20 @@ export async function POST(req: NextRequest) {
         amount,
         token,
       })
-      txHash = mintTxHash
+
+      // Store burn info so cron can complete the mint
+      await db.payment.update({
+        where: { id: payment.id },
+        data: {
+          burnTxHash:       burn.burnTxHash,
+          srcDomain:        burn.srcDomain,
+          receiverWalletId: burn.receiverWalletId,
+          destTransmitter:  burn.destTransmitter,
+        },
+      })
+
+      // Return immediately — cron job will complete the mint and mark COMPLETED
+      return NextResponse.json({ success: true, paymentId: payment.id })
     }
 
     await db.payment.update({

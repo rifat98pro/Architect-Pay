@@ -119,6 +119,12 @@ model Payment {
   txHash           String?
   errorMessage     String?
 
+  // CCTP cross-chain: stored after burn so cron can complete the mint
+  burnTxHash       String?
+  srcDomain        Int?
+  receiverWalletId String?
+  destTransmitter  String?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
