@@ -239,76 +239,85 @@ export default function PayrollPage() {
       </div>
 
       {/* Scheduled payroll */}
-      {businessId && (
-        <div className="mb-8 rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
-          {/* Header */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/15">
-                <Calendar className="h-4 w-4 text-brand-400" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-white">Scheduled Payroll</div>
-                <div className="text-xs text-gray-500">Auto-run payroll on a fixed day every month</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {savingSched && <Loader2 className="h-4 w-4 animate-spin text-brand-400" />}
-              {!savingSched && scheduleDay && <CheckCircle2 className="h-4 w-4 text-green-400" />}
-              {scheduleDay && !savingSched && (
-                <button
-                  onClick={() => saveSchedule(null)}
-                  className="text-xs text-red-400 hover:underline"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
+      {businessId && (() => {
+        const now       = new Date()
+        const nextMonth = scheduleDay
+          ? (() => {
+              const d = new Date(now.getFullYear(), now.getMonth(), scheduleDay!)
+              if (d <= now) d.setMonth(d.getMonth() + 1)
+              return d
+            })()
+          : null
+        const nextPayday = nextMonth?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 
-          {/* Active schedule banner */}
-          {scheduleDay && (
-            <div className="mb-4 flex items-center gap-3 rounded-xl border border-brand-500/20 bg-brand-500/8 px-4 py-3">
-              <Clock className="h-4 w-4 text-brand-400 shrink-0" />
-              <p className="text-sm text-gray-300">
-                Payroll runs automatically on the{' '}
-                <span className="font-bold text-white">
-                  {scheduleDay}{scheduleDay === 1 ? 'st' : scheduleDay === 2 ? 'nd' : scheduleDay === 3 ? 'rd' : 'th'}
-                </span>{' '}
-                of every month at midnight UTC
+        return (
+          <div className="mb-8 rounded-2xl border border-gray-700/50 bg-gray-900/60 overflow-hidden">
+            {/* Top bar */}
+            <div className="flex items-center justify-between border-b border-gray-700/50 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-brand-400" />
+                <span className="text-sm font-semibold text-white">Payroll Schedule</span>
+              </div>
+              <div className="flex items-center gap-3">
+                {savingSched && <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-400" />}
+                {!savingSched && scheduleDay && <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />}
+                {scheduleDay && !savingSched && (
+                  <button onClick={() => saveSchedule(null)} className="text-xs text-red-400 hover:underline">
+                    Remove schedule
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Next payday card — Gusto style */}
+            {scheduleDay && nextPayday && (
+              <div className="grid grid-cols-2 divide-x divide-gray-700/50 border-b border-gray-700/50">
+                <div className="px-5 py-4">
+                  <div className="mb-0.5 text-xs font-medium text-gray-500">Runs every month on</div>
+                  <div className="text-base font-bold text-white">
+                    Day {scheduleDay}
+                  </div>
+                </div>
+                <div className="px-5 py-4">
+                  <div className="mb-0.5 text-xs font-medium text-gray-500">Next payday</div>
+                  <div className="text-base font-bold text-brand-400">{nextPayday}</div>
+                </div>
+              </div>
+            )}
+
+            {!scheduleDay && (
+              <div className="border-b border-gray-700/50 px-5 py-4">
+                <p className="text-sm text-gray-500">No schedule set — select a payday below to automate payroll.</p>
+              </div>
+            )}
+
+            {/* Day grid */}
+            <div className="p-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Select payday</p>
+              <div className="grid grid-cols-7 gap-1.5">
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => saveSchedule(scheduleDay === d ? null : d)}
+                    disabled={savingSched}
+                    className={`flex h-9 w-full items-center justify-center rounded-lg text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                      ${scheduleDay === d
+                        ? 'bg-brand-500 text-navy-950 shadow-[0_0_14px_rgba(42,171,171,0.45)]'
+                        : 'border border-gray-700 bg-gray-800/50 text-gray-400 hover:border-brand-500/50 hover:bg-brand-500/10 hover:text-white'
+                      }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-gray-600">
+                Capped at day 28 to work every month including February · Triggers at midnight UTC
               </p>
             </div>
-          )}
-
-          {/* Day grid */}
-          <div className="mb-2">
-            <p className="mb-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Select payday</p>
-            <div className="grid grid-cols-7 gap-1.5">
-              {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => saveSchedule(scheduleDay === d ? null : d)}
-                  disabled={savingSched}
-                  className={`
-                    flex h-9 w-full items-center justify-center rounded-lg text-sm font-medium transition-all
-                    ${scheduleDay === d
-                      ? 'bg-brand-500 text-navy-950 shadow-[0_0_12px_rgba(42,171,171,0.4)]'
-                      : 'border border-gray-700 bg-gray-800/60 text-gray-400 hover:border-brand-500/50 hover:bg-brand-500/10 hover:text-white'
-                    }
-                    disabled:opacity-40 disabled:cursor-not-allowed
-                  `}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
           </div>
-          <p className="mt-3 text-xs text-gray-600">
-            Days limited to 28 to avoid month-end issues. Click the selected day again to clear.
-          </p>
-        </div>
-      )}
+        )
+      })()}
 
       {/* History */}
       <div>
