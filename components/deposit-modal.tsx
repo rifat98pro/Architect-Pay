@@ -1,130 +1,103 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Loader2 } from 'lucide-react'
-
-const CHAINS = [
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum Sepolia' },
-  { id: 'BASE-SEPOLIA', label: 'Base Sepolia'      },
-  { id: 'ARB-SEPOLIA',  label: 'Arbitrum Sepolia'  },
-  { id: 'MATIC-AMOY',   label: 'Polygon Amoy'      },
-]
+import { useEffect, useState } from 'react'
+import { X, Copy, CheckCheck, Info } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function DepositModal({
   onClose,
-  onSuccess,
+  onSuccess: _onSuccess,
 }: {
   onClose:   () => void
   onSuccess: () => void
 }) {
-  const [chain,   setChain]   = useState('ETH-SEPOLIA')
-  const [amount,  setAmount]  = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
-  const [done,    setDone]    = useState(false)
+  const [address, setAddress] = useState<string | null>(null)
+  const [copied,  setCopied]  = useState(false)
 
-  async function handleDeposit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const res = await fetch('/api/wallet/deposit', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ sourceChain: chain, amount }),
-      })
+  useEffect(() => {
+    fetch('/api/wallet/balance')
+      .then((r) => r.json())
+      .then((d) => { if (d.address) setAddress(d.address) })
+  }, [])
 
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error?.formErrors?.[0] ?? data.error ?? 'Deposit failed')
-      }
-
-      setDone(true)
-      onSuccess()
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Deposit failed')
-    } finally {
-      setLoading(false)
-    }
+  function copy() {
+    if (!address) return
+    navigator.clipboard.writeText(address)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="card w-full max-w-md">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Deposit USDC to Arc</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-gray-100">
-            <X className="h-5 w-5 text-gray-400" />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6"
+        style={{
+          background:  'linear-gradient(160deg, #0c1a2e 0%, #081422 100%)',
+          border:      '1px solid rgba(42,171,171,0.18)',
+          boxShadow:   '0 24px 64px rgba(0,0,0,0.6)',
+        }}
+      >
+        {/* Header */}
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white">Deposit</h2>
+            <p className="text-xs text-gray-500">Send tokens to your wallet address</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-xl border border-gray-700 p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {done ? (
-          <div className="py-6 text-center">
-            <div className="mb-2 text-3xl">✅</div>
-            <p className="font-semibold text-gray-900">Deposit complete!</p>
-            <p className="mt-1 text-sm text-gray-500">
-              USDC has been minted to your Arc Testnet wallet via CCTP.
-            </p>
-            <button onClick={onClose} className="btn-primary mx-auto mt-4">
-              Close
+        {/* QR Code */}
+        <div className="mb-5 flex justify-center">
+          <div className="rounded-2xl border border-gray-700/60 bg-white p-3.5">
+            {address ? (
+              <QRCodeSVG
+                value={address}
+                size={180}
+                bgColor="#ffffff"
+                fgColor="#0a0f1e"
+                level="M"
+              />
+            ) : (
+              <div className="h-[180px] w-[180px] animate-pulse rounded-xl bg-gray-200" />
+            )}
+          </div>
+        </div>
+
+        {/* Address */}
+        <div className="mb-4">
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            Your Wallet Address
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800/60 px-3 py-2.5">
+            <span className="flex-1 truncate font-mono text-xs text-gray-200">
+              {address ?? 'Loading…'}
+            </span>
+            <button
+              onClick={copy}
+              className="shrink-0 rounded-lg p-1 text-gray-500 hover:bg-gray-700 hover:text-brand-400 transition"
+            >
+              {copied ? <CheckCheck className="h-4 w-4 text-brand-400" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
-        ) : (
-          <form onSubmit={handleDeposit} className="space-y-4">
-            {error && (
-              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-            )}
+        </div>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Source chain
-              </label>
-              <select
-                value={chain}
-                onChange={(e) => setChain(e.target.value)}
-                className="input-base"
-              >
-                {CHAINS.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Amount (USDC)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="input-base"
-                placeholder="10.00"
-                required
-              />
-            </div>
-
-            <p className="text-xs text-gray-400">
-              USDC burns on {CHAINS.find((c) => c.id === chain)?.label} and mints directly into your Arc Testnet wallet via CCTP (~2–3 minutes). A small relayer fee (~1%) applies.
-            </p>
-
-            {loading && (
-              <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                  <span>Transferring via CCTP (~2–3 min): approving → burning → attesting → minting on Arc. Do not close this window.</span>
-                </div>
-              </div>
-            )}
-
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Deposit {amount ? `$${amount} USDC` : 'USDC'} to Arc
-            </button>
-          </form>
-        )}
+        {/* Info note */}
+        <div className="flex items-start gap-2.5 rounded-xl border border-brand-500/15 bg-brand-500/8 px-3 py-2.5">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-400" />
+          <p className="text-xs text-gray-400 leading-relaxed">
+            This address works on <span className="text-white font-medium">Arc Testnet</span>, Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, and Polygon Amoy.
+            Send USDC or EURC from any exchange or wallet.
+          </p>
+        </div>
       </div>
     </div>
   )

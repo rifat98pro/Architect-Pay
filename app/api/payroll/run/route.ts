@@ -6,6 +6,7 @@ import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
+import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 
 export const maxDuration = 300
 
@@ -29,7 +30,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No active employees' }, { status: 400 })
   }
 
-  const totalAmount = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
+  const totalAmount   = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
+  const platformFee   = calcFee(totalAmount)
+  const totalWithFee  = totalAmount + platformFee
 
   // Build chain wallet ID map
   const chainWalletIds: Partial<Record<CctpSourceChain, string>> = {}
@@ -42,12 +45,12 @@ export async function POST(req: Request) {
   // Get all chain balances and compute funding plan
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
-  const plan        = computeAggregatePlan(numericBals, totalAmount)
+  const plan        = computeAggregatePlan(numericBals, totalWithFee)
 
   if (!plan.feasible) {
     const totalAvail = Object.values(numericBals).reduce((s, v) => s + v, 0)
     return NextResponse.json(
-      { error: `Insufficient balance across all chains. Need $${totalAmount.toFixed(2)}, have $${totalAvail.toFixed(2)} USDC total.` },
+      { error: `Insufficient balance. Need $${totalAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee = $${totalWithFee.toFixed(2)}, have $${totalAvail.toFixed(2)} USDC total.` },
       { status: 400 },
     )
   }
@@ -124,6 +127,19 @@ export async function POST(req: Request) {
 
     const finalStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
     await db.payrollRun.update({ where: { id: run.id }, data: { status: finalStatus } })
+
+    // Collect platform fee (best-effort — don't fail the run if fee transfer fails)
+    if (completed > 0) {
+      try {
+        await sendUsdcPayment({
+          fromWalletId: wallet.circleWalletId,
+          toAddress:    FEE_RECIPIENT,
+          amount:       platformFee.toFixed(6),
+        })
+      } catch (feeErr) {
+        console.error('[payroll] fee transfer failed:', feeErr)
+      }
+    }
 
     if (completed > 0) logPayrollRunOnChain(wallet.circleWalletId, totalAmount.toFixed(6), completed)
 

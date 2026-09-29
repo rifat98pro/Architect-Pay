@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { swapTokens } from '@/lib/arc-kit'
-import { getChainWalletAddress } from '@/lib/circle'
+import { getChainWalletAddress, sendUsdcPayment } from '@/lib/circle'
+import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 import { z } from 'zod'
 
 export const dynamic     = 'force-dynamic'
@@ -58,11 +59,33 @@ export async function POST(req: NextRequest) {
       resolveWalletAddress(wallet, destChain),
     ])
 
+    const isCrossChain = srcChain !== destChain
+    let swapAmountIn   = amountIn
+
+    if (isCrossChain) {
+      const amountNum  = parseFloat(amountIn)
+      const platformFee = calcFee(amountNum)
+      swapAmountIn     = (amountNum - platformFee).toFixed(6)
+
+      // Send fee to platform wallet on source chain (tokenIn currency)
+      const srcWalletId = srcChain === 'ARC-TESTNET'
+        ? wallet.circleWalletId
+        : wallet.chainWallets.find((w) => w.chain === srcChain)?.circleWalletId
+      if (srcWalletId) {
+        await sendUsdcPayment({
+          fromWalletId: srcWalletId,
+          toAddress:    FEE_RECIPIENT,
+          amount:       platformFee.toFixed(6),
+          token:        tokenIn,
+        })
+      }
+    }
+
     const result = await swapTokens({
       walletAddress: srcAddress,
       tokenIn,
       tokenOut,
-      amountIn,
+      amountIn:  swapAmountIn,
       chain:     CHAIN_MAP[srcChain],
       toChain:   CHAIN_MAP[destChain],
       toAddress: destAddress,

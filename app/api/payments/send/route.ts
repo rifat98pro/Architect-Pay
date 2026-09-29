@@ -5,6 +5,7 @@ import { sendUsdcPayment, waitForTransaction, getWalletBalance, getOrCreateChain
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpBurn } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
+import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 import { z } from 'zod'
 
 export const maxDuration = 300 // 5-minute timeout for CCTP cross-chain flow
@@ -44,7 +45,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const amountNum = parseFloat(amount)
+  const amountNum    = parseFloat(amount)
+  const isCrossChain = sourceChain !== destChain
+  const platformFee  = isCrossChain ? calcFee(amountNum) : 0
+  const totalNeeded  = amountNum + platformFee
 
   const wallet = await db.wallet.findUnique({
     where:   { userId: user.id },
@@ -72,9 +76,12 @@ export async function POST(req: NextRequest) {
   const { getWalletBalances } = await import('@/lib/circle')
   const bals = await getWalletBalances(sourceWalletId)
   const available = parseFloat(token === 'EURC' ? bals.eurc : bals.usdc)
-  if (available < amountNum) {
+  if (available < totalNeeded) {
+    const needed = isCrossChain
+      ? `${amountNum.toFixed(2)} + ${platformFee.toFixed(2)} fee = ${totalNeeded.toFixed(2)}`
+      : amountNum.toFixed(2)
     return NextResponse.json(
-      { error: `Insufficient ${token} balance on ${sourceChain}. Available: ${available.toFixed(2)} ${token}` },
+      { error: `Insufficient ${token} balance on ${sourceChain}. Need ${needed} ${token}, available: ${available.toFixed(2)}` },
       { status: 400 },
     )
   }
@@ -105,6 +112,14 @@ export async function POST(req: NextRequest) {
       })
       txHash = result.txHash ?? await waitForTransaction(result.id)
     } else {
+      // ── Cross-chain: collect platform fee on source chain first ─────────────
+      await sendUsdcPayment({
+        fromWalletId: sourceWalletId,
+        toAddress:    FEE_RECIPIENT,
+        amount:       platformFee.toFixed(6),
+        token,
+      })
+
       // ── Cross-chain: CCTP transfer to destChain ─────────────────────────────
       const destWalletId = destChain === 'ARC-TESTNET'
         ? wallet.circleWalletId
