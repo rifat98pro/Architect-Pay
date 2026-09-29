@@ -54,7 +54,7 @@ export default function LandingPage() {
               className="block w-full text-center font-black uppercase"
               style={{
                 fontSize: 'clamp(3rem, 9vw, 8rem)',
-                WebkitTextStroke: '1px rgba(255,255,255,0.08)',
+                WebkitTextStroke: '1.5px rgba(255,255,255,0.22)',
                 color: 'transparent',
                 letterSpacing: '-0.02em',
                 lineHeight: 1,
