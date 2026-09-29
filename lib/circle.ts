@@ -154,6 +154,14 @@ export async function getOrCreateChainWalletId(
   return found.id
 }
 
+export async function getChainWalletAddress(circleWalletId: string): Promise<string> {
+  const client = getClient()
+  const res = await client.getWallet({ id: circleWalletId })
+  const address = res.data?.wallet?.address
+  if (!address) throw new Error(`Address not found for wallet ${circleWalletId}`)
+  return address
+}
+
 /**
  * Get USDC balance for any Circle wallet by its wallet ID.
  */
