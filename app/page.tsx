@@ -3,145 +3,265 @@ import Image from 'next/image'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, RefreshCw, CheckCircle2,
+  ArrowLeftRight, Calendar,
 } from 'lucide-react'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen overflow-x-hidden" style={{ background: '#000', color: '#e2eaf4' }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl" style={{ background: 'rgba(0,0,0,0.85)' }}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Architect Pay" width={36} height={36} className="object-contain rounded-lg" />
-            <span className="text-xl font-bold">
-            <span style={{ color: '#1B3A6B' }}>Architect</span>
-            <span style={{ color: '#2aabab' }}> Pay</span>
-          </span>
+          <div className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="rounded-xl object-contain" />
+            <span className="text-lg font-bold tracking-tight">
+              <span style={{ color: '#c5d3ed' }}>Architect</span>
+              <span style={{ color: '#2aabab' }}> Pay</span>
+            </span>
           </div>
 
-          <nav className="hidden items-center gap-8 text-sm font-medium text-gray-600 md:flex">
-            <a href="#how-it-works" className="hover:text-brand-600 transition-colors">How It Works</a>
-            <a href="#use-cases"    className="hover:text-brand-600 transition-colors">Use Cases</a>
-            <a href="#documentation" className="hover:text-brand-600 transition-colors">Documentation</a>
-            <a href="#developer"    className="hover:text-brand-600 transition-colors">Developer Portal</a>
+          <nav className="hidden items-center gap-8 text-sm font-medium md:flex" style={{ color: '#888' }}>
+            <a href="#features"     className="transition-colors hover:text-white">Features</a>
+            <a href="#how-it-works" className="transition-colors hover:text-white">Developers</a>
+            <a href="#use-cases"    className="transition-colors hover:text-white">Use Cases</a>
+            <a href="#developer"    className="transition-colors hover:text-white">Docs</a>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Link href="/login"  className="text-sm font-medium text-gray-600 hover:text-brand-600 transition-colors">
-              Sign In
-            </Link>
-            <Link href="/signup" className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors">
-              Get Started <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
+          <Link
+            href="/signup"
+            className="flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-black transition-all hover:opacity-90"
+            style={{ background: '#2aabab' }}
+          >
+            Launch App <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="px-6 py-28 text-white" style={{ background: 'linear-gradient(135deg, #060e28 0%, #0b1e47 50%, #0b2c2c 100%)' }}>
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-300">
-            Powered by Circle CCTP V2 · Arc Testnet
-          </div>
-          <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight">
-            Pay employees globally
-            <br />
-            <span className="text-brand-400">with one USDC balance.</span>
-          </h1>
-          <p className="mx-auto mb-4 max-w-2xl text-lg text-gray-300">
-            Architect Pay lets you run payroll, send cross-chain USDC payments, and manage employees from a single dashboard
+      <section className="relative flex min-h-[92vh] flex-col items-center justify-center overflow-hidden px-6 text-center">
 
-          </p>
-          <div className="mb-8">
-            <span className="inline-block rounded-full bg-yellow-400/20 border border-yellow-400/40 px-4 py-1.5 text-sm font-medium text-yellow-200">
-               Currently live on testnet only
-            </span>
+        {/* Giant background ghost text */}
+        <div
+          className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center leading-none"
+          aria-hidden="true"
+        >
+          <span
+            className="block w-full text-center font-black uppercase"
+            style={{
+              fontSize: 'clamp(5rem, 16vw, 14rem)',
+              WebkitTextStroke: '1px rgba(255,255,255,0.08)',
+              color: 'transparent',
+              letterSpacing: '-0.02em',
+              lineHeight: 0.95,
+            }}
+          >
+            ONE WALLET
+          </span>
+          <span
+            className="block w-full text-center font-black uppercase"
+            style={{
+              fontSize: 'clamp(5rem, 16vw, 14rem)',
+              WebkitTextStroke: '1px rgba(255,255,255,0.08)',
+              color: 'transparent',
+              letterSpacing: '-0.02em',
+              lineHeight: 0.95,
+            }}
+          >
+            ANY CHAIN
+          </span>
+          <span
+            className="block w-full text-center font-black uppercase"
+            style={{
+              fontSize: 'clamp(5rem, 16vw, 14rem)',
+              WebkitTextStroke: '1px rgba(255,255,255,0.08)',
+              color: 'transparent',
+              letterSpacing: '-0.02em',
+              lineHeight: 0.95,
+            }}
+          >
+            ANY TEAM
+          </span>
+        </div>
+
+        {/* Foreground content */}
+        <div className="relative z-10 flex flex-col items-center">
+          {/* Accent line */}
+          <div
+            className="mb-8 text-center font-black uppercase leading-none"
+            style={{
+              fontSize: 'clamp(4.5rem, 14vw, 12rem)',
+              color: '#2aabab',
+              letterSpacing: '-0.02em',
+              textShadow: '0 0 80px rgba(42,171,171,0.45)',
+            }}
+          >
+            PAY GLOBAL
           </div>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup" className="flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-navy-900 shadow-lg hover:bg-gray-100 transition-colors" style={{ color: '#0b1e47' }}>
-              Get started free <ArrowRight className="h-4 w-4" />
+
+          <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
+            On-chain payroll infrastructure for global teams. Run payroll, send cross-chain
+            USDC &amp; EURC payments, and manage employees from a single wallet.
+          </p>
+
+          <div className="flex items-center gap-4">
+            <Link
+              href="/signup"
+              className="flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-black transition-all hover:opacity-90"
+              style={{ background: '#2aabab', boxShadow: '0 0 30px rgba(42,171,171,0.35)' }}
+            >
+              <Zap className="h-4 w-4" />
+              Get Started Free
             </Link>
-            <a href="#how-it-works" className="flex items-center gap-2 rounded-xl border border-white/30 px-7 py-3.5 text-base font-medium text-white hover:bg-white/10 transition-colors">
-              See how it works
+            <a
+              href="#how-it-works"
+              className="text-sm font-medium transition-colors hover:text-white"
+              style={{ color: '#666' }}
+            >
+              See how it works →
             </a>
+          </div>
+
+          <div className="mt-6">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium"
+              style={{ borderColor: 'rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.06)', color: '#fbbf24' }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+              Testnet only · No real money · Mainnet coming soon
+            </span>
           </div>
         </div>
       </section>
 
       {/* ── Stats strip ────────────────────────────────────────────────────── */}
-      <section className="border-b border-gray-100 bg-gray-50 py-10">
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 px-6 text-center sm:grid-cols-4">
+      <section className="border-y px-6 py-10" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 text-center sm:grid-cols-4">
           {[
-            { value: '5 chains',    label: 'Supported networks'    },
-            { value: '~2–3 min',   label: 'Cross-chain settlement' },
-            { value: '~1% fee',    label: 'CCTP relayer cost'      },
-            { value: 'Instant',    label: 'Arc → Arc transfers'    },
+            { value: '5 chains',  label: 'Supported networks'    },
+            { value: '~2–3 min', label: 'Cross-chain settlement' },
+            { value: '0.1%',     label: 'Platform fee'           },
+            { value: 'Instant',  label: 'Arc → Arc transfers'    },
           ].map((s) => (
             <div key={s.label}>
-              <div className="text-2xl font-bold text-brand-600">{s.value}</div>
-              <div className="mt-0.5 text-xs text-gray-500">{s.label}</div>
+              <div className="text-2xl font-bold" style={{ color: '#2aabab' }}>{s.value}</div>
+              <div className="mt-0.5 text-xs" style={{ color: '#555' }}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── How It Works ───────────────────────────────────────────────────── */}
-      <section id="how-it-works" className="px-6 py-24">
+      {/* ── Features grid ──────────────────────────────────────────────────── */}
+      <section id="features" className="px-6 py-24">
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold">How It Works</h2>
-            <p className="mt-3 text-gray-500">Three steps from sign-up to sending payroll.</p>
+            <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Everything you need</div>
+            <h2 className="text-3xl font-bold text-white">Built for modern finance teams</h2>
+            <p className="mt-3 text-sm" style={{ color: '#555' }}>One platform for payroll, payments, swaps, and multi-chain treasury.</p>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { icon: <Users className="h-5 w-5" />,         title: 'Global Payroll',           desc: 'Add employees, set salaries, run payroll in one click. Schedule auto-runs on any day of the month.',                        color: '#2aabab' },
+              { icon: <Globe className="h-5 w-5" />,          title: 'Cross-Chain Payments',     desc: 'Send USDC & EURC across Ethereum, Base, Arbitrum, Polygon, and Arc via Circle CCTP V2.',                                  color: '#60a5fa' },
+              { icon: <ArrowLeftRight className="h-5 w-5" />, title: 'EURC ↔ USDC Swaps',       desc: 'Swap between stablecoins across chains instantly from your unified dashboard.',                                            color: '#a78bfa' },
+              { icon: <Calendar className="h-5 w-5" />,       title: 'Scheduled Payroll',        desc: 'Set a payday once — payroll runs automatically every month on your chosen date.',                                          color: '#34d399' },
+              { icon: <Wallet className="h-5 w-5" />,         title: 'Developer-Controlled Wallets', desc: 'Circle SCA wallets with no seed phrases. Gas is sponsored — employees pay nothing.',                                  color: '#fb923c' },
+              { icon: <Shield className="h-5 w-5" />,         title: 'On-Chain Audit Trail',     desc: 'Every payment, swap, and payroll run recorded on-chain with ArcScan explorer links.',                                     color: '#f472b6' },
+            ].map((feat) => (
+              <div
+                key={feat.title}
+                className="rounded-2xl border p-6 transition-all"
+                style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = feat.color + '40'
+                  el.style.background  = 'rgba(255,255,255,0.055)'
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = 'rgba(255,255,255,0.07)'
+                  el.style.background  = 'rgba(255,255,255,0.03)'
+                }}
+              >
+                <div className="mb-4 inline-flex rounded-xl p-2.5" style={{ background: feat.color + '15' }}>
+                  <span style={{ color: feat.color }}>{feat.icon}</span>
+                </div>
+                <h3 className="mb-2 font-semibold text-white">{feat.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#666' }}>{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How It Works ───────────────────────────────────────────────────── */}
+      <section id="how-it-works" className="px-6 py-24" style={{ background: 'rgba(255,255,255,0.015)' }}>
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-14 text-center">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Simple setup</div>
+            <h2 className="text-3xl font-bold text-white">Three steps, then you&apos;re live</h2>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3">
             {[
               {
                 step: '01',
-                icon: <Wallet className="h-7 w-7 text-brand-600" />,
+                icon: <Wallet className="h-6 w-6" />,
                 title: 'Create your account',
-                body: 'Sign up in seconds. We instantly provision a developer-controlled SCA wallet on Arc Testnet and every supported source chain — no seed phrases, no MetaMask required.',
+                body: 'Sign up in seconds. We instantly provision a Circle SCA wallet on Arc Testnet and every supported chain — no seed phrases, no MetaMask.',
               },
               {
                 step: '02',
-                icon: <Globe className="h-7 w-7 text-brand-600" />,
+                icon: <Globe className="h-6 w-6" />,
                 title: 'Fund from any chain',
-                body: 'Deposit USDC from Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, or Polygon Amoy. Circle CCTP V2 burns it on the source chain and mints it directly to your Arc wallet in ~2–3 minutes.',
+                body: 'Deposit USDC from Ethereum, Base, Arbitrum, or Polygon. CCTP V2 burns it on the source chain and mints directly to your Arc wallet in ~2–3 min.',
               },
               {
                 step: '03',
-                icon: <Banknote className="h-7 w-7 text-brand-600" />,
-                title: 'Run payroll or send payments',
-                body: 'Add employees with wallet addresses and salaries, then hit Run Payroll. Or send one-off payments to any Arc Testnet address instantly. All transactions are on-chain and auditable.',
+                icon: <Banknote className="h-6 w-6" />,
+                title: 'Run payroll or send',
+                body: 'Add employees with wallet addresses and salaries, then hit Run Payroll. Or send one-off payments to any address instantly. All on-chain, fully auditable.',
               },
-            ].map((item) => (
-              <div key={item.step} className="relative rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-                <div className="absolute right-6 top-6 text-4xl font-black text-gray-50">{item.step}</div>
-                <div className="mb-4 inline-flex rounded-xl bg-brand-50 p-3">{item.icon}</div>
-                <h3 className="mb-2 text-lg font-semibold">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-gray-500">{item.body}</p>
+            ].map((item, i) => (
+              <div
+                key={item.step}
+                className="relative rounded-2xl border p-8"
+                style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(42,171,171,0.15)' }}
+              >
+                {i < 2 && (
+                  <div className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 sm:block">
+                    <ChevronRight className="h-5 w-5" style={{ color: 'rgba(42,171,171,0.3)' }} />
+                  </div>
+                )}
+                <div className="absolute right-6 top-6 text-4xl font-black" style={{ color: 'rgba(42,171,171,0.07)' }}>{item.step}</div>
+                <div className="mb-4 inline-flex rounded-xl p-3" style={{ background: 'rgba(42,171,171,0.1)' }}>
+                  <span style={{ color: '#2aabab' }}>{item.icon}</span>
+                </div>
+                <h3 className="mb-2 font-semibold text-white">{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#666' }}>{item.body}</p>
               </div>
             ))}
           </div>
 
-          {/* CCTP flow diagram */}
-          <div className="mt-14 rounded-2xl bg-gradient-to-r from-brand-50 to-blue-50 p-8">
-            <p className="mb-6 text-center text-sm font-semibold uppercase tracking-wider text-brand-700">CCTP V2 Cross-Chain Flow</p>
+          {/* CCTP flow */}
+          <div className="mt-12 rounded-2xl border p-8" style={{ background: 'rgba(42,171,171,0.04)', borderColor: 'rgba(42,171,171,0.15)' }}>
+            <p className="mb-6 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: '#2aabab' }}>CCTP V2 Cross-Chain Flow</p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               {[
-                { label: 'Your ETH/Base/ARB/Polygon wallet', color: 'bg-gray-100 text-gray-700' },
+                { label: 'Your ETH/Base/ARB/Polygon wallet', bg: 'rgba(255,255,255,0.05)', color: '#888' },
                 null,
-                { label: 'approve + depositForBurn', color: 'bg-amber-100 text-amber-800' },
+                { label: 'depositForBurn via CCTP',          bg: 'rgba(251,191,36,0.08)',  color: '#fbbf24' },
                 null,
-                { label: 'Iris API attestation', color: 'bg-blue-100 text-blue-800' },
+                { label: 'Iris API attestation',             bg: 'rgba(96,165,250,0.08)',  color: '#60a5fa' },
                 null,
-                { label: 'receiveMessage on Arc', color: 'bg-green-100 text-green-800' },
+                { label: 'receiveMessage on Arc',            bg: 'rgba(52,211,153,0.08)',  color: '#34d399' },
                 null,
-                { label: 'USDC in Arc wallet ✓', color: 'bg-brand-100 text-brand-800' },
+                { label: 'USDC in Arc wallet ✓',            bg: 'rgba(42,171,171,0.12)',  color: '#2aabab' },
               ].map((item, i) =>
                 item === null
-                  ? <ChevronRight key={i} className="h-4 w-4 text-gray-400" />
-                  : <span key={i} className={`rounded-lg px-3 py-1.5 font-medium ${item.color}`}>{item.label}</span>
+                  ? <ChevronRight key={i} className="h-4 w-4" style={{ color: 'rgba(255,255,255,0.15)' }} />
+                  : <span key={i} className="rounded-lg px-3 py-1.5 text-xs font-medium" style={{ background: item.bg, color: item.color }}>{item.label}</span>
               )}
             </div>
           </div>
@@ -149,48 +269,58 @@ export default function LandingPage() {
       </section>
 
       {/* ── Use Cases ──────────────────────────────────────────────────────── */}
-      <section id="use-cases" className="bg-gray-50 px-6 py-24">
+      <section id="use-cases" className="px-6 py-24">
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold">Use Cases</h2>
-            <p className="mt-3 text-gray-500">Who benefits from Architect Pay?</p>
+            <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Use cases</div>
+            <h2 className="text-3xl font-bold text-white">Who uses Architect Pay?</h2>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {[
               {
-                icon: <Users className="h-6 w-6 text-brand-600" />,
-                title: 'Global Payroll',
-                body: 'Pay remote employees and contractors in USDC regardless of which chain their wallet is on. Run payroll for your whole team in one click — funds arrive in seconds on Arc Testnet.',
-                bullets: ['Add employee roster with salaries', 'One-click batch payroll', 'Per-employee tx history'],
+                icon: <Users className="h-5 w-5" />,
+                title: 'Global Payroll Teams',
+                body: 'Pay remote employees and contractors in USDC regardless of which chain their wallet is on. Schedule auto-runs so payroll never slips.',
+                bullets: ['Add employee roster with salaries', 'One-click batch payroll', 'Scheduled monthly auto-pay'],
+                color: '#2aabab',
               },
               {
-                icon: <Building2 className="h-6 w-6 text-brand-600" />,
-                title: 'Vendor Payments',
-                body: 'Pay vendors and suppliers on-chain without asking them to set up a specific chain. Any EVM address on Arc Testnet receives USDC instantly.',
-                bullets: ['Instant on-chain payments', 'Wallet address + label tracking', 'Payment history with explorer links'],
+                icon: <Building2 className="h-5 w-5" />,
+                title: 'Vendor & Supplier Payments',
+                body: 'Pay vendors on-chain without asking them to use a specific chain. Any EVM address receives USDC or EURC instantly.',
+                bullets: ['Instant on-chain payments', 'Wallet address + label tracking', 'Full history with explorer links'],
+                color: '#60a5fa',
               },
               {
-                icon: <RefreshCw className="h-6 w-6 text-brand-600" />,
+                icon: <RefreshCw className="h-5 w-5" />,
                 title: 'Cross-Chain Treasury',
-                body: 'Aggregate USDC scattered across multiple chains into a single spendable Arc Testnet balance. No manual bridging, no gas management per chain.',
+                body: 'Aggregate USDC scattered across multiple chains into a single spendable Arc balance. No manual bridging or per-chain gas management.',
                 bullets: ['Auto-aggregate from all chains', 'Parallel CCTP pulls', 'Arc becomes unified treasury'],
+                color: '#a78bfa',
               },
               {
-                icon: <Zap className="h-6 w-6 text-brand-600" />,
-                title: 'Instant Settlements',
-                body: 'Arc Testnet → Arc Testnet transfers are instant with zero fee. Perfect for internal transfers between team wallets or settling invoices in real time.',
+                icon: <Zap className="h-5 w-5" />,
+                title: 'Instant Internal Transfers',
+                body: 'Arc → Arc transfers are instant with zero fee. Perfect for internal wallet settlements or real-time invoice payments.',
                 bullets: ['Zero fee on-Arc transfers', 'Circle Gas Station sponsors gas', 'No MetaMask or seed phrases'],
+                color: '#34d399',
               },
             ].map((uc) => (
-              <div key={uc.title} className="rounded-2xl border border-gray-200 bg-white p-8">
-                <div className="mb-4 inline-flex rounded-xl bg-brand-50 p-3">{uc.icon}</div>
-                <h3 className="mb-2 text-lg font-semibold">{uc.title}</h3>
-                <p className="mb-4 text-sm leading-relaxed text-gray-500">{uc.body}</p>
-                <ul className="space-y-1.5">
+              <div
+                key={uc.title}
+                className="rounded-2xl border p-8 transition-all"
+                style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
+              >
+                <div className="mb-4 inline-flex rounded-xl p-3" style={{ background: uc.color + '15' }}>
+                  <span style={{ color: uc.color }}>{uc.icon}</span>
+                </div>
+                <h3 className="mb-2 font-semibold text-white">{uc.title}</h3>
+                <p className="mb-4 text-sm leading-relaxed" style={{ color: '#666' }}>{uc.body}</p>
+                <ul className="space-y-2">
                   {uc.bullets.map((b) => (
-                    <li key={b} className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                    <li key={b} className="flex items-center gap-2 text-sm" style={{ color: '#888' }}>
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: uc.color }} />
                       {b}
                     </li>
                   ))}
@@ -201,147 +331,89 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Documentation ──────────────────────────────────────────────────── */}
-      <section id="documentation" className="px-6 py-24">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold">Documentation</h2>
-            <p className="mt-3 text-gray-500">Everything you need to understand the stack.</p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                title: 'Circle CCTP V2',
-                desc: 'Cross-Chain Transfer Protocol — how USDC burns and mints across EVM chains.',
-                href: 'https://developers.circle.com/stablecoins/cctp-getting-started',
-                tag: 'External docs',
-              },
-              {
-                title: 'Arc Testnet',
-                desc: 'Circle\'s L2 blockchain built on Arbitrum Orbit. Fast, cheap, USDC-native.',
-                href: 'https://developers.circle.com/arc',
-                tag: 'External docs',
-              },
-              {
-                title: 'Developer-Controlled Wallets',
-                desc: 'Circle SDK for provisioning and operating SCA wallets on behalf of users.',
-                href: 'https://developers.circle.com/w3s/developer-controlled-wallets',
-                tag: 'External docs',
-              },
-              {
-                title: 'Iris API',
-                desc: 'Circle\'s attestation service — polls until a burn message is ready to relay on Arc.',
-                href: 'https://iris-api-sandbox.circle.com',
-                tag: 'Sandbox API',
-              },
-              {
-                title: 'Circle Faucet',
-                desc: 'Get free testnet USDC on Ethereum Sepolia, Base Sepolia, and other chains.',
-                href: 'https://faucet.circle.com',
-                tag: 'Testnet tool',
-              },
-              {
-                title: 'ArcScan Explorer',
-                desc: 'Browse Arc Testnet transactions, addresses, and smart contract calls.',
-                href: 'https://testnet.arcscan.app',
-                tag: 'Block explorer',
-              },
-            ].map((doc) => (
-              <a
-                key={doc.title}
-                href={doc.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group rounded-xl border border-gray-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-md"
-              >
-                <div className="mb-1 text-xs font-medium text-brand-500">{doc.tag}</div>
-                <h3 className="mb-1.5 font-semibold group-hover:text-brand-600 transition-colors">{doc.title}</h3>
-                <p className="text-sm text-gray-500">{doc.desc}</p>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── Developer Portal ───────────────────────────────────────────────── */}
-      <section id="developer" className="bg-gray-900 px-6 py-24 text-white">
+      <section id="developer" className="px-6 py-24" style={{ background: 'rgba(255,255,255,0.015)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold">Developer Portal</h2>
-            <p className="mt-3 text-gray-400">The tech stack powering Architect Pay.</p>
+            <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Open stack</div>
+            <h2 className="text-3xl font-bold text-white">Developer Portal</h2>
+            <p className="mt-3 text-sm" style={{ color: '#555' }}>The tech powering Architect Pay — all open, all auditable.</p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            <div className="rounded-2xl bg-gray-800 p-8">
-              <Code2 className="mb-4 h-7 w-7 text-brand-400" />
-              <h3 className="mb-3 text-lg font-semibold">API Routes</h3>
-              <ul className="space-y-2 font-mono text-sm text-gray-400">
+            {/* API routes */}
+            <div className="rounded-2xl border p-8" style={{ background: 'rgba(0,0,0,0.6)', borderColor: 'rgba(42,171,171,0.15)' }}>
+              <div className="mb-6 flex items-center gap-3">
+                <Code2 className="h-5 w-5" style={{ color: '#2aabab' }} />
+                <h3 className="font-semibold text-white">API Routes</h3>
+              </div>
+              <ul className="space-y-2 font-mono text-xs" style={{ color: '#555' }}>
                 {[
                   ['POST', '/api/auth/register'],
-                  ['POST', '/api/auth/login'],
                   ['GET',  '/api/wallet/balance'],
-                  ['POST', '/api/wallet/deposit'],
                   ['POST', '/api/payments/send'],
-                  ['POST', '/api/payments/aggregate-send'],
-                  ['GET',  '/api/payments/aggregate-plan'],
-                  ['GET',  '/api/payments/history'],
-                  ['GET',  '/api/employees'],
-                  ['POST', '/api/employees'],
-                  ['DELETE', '/api/employees/[id]'],
                   ['POST', '/api/payroll/run'],
                   ['GET',  '/api/payroll/runs'],
+                  ['POST', '/api/swap'],
+                  ['GET',  '/api/swap/history'],
+                  ['POST', '/api/employees'],
+                  ['GET',  '/api/payments/history'],
                 ].map(([method, route]) => (
                   <li key={`${method}-${route}`} className="flex items-center gap-3">
-                    <span className={`w-14 shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-bold ${
-                      method === 'GET' ? 'bg-green-900 text-green-400' :
-                      method === 'POST' ? 'bg-blue-900 text-blue-400' :
-                      'bg-red-900 text-red-400'
-                    }`}>{method}</span>
+                    <span className="w-14 shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-bold" style={{
+                      background: method === 'GET' ? 'rgba(52,211,153,0.1)' : method === 'POST' ? 'rgba(96,165,250,0.1)' : 'rgba(248,113,113,0.1)',
+                      color:      method === 'GET' ? '#34d399'              : method === 'POST' ? '#60a5fa'               : '#f87171',
+                    }}>{method}</span>
                     <span>{route}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="space-y-4">
-              <div className="rounded-2xl bg-gray-800 p-6">
-                <Shield className="mb-3 h-6 w-6 text-brand-400" />
-                <h3 className="mb-2 font-semibold">Tech Stack</h3>
-                <ul className="space-y-1.5 text-sm text-gray-400">
+            <div className="space-y-5">
+              <div className="rounded-2xl border p-6" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}>
+                <div className="mb-4 flex items-center gap-3">
+                  <Shield className="h-5 w-5" style={{ color: '#2aabab' }} />
+                  <h3 className="font-semibold text-white">Tech Stack</h3>
+                </div>
+                <ul className="space-y-2 text-sm" style={{ color: '#666' }}>
                   {[
-                    'Next.js 14 App Router',
+                    'Next.js 14 App Router + TypeScript',
                     'Circle Developer-Controlled Wallets SDK',
                     'CCTP V2 (viem encodeFunctionData)',
-                    'Prisma + SQLite',
-                    'JWT session cookies',
+                    'Prisma + Neon PostgreSQL',
+                    'NextAuth.js sessions',
                     'Tailwind CSS',
                   ].map((t) => (
                     <li key={t} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-brand-500" />
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: '#2aabab' }} />
                       {t}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="rounded-2xl bg-gray-800 p-6">
-                <Zap className="mb-3 h-6 w-6 text-brand-400" />
-                <h3 className="mb-2 font-semibold">Key Integrations</h3>
-                <ul className="space-y-1.5 text-sm text-gray-400">
-                  {[
-                    'Circle Iris API — CCTP attestation polling',
-                    'Circle Gas Station — fee sponsorship',
-                    'Arc Testnet CCTP domain 26',
-                    'ArcScan — transaction explorer links',
-                    'Circle Testnet Faucet — USDC funding',
-                  ].map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-brand-500" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { title: 'Circle CCTP V2',  href: 'https://developers.circle.com/stablecoins/cctp-getting-started', tag: 'Docs'     },
+                  { title: 'Arc Testnet',     href: 'https://developers.circle.com/arc',                              tag: 'Docs'     },
+                  { title: 'ArcScan',         href: 'https://testnet.arcscan.app',                                    tag: 'Explorer' },
+                  { title: 'Circle Faucet',   href: 'https://faucet.circle.com',                                      tag: 'Faucet'   },
+                ].map((doc) => (
+                  <a
+                    key={doc.title}
+                    href={doc.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl border p-4 transition-all block"
+                    style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
+                    onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(42,171,171,0.3)'}
+                    onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'}
+                  >
+                    <div className="mb-1 text-xs font-medium" style={{ color: '#2aabab' }}>{doc.tag}</div>
+                    <div className="text-sm font-medium text-white">{doc.title}</div>
+                  </a>
+                ))}
               </div>
             </div>
           </div>
@@ -349,18 +421,53 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer CTA ─────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-r from-brand-600 to-brand-800 px-6 py-20 text-center text-white">
-        <h2 className="mb-4 text-3xl font-bold">Ready to run payroll on-chain?</h2>
-        <p className="mb-8 text-brand-100">Set up your account in under a minute. No wallet required.</p>
-        <Link href="/signup" className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-brand-700 shadow-lg hover:bg-brand-50 transition-colors">
-          Get started free <ArrowRight className="h-4 w-4" />
-        </Link>
+      <section className="relative overflow-hidden px-6 py-32 text-center">
+        {/* Ghost big text in background */}
+        <div
+          className="pointer-events-none absolute inset-0 flex select-none items-center justify-center"
+          aria-hidden="true"
+        >
+          <span
+            className="font-black uppercase"
+            style={{
+              fontSize: 'clamp(4rem, 14vw, 11rem)',
+              WebkitTextStroke: '1px rgba(255,255,255,0.05)',
+              color: 'transparent',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            GET STARTED
+          </span>
+        </div>
+        <div className="relative z-10 mx-auto max-w-xl">
+          <h2 className="mb-4 text-4xl font-bold text-white">
+            Ready to run payroll
+            <br />
+            <span style={{ color: '#2aabab' }}>on-chain?</span>
+          </h2>
+          <p className="mb-8 text-sm leading-relaxed" style={{ color: '#555' }}>
+            Set up your account in under a minute. No wallet required.
+          </p>
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-black transition-all hover:opacity-90"
+            style={{ background: '#2aabab', boxShadow: '0 0 40px rgba(42,171,171,0.3)' }}
+          >
+            <Zap className="h-4 w-4" />
+            Get Started Free
+          </Link>
+        </div>
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-8 text-center text-xs text-gray-400">
-        <p>Architect Pay · Built on Arc Testnet · Powered by Circle CCTP V2</p>
-        <p className="mt-1">All transactions use testnet USDC — no real money involved.</p>
+      <footer className="border-t px-6 py-8 text-center text-xs" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#444' }}>
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 sm:flex-row sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Architect Pay" width={18} height={18} className="rounded-md object-contain opacity-50" />
+            <span>Architect Pay · Built on Arc Testnet · Powered by Circle CCTP V2</span>
+          </div>
+          <p>All transactions use testnet USDC — no real money involved.</p>
+        </div>
       </footer>
 
     </div>
