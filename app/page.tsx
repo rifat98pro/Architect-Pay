@@ -55,10 +55,10 @@ export default function LandingPage() {
             style={{ letterSpacing: '-0.03em', color: '#2aabab' }}
           >
             {[
-              { text: 'ONE WALLET', size: 'clamp(2.8rem, 8vw, 7rem)', opacity: 0.45 },
-              { text: 'PAY GLOBAL', size: 'clamp(3.5rem, 10vw, 9rem)', opacity: 1 },
-              { text: 'ANY CHAIN',  size: 'clamp(2.8rem, 8vw, 7rem)', opacity: 0.45 },
-              { text: 'ANY TEAM',   size: 'clamp(2.8rem, 8vw, 7rem)', opacity: 0.45 },
+              { text: 'ONE WALLET', size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
+              { text: 'PAY GLOBAL', size: 'clamp(2rem, 5.5vw, 4.5rem)', opacity: 1 },
+              { text: 'ANY CHAIN',  size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
+              { text: 'ANY TEAM',   size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
             ].map(({ text, size, opacity }) => (
               <div
                 key={text}
