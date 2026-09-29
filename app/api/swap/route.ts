@@ -81,17 +81,44 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await swapTokens({
-      walletAddress: srcAddress,
-      tokenIn,
-      tokenOut,
-      amountIn:  swapAmountIn,
-      chain:     CHAIN_MAP[srcChain],
-      toChain:   CHAIN_MAP[destChain],
-      toAddress: destAddress,
-    })
+    let swapResult: Awaited<ReturnType<typeof swapTokens>> | null = null
+    let swapError: string | null = null
+    try {
+      swapResult = await swapTokens({
+        walletAddress: srcAddress,
+        tokenIn,
+        tokenOut,
+        amountIn:  swapAmountIn,
+        chain:     CHAIN_MAP[srcChain],
+        toChain:   CHAIN_MAP[destChain],
+        toAddress: destAddress,
+      })
+    } catch (e) {
+      swapError = e instanceof Error ? e.message : 'Swap failed'
+    }
 
-    return NextResponse.json({ success: true, result })
+    // Record swap regardless of outcome
+    await db.swapHistory.create({
+      data: {
+        userId:   user.id,
+        tokenIn,
+        tokenOut,
+        amountIn: swapAmountIn,
+        amountOut: swapResult ? String((swapResult as { amountOut?: string | number })?.amountOut ?? '') : null,
+        srcChain,
+        destChain,
+        status:   swapError ? 'FAILED' : 'COMPLETED',
+        txHash:   swapResult ? String((swapResult as { txHash?: string })?.txHash ?? '') || null : null,
+        errorMsg: swapError,
+      },
+    }).catch(() => {/* non-fatal */})
+
+    if (swapError) {
+      console.error('[swap]', swapError)
+      return NextResponse.json({ error: swapError }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, result: swapResult })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Swap failed'
     console.error('[swap]', message)

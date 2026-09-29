@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
 import {
   CheckCircle2, XCircle, Clock, RefreshCw,
-  ExternalLink, AlertTriangle, Loader2, ChevronDown,
+  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +29,20 @@ interface PayrollEntry {
   txHash:       string | null
   errorMessage: string | null
   employee:     { name: string; walletAddress: string }
+}
+
+interface SwapRecord {
+  id:        string
+  tokenIn:   string
+  tokenOut:  string
+  amountIn:  string
+  amountOut: string | null
+  srcChain:  string
+  destChain: string
+  status:    string
+  txHash:    string | null
+  errorMsg:  string | null
+  createdAt: string
 }
 
 interface PayrollRun {
@@ -60,9 +74,10 @@ export default function HistoryPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
-  const [tab,      setTab]      = useState<'payments' | 'payroll'>('payments')
+  const [tab,      setTab]      = useState<'payments' | 'payroll' | 'swaps'>('payments')
   const [payments, setPayments] = useState<Payment[]>([])
   const [runs,     setRuns]     = useState<PayrollRun[]>([])
+  const [swaps,    setSwaps]    = useState<SwapRecord[]>([])
   const [loading,  setLoading]  = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
 
@@ -75,9 +90,11 @@ export default function HistoryPage() {
     Promise.all([
       fetch('/api/payments/history').then((r) => r.json()),
       fetch('/api/payroll/runs').then((r) => r.json()),
-    ]).then(([payData, runData]) => {
+      fetch('/api/swap/history').then((r) => r.json()),
+    ]).then(([payData, runData, swapData]) => {
       setPayments(payData.payments ?? [])
       setRuns(runData.runs ?? [])
+      setSwaps(swapData.swaps ?? [])
     }).finally(() => setLoading(false))
   }, [user?.id])
 
@@ -94,6 +111,7 @@ export default function HistoryPage() {
         {([
           { id: 'payments', label: 'Payments' },
           { id: 'payroll',  label: 'Payroll Runs' },
+          { id: 'swaps',    label: 'Swaps' },
         ] as const).map((t) => (
           <button
             key={t.id}
@@ -157,6 +175,73 @@ export default function HistoryPage() {
                   <StatusBadge status={p.status} />
                 </div>
               ))}
+            </div>
+          </div>
+        )
+      ) : tab === 'swaps' ? (
+        swaps.length === 0 ? (
+          <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-700 text-sm text-gray-500">
+            <ArrowLeftRight className="h-8 w-8 text-gray-700" />
+            No swaps yet
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-gray-700/50 bg-gray-900/60">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-gray-800 px-5 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Swap</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Amount In</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Amount Out</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</span>
+            </div>
+            <div className="divide-y divide-gray-800/60">
+              {swaps.map((s) => {
+                const isCross = s.srcChain !== s.destChain
+                const chainLabel = isCross
+                  ? `${s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','')} → ${s.destChain.replace('-TESTNET','').replace('-SEPOLIA','')}`
+                  : s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','')
+                return (
+                  <div key={s.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                        <span className="text-brand-400">{s.tokenIn}</span>
+                        <ArrowLeftRight className="h-3.5 w-3.5 text-gray-500" />
+                        <span className="text-purple-400">{s.tokenOut}</span>
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <span className="text-xs text-gray-500">{chainLabel}</span>
+                        <span className="text-gray-700">·</span>
+                        <span className="text-xs text-gray-600">{new Date(s.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      {s.txHash && (
+                        <a
+                          href={`${ARC_EXPLORER}/tx/${s.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
+                        >
+                          {s.txHash.slice(0, 6)}…{s.txHash.slice(-4)}
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                      {s.errorMsg && <div className="mt-0.5 text-xs text-red-400">{s.errorMsg}</div>}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-white">{parseFloat(s.amountIn).toFixed(4)}</div>
+                      <div className="text-xs text-gray-500">{s.tokenIn}</div>
+                    </div>
+                    <div className="text-right">
+                      {s.amountOut && parseFloat(s.amountOut) > 0 ? (
+                        <>
+                          <div className="text-sm font-semibold text-white">{parseFloat(s.amountOut).toFixed(4)}</div>
+                          <div className="text-xs text-gray-500">{s.tokenOut}</div>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-600">—</span>
+                      )}
+                    </div>
+                    <StatusBadge status={s.status} />
+                  </div>
+                )
+              })}
             </div>
           </div>
         )

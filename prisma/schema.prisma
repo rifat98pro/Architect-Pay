@@ -68,6 +68,7 @@ model User {
   businesses   Business[]
   feedbacks    Feedback[]
   bugReports   BugReport[]
+  swaps        SwapHistory[]
 }
 
 model Business {
@@ -167,6 +168,22 @@ model PayrollEntry {
   status       String      @default("PENDING")
   txHash       String?
   errorMessage String?
+}
+
+model SwapHistory {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  tokenIn    String
+  tokenOut   String
+  amountIn   String
+  amountOut  String?
+  srcChain   String
+  destChain  String
+  status     String   @default("COMPLETED")
+  txHash     String?
+  errorMsg   String?
+  createdAt  DateTime @default(now())
 }
 
 model Feedback {
