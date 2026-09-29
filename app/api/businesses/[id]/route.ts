@@ -19,12 +19,15 @@ export async function PATCH(
   }
 
   const body   = await req.json()
-  const parsed = z.object({ name: z.string().min(1).max(100) }).safeParse(body)
+  const parsed = z.object({
+    name:         z.string().min(1).max(100).optional(),
+    scheduledDay: z.number().int().min(1).max(28).nullable().optional(),
+  }).safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const updated = await db.business.update({ where: { id }, data: { name: parsed.data.name } })
+  const updated = await db.business.update({ where: { id }, data: parsed.data })
   return NextResponse.json({ business: updated })
 }
 

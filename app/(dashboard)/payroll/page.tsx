@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet } from 'lucide-react'
+import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, Clock } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
@@ -46,8 +46,10 @@ export default function PayrollPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
-  const [businesses,    setBusinesses]    = useState<{ id: string; name: string }[]>([])
+  const [businesses,    setBusinesses]    = useState<{ id: string; name: string; scheduledDay?: number | null }[]>([])
   const [businessId,    setBusinessId]    = useState<string>('')
+  const [scheduleDay,   setScheduleDay]   = useState<number | null>(null)
+  const [savingSched,   setSavingSched]   = useState(false)
   const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
   const [employees,     setEmployees]     = useState<{ id: string; salary: string }[]>([])
   const [runs,          setRuns]          = useState<PayrollRun[]>([])
@@ -81,6 +83,26 @@ export default function PayrollPage() {
   useEffect(() => {
     if (user?.id) loadData(businessId || undefined)
   }, [user?.id, businessId])
+
+  // Sync scheduleDay when business changes
+  useEffect(() => {
+    const biz = businesses.find((b) => b.id === businessId)
+    setScheduleDay(biz?.scheduledDay ?? null)
+  }, [businessId, businesses])
+
+  async function saveSchedule(day: number | null) {
+    if (!businessId) return
+    setSavingSched(true)
+    try {
+      await fetch(`/api/businesses/${businessId}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ scheduledDay: day }),
+      })
+      setScheduleDay(day)
+      setBusinesses((prev) => prev.map((b) => b.id === businessId ? { ...b, scheduledDay: day } : b))
+    } finally { setSavingSched(false) }
+  }
 
   const totalSalary  = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
@@ -215,6 +237,63 @@ export default function PayrollPage() {
           </p>
         )}
       </div>
+
+      {/* Scheduled payroll */}
+      {businessId && (
+        <div className="mb-8 rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/15">
+              <Calendar className="h-4 w-4 text-brand-400" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white">Scheduled Payroll</div>
+              <div className="text-xs text-gray-500">Auto-run payroll on a fixed day every month</div>
+            </div>
+          </div>
+
+          {scheduleDay ? (
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-brand-500/20 bg-brand-500/8 px-4 py-3">
+              <Clock className="h-4 w-4 text-brand-400 shrink-0" />
+              <div className="flex-1 text-sm text-gray-300">
+                Payroll runs automatically on the <span className="font-semibold text-white">{scheduleDay}{['st','nd','rd'][scheduleDay-1]??'th'}</span> of every month
+              </div>
+              <button
+                onClick={() => saveSchedule(null)}
+                disabled={savingSched}
+                className="text-xs text-red-400 hover:underline disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <p className="mb-4 text-xs text-gray-500">No schedule set — payroll only runs when you click Run Payroll.</p>
+          )}
+
+          <div className="flex items-center gap-3">
+            <select
+              value={scheduleDay ?? ''}
+              onChange={(e) => {
+                const val = e.target.value ? parseInt(e.target.value) : null
+                saveSchedule(val)
+              }}
+              disabled={savingSched}
+              className="flex-1 appearance-none rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white outline-none focus:border-brand-500/50 disabled:opacity-50"
+            >
+              <option value="">Select a day of month…</option>
+              {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                <option key={d} value={d}>
+                  {d}{['st','nd','rd'][d-1]??'th'} of every month
+                </option>
+              ))}
+            </select>
+            {savingSched && <Loader2 className="h-4 w-4 animate-spin text-brand-400 shrink-0" />}
+            {!savingSched && scheduleDay && <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" />}
+          </div>
+          <p className="mt-2 text-xs text-gray-600">
+            Max day is 28 to avoid issues with February. The cron job triggers at midnight UTC.
+          </p>
+        </div>
+      )}
 
       {/* History */}
       <div>

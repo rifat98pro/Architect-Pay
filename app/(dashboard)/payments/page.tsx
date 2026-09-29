@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight } from 'lucide-react'
+import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
 
@@ -55,6 +55,7 @@ export default function PaymentsPage() {
   const [loading, setLoading]                     = useState(false)
   const [error, setError]                         = useState('')
   const [success, setSuccess]                     = useState('')
+  const [confirming, setConfirming]               = useState(false)
 
   const [planLoading, setPlanLoading]   = useState(false)
   const [plan, setPlan]                 = useState<AggregatePlanEntry[] | null>(null)
@@ -154,11 +155,18 @@ export default function PaymentsPage() {
     ? /^0x[a-fA-F0-9]{40}$/.test(walletAddress)
     : lookupState === 'found'
 
-  async function handleSend(e: React.FormEvent) {
+  // Step 1: show confirmation screen
+  function handleSend(e: React.FormEvent) {
     e.preventDefault()
     if (!canSend) return
     setError('')
     setSuccess('')
+    setConfirming(true)
+  }
+
+  // Step 2: actually send after user confirms
+  async function confirmSend() {
+    setConfirming(false)
     setLoading(true)
     try {
       const endpoint = isAggregate ? '/api/payments/aggregate-send' : '/api/payments/send'
@@ -463,14 +471,118 @@ export default function PaymentsPage() {
         >
           {loading
             ? <Loader2 className="h-4 w-4 animate-spin" />
-            : isAggregate ? <Layers className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+            : <ShieldCheck className="h-4 w-4" />}
           {loading
             ? 'Sending…'
             : isAggregate
-              ? `Aggregate & Send${amount ? ` $${amount}` : ''} USDC`
-              : `Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
+              ? `Review & Send${amount ? ` $${amount}` : ''} USDC`
+              : `Review & Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
         </button>
       </form>
+
+      {/* ── Confirmation modal ── */}
+      {confirming && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6"
+            style={{
+              background: 'linear-gradient(160deg, #0c1a2e 0%, #081422 100%)',
+              border:     '1px solid rgba(42,171,171,0.2)',
+              boxShadow:  '0 24px 64px rgba(0,0,0,0.6)',
+            }}
+          >
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15">
+                <ShieldCheck className="h-5 w-5 text-brand-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Confirm Transaction</h3>
+                <p className="text-xs text-gray-500">Double-check before sending</p>
+              </div>
+            </div>
+
+            <div className="mb-5 space-y-3 rounded-xl border border-gray-700/50 bg-gray-800/40 p-4">
+              {/* Amount */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Amount</span>
+                <span className="text-sm font-bold text-white">
+                  {token === 'EURC' ? '' : '$'}{amount} {token}
+                </span>
+              </div>
+
+              {/* Route */}
+              {!isAggregate && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Route</span>
+                  <span className="text-xs text-gray-300">
+                    {selectedSrcChain.label}
+                    {isCrossChain && <> <ArrowRight className="inline h-3 w-3" /> {selectedDestChain.label}</>}
+                  </span>
+                </div>
+              )}
+              {isAggregate && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Route</span>
+                  <span className="text-xs text-gray-300">All Chains (Aggregate)</span>
+                </div>
+              )}
+
+              {/* Fee */}
+              {isCrossChain && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Platform fee (0.1%)</span>
+                  <span className="text-xs text-amber-400">
+                    ~{token === 'EURC' ? '' : '$'}{Math.max(parseFloat(amount || '0') * 0.001, 0.10).toFixed(2)} {token}
+                  </span>
+                </div>
+              )}
+
+              {/* Label */}
+              {label && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Note</span>
+                  <span className="text-xs text-gray-300">{label}</span>
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="my-1 border-t border-gray-700" />
+
+              {/* Recipient — full address highlighted */}
+              <div>
+                <div className="mb-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+                  <AlertTriangle className="h-3 w-3 text-amber-400" />
+                  Recipient address — verify carefully
+                </div>
+                <div className="break-all rounded-lg border border-amber-900/40 bg-amber-900/10 px-3 py-2 font-mono text-xs text-amber-200">
+                  {recipientAddress}
+                </div>
+                {resolvedName && (
+                  <div className="mt-1 text-xs text-green-400">{resolvedName}</div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirming(false)}
+                className="flex-1 rounded-xl border border-gray-700 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 transition"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={confirmSend}
+                className="flex-1 rounded-xl bg-brand-500 py-2.5 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition"
+              >
+                Confirm & Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

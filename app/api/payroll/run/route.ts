@@ -11,7 +11,14 @@ import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 export const maxDuration = 300
 
 export async function POST(req: Request) {
-  const user = await getUserFromRequest()
+  // Allow cron-triggered calls with x-user-id header + cron secret
+  const authHeader = req.headers.get('authorization')
+  const cronUserId = req.headers.get('x-user-id')
+  const isCron     = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}` && !!cronUserId
+
+  const user = isCron
+    ? await db.user.findUnique({ where: { id: cronUserId! }, select: { id: true } })
+    : await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body       = await req.json().catch(() => ({}))

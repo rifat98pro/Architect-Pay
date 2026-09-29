@@ -90,5 +90,40 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ processed: pending.length, results })
+  // ── Auto-payroll: run scheduled payrolls whose day matches today ─────────
+  const todayDay = new Date().getUTCDate()
+  const scheduledBusinesses = await db.business.findMany({
+    where:   { scheduledDay: todayDay },
+    include: { user: { include: { wallet: { include: { chainWallets: true } } } } },
+  })
+
+  const payrollResults: { businessId: string; result: string }[] = []
+
+  for (const business of scheduledBusinesses) {
+    // Don't double-run: skip if a payroll run already completed today for this business
+    const todayStart = new Date()
+    todayStart.setUTCHours(0, 0, 0, 0)
+    const alreadyRan = await db.payrollRun.findFirst({
+      where: { businessId: business.id, createdAt: { gte: todayStart }, status: { in: ['COMPLETED', 'PARTIAL', 'PROCESSING'] } },
+    })
+    if (alreadyRan) { payrollResults.push({ businessId: business.id, result: 'already_ran' }); continue }
+
+    try {
+      const res = await fetch(`${process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL}/api/payroll/run`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.CRON_SECRET}`,
+          'x-user-id':     business.userId,
+        },
+        body: JSON.stringify({ businessId: business.id, _cronTriggered: true }),
+      })
+      const data = await res.json()
+      payrollResults.push({ businessId: business.id, result: res.ok ? 'triggered' : `error: ${data.error}` })
+    } catch (err) {
+      payrollResults.push({ businessId: business.id, result: `fetch_error: ${err instanceof Error ? err.message : err}` })
+    }
+  }
+
+  return NextResponse.json({ processed: pending.length, results, payrollResults })
 }
