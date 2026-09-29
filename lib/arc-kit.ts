@@ -91,19 +91,44 @@ export async function swapTokens({
   tokenIn,
   tokenOut,
   amountIn,
+  chain = 'Arc_Testnet',
+  toChain,
+  toAddress,
 }: {
   walletAddress: string
   tokenIn:       'EURC' | 'USDC'
   tokenOut:      'EURC' | 'USDC'
   amountIn:      string
+  chain?:        string
+  toChain?:      string
+  toAddress?:    string
 }) {
-  const adapter = buildCircleAdapter()
+  const adapter      = buildCircleAdapter()
+  const isCrossChain = toChain && toChain !== chain
 
-  return kit.swap({
-    from:    { adapter, chain: 'Arc_Testnet', address: walletAddress },
+  const params = {
+    from:   { adapter, chain: chain as never, address: walletAddress },
     tokenIn,
     tokenOut,
     amountIn,
-    config:  { slippageBps: 100, allowanceStrategy: 'approve' },
-  })
+    ...(isCrossChain ? { to: { chain: toChain as never, recipientAddress: toAddress ?? walletAddress } } : {}),
+    config: { slippageBps: 100, allowanceStrategy: 'approve' },
+  }
+
+  const result = await kit.swap(params as never) as Record<string, unknown>
+
+  // Cross-chain swaps start PENDING — try to wait up to 55s for completion
+  if ((result?.progress as Record<string, unknown>)?.status === 'PENDING') {
+    try {
+      const finalStatus = await Promise.race([
+        kit.waitForSwap({ result: result as never, apiKey: process.env.CIRCLE_API_KEY }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 55_000)),
+      ])
+      return { ...result, finalStatus, pending: false }
+    } catch {
+      return { ...result, pending: true }
+    }
+  }
+
+  return { ...result, pending: false }
 }
