@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid image format' }, { status: 400 })
   }
 
-  // ~400KB limit after base64 (300KB actual image)
-  if (image.length > 550_000) {
-    return NextResponse.json({ error: 'Image too large (max 400KB)' }, { status: 400 })
+  // ~1.5MB limit (base64 is ~33% larger than binary)
+  if (image.length > 2_100_000) {
+    return NextResponse.json({ error: 'Image too large (max 1.5 MB)' }, { status: 400 })
   }
 
   await db.user.update({ where: { id: user.id }, data: { image } })

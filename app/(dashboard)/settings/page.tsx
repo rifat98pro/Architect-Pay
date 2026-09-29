@@ -5,24 +5,11 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Loader2, Check, Camera, Trash2 } from 'lucide-react'
 
-function resizeImage(file: File, maxPx = 256): Promise<string> {
+function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = reject
-    reader.onload = (e) => {
-      const img = new Image()
-      img.onerror = reject
-      img.onload = () => {
-        const size = Math.min(img.width, img.height, maxPx)
-        const canvas = document.createElement('canvas')
-        canvas.width  = size
-        canvas.height = size
-        const ctx = canvas.getContext('2d')!
-        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, size, size)
-        resolve(canvas.toDataURL('image/jpeg', 0.88))
-      }
-      img.src = e.target?.result as string
-    }
+    reader.onload  = (e) => resolve(e.target?.result as string)
     reader.readAsDataURL(file)
   })
 }
@@ -64,10 +51,12 @@ export default function SettingsPage() {
     if (!file) return
     if (!file.type.startsWith('image/')) { setAvatarError('Please select an image file.'); return }
 
+    if (file.size > 1_500_000) { setAvatarError('Image too large (max 1.5 MB).'); return }
+
     setAvatarError('')
     setAvatarSaving(true)
     try {
-      const base64 = await resizeImage(file, 256)
+      const base64 = await readFileAsBase64(file)
       setAvatarPreview(base64)
 
       const res  = await fetch('/api/account/avatar', {
@@ -168,7 +157,7 @@ export default function SettingsPage() {
 
           {/* Actions */}
           <div className="flex-1">
-            <p className="mb-3 text-xs text-gray-500">JPG, PNG or GIF · Max 400KB · Cropped to a square</p>
+            <p className="mb-3 text-xs text-gray-500">JPG, PNG or GIF · Max 1.5 MB · Original quality</p>
             <div className="flex gap-2">
               <button
                 type="button"
