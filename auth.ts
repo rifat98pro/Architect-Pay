@@ -20,7 +20,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
-        session.user.id = user.id
+        session.user.id    = user.id
+        session.user.image = user.image ?? null
         const u = user as typeof user & { displayName?: string | null }
         if (u.displayName) session.user.name = u.displayName
       }

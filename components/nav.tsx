@@ -92,9 +92,20 @@ export default function Nav() {
         style={{ background: 'rgba(42,171,171,0.04)', border: '1px solid rgba(42,171,171,0.08)' }}
       >
         {user && (
-          <div className="mb-3">
-            <div className="text-sm font-medium text-white truncate">{user.name ?? user.email}</div>
-            <div className="text-xs text-gray-500 truncate">{user.email}</div>
+          <div className="mb-3 flex items-center gap-2.5">
+            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
+              {user.image ? (
+                <img src={user.image} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-bold text-brand-400">
+                  {(user.name ?? user.email ?? '?')[0].toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-white truncate">{user.name ?? user.email}</div>
+              <div className="text-xs text-gray-500 truncate">{user.email}</div>
+            </div>
           </div>
         )}
         <button

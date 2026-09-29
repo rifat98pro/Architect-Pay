@@ -6,6 +6,7 @@ interface AuthUser {
   id: string
   name: string | null
   email: string
+  image: string | null
 }
 
 interface AuthContextValue {
@@ -28,6 +29,7 @@ export function useAuth(): AuthContextValue {
           id:    (session.user as any).id ?? '',
           name:  session.user.name  ?? null,
           email: session.user.email ?? '',
+          image: session.user.image ?? null,
         }
       : null,
     loading: status === 'loading',
