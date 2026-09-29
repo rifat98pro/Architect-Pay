@@ -115,7 +115,7 @@ export async function swapTokens({
     config: { slippageBps: 100, allowanceStrategy: 'approve' },
   }
 
-  const result = await kit.swap(params as never) as Record<string, unknown>
+  const result = await kit.swap(params as never) as unknown as Record<string, unknown>
 
   // Cross-chain swaps start PENDING — try to wait up to 55s for completion
   if ((result?.progress as Record<string, unknown>)?.status === 'PENDING') {
