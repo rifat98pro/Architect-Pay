@@ -8,10 +8,10 @@ import { ArrowUpDown, ArrowRight, Loader2, CheckCircle2, Clock, RefreshCw } from
 type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
 type Chain = 'ARC-TESTNET' | 'ETH-SEPOLIA' | 'BASE-SEPOLIA'
 
-const CHAINS: { id: Chain; label: string; short: string }[] = [
-  { id: 'ARC-TESTNET',  label: 'Arc Testnet',  short: 'Arc'  },
-  { id: 'ETH-SEPOLIA',  label: 'ETH Sepolia',  short: 'ETH'  },
-  { id: 'BASE-SEPOLIA', label: 'Base Sepolia', short: 'Base' },
+const CHAINS: { id: Chain; label: string; short: string; swapSupported: boolean }[] = [
+  { id: 'ARC-TESTNET',  label: 'Arc Testnet',  short: 'Arc',  swapSupported: true  },
+  { id: 'ETH-SEPOLIA',  label: 'ETH Sepolia',  short: 'ETH',  swapSupported: false },
+  { id: 'BASE-SEPOLIA', label: 'Base Sepolia', short: 'Base', swapSupported: false },
 ]
 
 type BalMap = Record<Chain, { usdc: string; eurc: string }>
@@ -127,17 +127,24 @@ export default function SwapPage() {
             {CHAINS.map((c) => (
               <button
                 key={c.id}
-                onClick={() => { setSrcChain(c.id); setAmount(''); setError(''); setSuccess(false); setPending(false) }}
+                disabled={!c.swapSupported}
+                onClick={() => { if (c.swapSupported) { setSrcChain(c.id); setAmount(''); setError(''); setSuccess(false); setPending(false) } }}
+                title={!c.swapSupported ? 'Swap not supported on testnet — mainnet only' : undefined}
                 className={`rounded-lg px-3 py-2 text-xs font-medium text-left transition ${
-                  srcChain === c.id
+                  !c.swapSupported
+                    ? 'bg-gray-900 text-gray-600 cursor-not-allowed'
+                    : srcChain === c.id
                     ? 'bg-brand-500 text-white'
                     : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200'
                 }`}
               >
                 <span>{c.label}</span>
-                <span className={`ml-1 ${srcChain === c.id ? 'text-white/70' : 'text-gray-600'}`}>
-                  {balLoading ? '' : `${bals[c.id][tokenIn === 'EURC' ? 'eurc' : 'usdc']} ${tokenIn}`}
-                </span>
+                {!c.swapSupported
+                  ? <span className="ml-1 text-gray-700">mainnet only</span>
+                  : <span className={`ml-1 ${srcChain === c.id ? 'text-white/70' : 'text-gray-600'}`}>
+                      {balLoading ? '' : `${bals[c.id][tokenIn === 'EURC' ? 'eurc' : 'usdc']} ${tokenIn}`}
+                    </span>
+                }
               </button>
             ))}
           </div>
@@ -152,17 +159,24 @@ export default function SwapPage() {
             {CHAINS.map((c) => (
               <button
                 key={c.id}
-                onClick={() => { setDestChain(c.id); setError(''); setSuccess(false); setPending(false) }}
+                disabled={!c.swapSupported}
+                onClick={() => { if (c.swapSupported) { setDestChain(c.id); setError(''); setSuccess(false); setPending(false) } }}
+                title={!c.swapSupported ? 'Swap not supported on testnet — mainnet only' : undefined}
                 className={`rounded-lg px-3 py-2 text-xs font-medium text-left transition ${
-                  destChain === c.id
+                  !c.swapSupported
+                    ? 'bg-gray-900 text-gray-600 cursor-not-allowed'
+                    : destChain === c.id
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200'
                 }`}
               >
                 <span>{c.label}</span>
-                <span className={`ml-1 ${destChain === c.id ? 'text-white/70' : 'text-gray-600'}`}>
-                  {balLoading ? '' : `${bals[c.id][tokenOut === 'USDC' ? 'usdc' : 'eurc']} ${tokenOut}`}
-                </span>
+                {!c.swapSupported
+                  ? <span className="ml-1 text-gray-700">mainnet only</span>
+                  : <span className={`ml-1 ${destChain === c.id ? 'text-white/70' : 'text-gray-600'}`}>
+                      {balLoading ? '' : `${bals[c.id][tokenOut === 'USDC' ? 'usdc' : 'eurc']} ${tokenOut}`}
+                    </span>
+                }
               </button>
             ))}
           </div>
