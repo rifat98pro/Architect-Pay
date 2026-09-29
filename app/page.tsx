@@ -25,7 +25,7 @@ export default function LandingPage() {
 
           <nav className="hidden items-center gap-8 text-sm font-medium md:flex" style={{ color: '#888' }}>
             <a href="#features"     className="transition-colors hover:text-white">Features</a>
-            <a href="#how-it-works" className="transition-colors hover:text-white">Developers</a>
+            <a href="#developer" className="transition-colors hover:text-white">Developers</a>
             <a href="#use-cases"    className="transition-colors hover:text-white">Use Cases</a>
             <a href="#developer"    className="transition-colors hover:text-white">Docs</a>
           </nav>
