@@ -58,7 +58,7 @@ export default function LandingPage() {
               { text: 'ONE WALLET', size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
               { text: 'PAY GLOBAL', size: 'clamp(2rem, 5.5vw, 4.5rem)', opacity: 1 },
               { text: 'ANY CHAIN',  size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
-              { text: 'ANY TEAM',   size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
+              { text: 'ANY BUSINESS', size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
             ].map(({ text, size, opacity }) => (
               <div
                 key={text}
@@ -75,7 +75,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
-            On-chain payroll infrastructure for global teams. Run payroll, send cross-chain
+            On-chain payroll infrastructure for global businesses. Run payroll, send cross-chain
             USDC &amp; EURC payments, and manage employees from a single wallet.
           </p>
 
