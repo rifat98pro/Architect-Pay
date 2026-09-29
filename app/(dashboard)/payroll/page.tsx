@@ -49,6 +49,8 @@ export default function PayrollPage() {
   const [businesses,    setBusinesses]    = useState<{ id: string; name: string; scheduledDay?: number | null }[]>([])
   const [businessId,    setBusinessId]    = useState<string>('')
   const [scheduleDay,   setScheduleDay]   = useState<number | null>(null)
+  const [pendingDay,    setPendingDay]    = useState<number | null>(null)
+  const [editingSched,  setEditingSched]  = useState(false)
   const [savingSched,   setSavingSched]   = useState(false)
   const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
   const [employees,     setEmployees]     = useState<{ id: string; salary: string }[]>([])
@@ -87,20 +89,40 @@ export default function PayrollPage() {
   // Sync scheduleDay when business changes
   useEffect(() => {
     const biz = businesses.find((b) => b.id === businessId)
-    setScheduleDay(biz?.scheduledDay ?? null)
+    const day = biz?.scheduledDay ?? null
+    setScheduleDay(day)
+    setPendingDay(day)
+    setEditingSched(!day) // open editor if no schedule set yet
   }, [businessId, businesses])
 
-  async function saveSchedule(day: number | null) {
+  async function saveSchedule() {
     if (!businessId) return
     setSavingSched(true)
     try {
       await fetch(`/api/businesses/${businessId}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ scheduledDay: day }),
+        body:    JSON.stringify({ scheduledDay: pendingDay }),
       })
-      setScheduleDay(day)
-      setBusinesses((prev) => prev.map((b) => b.id === businessId ? { ...b, scheduledDay: day } : b))
+      setScheduleDay(pendingDay)
+      setBusinesses((prev) => prev.map((b) => b.id === businessId ? { ...b, scheduledDay: pendingDay } : b))
+      setEditingSched(false)
+    } finally { setSavingSched(false) }
+  }
+
+  async function removeSchedule() {
+    if (!businessId) return
+    setSavingSched(true)
+    try {
+      await fetch(`/api/businesses/${businessId}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ scheduledDay: null }),
+      })
+      setScheduleDay(null)
+      setPendingDay(null)
+      setBusinesses((prev) => prev.map((b) => b.id === businessId ? { ...b, scheduledDay: null } : b))
+      setEditingSched(true)
     } finally { setSavingSched(false) }
   }
 
@@ -240,19 +262,20 @@ export default function PayrollPage() {
 
       {/* Scheduled payroll */}
       {businessId && (() => {
-        const now       = new Date()
-        const nextMonth = scheduleDay
+        const now      = new Date()
+        const nextDate = scheduleDay
           ? (() => {
-              const d = new Date(now.getFullYear(), now.getMonth(), scheduleDay!)
+              const d = new Date(now.getFullYear(), now.getMonth(), scheduleDay)
               if (d <= now) d.setMonth(d.getMonth() + 1)
               return d
             })()
           : null
-        const nextPayday = nextMonth?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+        const nextPayday = nextDate?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 
         return (
           <div className="mb-8 rounded-2xl border border-gray-700/50 bg-gray-900/60 overflow-hidden">
-            {/* Top bar */}
+
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-700/50 px-5 py-4">
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-brand-400" />
@@ -260,61 +283,93 @@ export default function PayrollPage() {
               </div>
               <div className="flex items-center gap-3">
                 {savingSched && <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-400" />}
-                {!savingSched && scheduleDay && <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />}
-                {scheduleDay && !savingSched && (
-                  <button onClick={() => saveSchedule(null)} className="text-xs text-red-400 hover:underline">
-                    Remove schedule
-                  </button>
+                {scheduleDay && !editingSched && !savingSched && (
+                  <>
+                    <button
+                      onClick={() => { setPendingDay(scheduleDay); setEditingSched(true) }}
+                      className="text-xs font-medium text-brand-400 hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <span className="text-gray-700">·</span>
+                    <button onClick={removeSchedule} className="text-xs text-red-400 hover:underline">
+                      Remove
+                    </button>
+                  </>
                 )}
               </div>
             </div>
 
-            {/* Next payday card — Gusto style */}
-            {scheduleDay && nextPayday && (
+            {/* Active schedule summary — Gusto style stat row */}
+            {scheduleDay && !editingSched && (
               <div className="grid grid-cols-2 divide-x divide-gray-700/50 border-b border-gray-700/50">
                 <div className="px-5 py-4">
-                  <div className="mb-0.5 text-xs font-medium text-gray-500">Runs every month on</div>
-                  <div className="text-base font-bold text-white">
-                    Day {scheduleDay}
-                  </div>
+                  <div className="mb-1 text-xs font-medium text-gray-500">Runs every month on</div>
+                  <div className="text-xl font-bold text-white">Day {scheduleDay}</div>
                 </div>
                 <div className="px-5 py-4">
-                  <div className="mb-0.5 text-xs font-medium text-gray-500">Next payday</div>
+                  <div className="mb-1 text-xs font-medium text-gray-500">Next payday</div>
                   <div className="text-base font-bold text-brand-400">{nextPayday}</div>
                 </div>
               </div>
             )}
 
-            {!scheduleDay && (
-              <div className="border-b border-gray-700/50 px-5 py-4">
-                <p className="text-sm text-gray-500">No schedule set — select a payday below to automate payroll.</p>
+            {/* Editor — shown when editing or no schedule yet */}
+            {(editingSched || !scheduleDay) && (
+              <div className="p-5">
+                {!scheduleDay && (
+                  <p className="mb-4 text-sm text-gray-500">
+                    No schedule set — pick a day below to automate monthly payroll.
+                  </p>
+                )}
+
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Select payday</p>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setPendingDay(pendingDay === d ? null : d)}
+                      disabled={savingSched}
+                      className={`flex h-9 w-full items-center justify-center rounded-lg text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                        ${pendingDay === d
+                          ? 'bg-brand-500 text-navy-950 shadow-[0_0_14px_rgba(42,171,171,0.4)]'
+                          : 'border border-gray-700 bg-gray-800/50 text-gray-400 hover:border-brand-500/40 hover:bg-brand-500/10 hover:text-white'
+                        }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    onClick={saveSchedule}
+                    disabled={!pendingDay || savingSched}
+                    className="flex items-center gap-2 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {savingSched ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                    {savingSched ? 'Saving…' : 'Save Schedule'}
+                  </button>
+                  {editingSched && scheduleDay && (
+                    <button
+                      onClick={() => { setPendingDay(scheduleDay); setEditingSched(false) }}
+                      className="rounded-xl border border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 transition"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  {pendingDay && (
+                    <span className="text-xs text-gray-500">
+                      Day {pendingDay} selected
+                    </span>
+                  )}
+                </div>
+                <p className="mt-3 text-xs text-gray-600">
+                  Capped at day 28 to work every month including February · Triggers at midnight UTC
+                </p>
               </div>
             )}
-
-            {/* Day grid */}
-            <div className="p-5">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Select payday</p>
-              <div className="grid grid-cols-7 gap-1.5">
-                {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => saveSchedule(scheduleDay === d ? null : d)}
-                    disabled={savingSched}
-                    className={`flex h-9 w-full items-center justify-center rounded-lg text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed
-                      ${scheduleDay === d
-                        ? 'bg-brand-500 text-navy-950 shadow-[0_0_14px_rgba(42,171,171,0.45)]'
-                        : 'border border-gray-700 bg-gray-800/50 text-gray-400 hover:border-brand-500/50 hover:bg-brand-500/10 hover:text-white'
-                      }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-3 text-xs text-gray-600">
-                Capped at day 28 to work every month including February · Triggers at midnight UTC
-              </p>
-            </div>
           </div>
         )
       })()}
