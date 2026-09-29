@@ -43,41 +43,35 @@ export default function LandingPage() {
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
       <section className="relative flex min-h-[92vh] flex-col items-center justify-center overflow-hidden px-6 text-center">
 
-        {/* Giant background ghost text */}
-        <div
-          className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center leading-none"
-          aria-hidden="true"
-        >
-          {['ONE WALLET', 'ANY CHAIN', 'ANY TEAM'].map((word) => (
-            <span
-              key={word}
-              className="block w-full text-center font-black uppercase"
-              style={{
-                fontSize: 'clamp(3rem, 9vw, 8rem)',
-                WebkitTextStroke: '1.5px rgba(255,255,255,0.22)',
-                color: 'transparent',
-                letterSpacing: '-0.02em',
-                lineHeight: 1,
-              }}
-            >
-              {word}
-            </span>
-          ))}
-        </div>
+        {/* Subtle radial glow behind text */}
+        <div className="pointer-events-none absolute inset-0" style={{
+          background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(42,171,171,0.08) 0%, transparent 70%)',
+        }} />
 
-        {/* Foreground content */}
         <div className="relative z-10 flex flex-col items-center">
-          {/* Accent line */}
+          {/* All headline lines — solid teal, stacked */}
           <div
-            className="mb-8 text-center font-black uppercase leading-none"
-            style={{
-              fontSize: 'clamp(2.5rem, 6vw, 5rem)',
-              color: '#2aabab',
-              letterSpacing: '-0.02em',
-              textShadow: '0 0 60px rgba(42,171,171,0.4)',
-            }}
+            className="mb-8 select-none text-center font-black uppercase leading-none"
+            style={{ letterSpacing: '-0.03em', color: '#2aabab' }}
           >
-            PAY GLOBAL
+            {[
+              { text: 'ONE WALLET', size: 'clamp(2.8rem, 8vw, 7rem)', opacity: 0.45 },
+              { text: 'PAY GLOBAL', size: 'clamp(3.5rem, 10vw, 9rem)', opacity: 1 },
+              { text: 'ANY CHAIN',  size: 'clamp(2.8rem, 8vw, 7rem)', opacity: 0.45 },
+              { text: 'ANY TEAM',   size: 'clamp(2.8rem, 8vw, 7rem)', opacity: 0.45 },
+            ].map(({ text, size, opacity }) => (
+              <div
+                key={text}
+                style={{
+                  fontSize: size,
+                  opacity,
+                  lineHeight: 1.05,
+                  textShadow: opacity === 1 ? '0 0 80px rgba(42,171,171,0.5)' : 'none',
+                }}
+              >
+                {text}
+              </div>
+            ))}
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
