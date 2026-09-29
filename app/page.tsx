@@ -48,42 +48,21 @@ export default function LandingPage() {
           className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center leading-none"
           aria-hidden="true"
         >
-          <span
-            className="block w-full text-center font-black uppercase"
-            style={{
-              fontSize: 'clamp(5rem, 16vw, 14rem)',
-              WebkitTextStroke: '1px rgba(255,255,255,0.08)',
-              color: 'transparent',
-              letterSpacing: '-0.02em',
-              lineHeight: 0.95,
-            }}
-          >
-            ONE WALLET
-          </span>
-          <span
-            className="block w-full text-center font-black uppercase"
-            style={{
-              fontSize: 'clamp(5rem, 16vw, 14rem)',
-              WebkitTextStroke: '1px rgba(255,255,255,0.08)',
-              color: 'transparent',
-              letterSpacing: '-0.02em',
-              lineHeight: 0.95,
-            }}
-          >
-            ANY CHAIN
-          </span>
-          <span
-            className="block w-full text-center font-black uppercase"
-            style={{
-              fontSize: 'clamp(5rem, 16vw, 14rem)',
-              WebkitTextStroke: '1px rgba(255,255,255,0.08)',
-              color: 'transparent',
-              letterSpacing: '-0.02em',
-              lineHeight: 0.95,
-            }}
-          >
-            ANY TEAM
-          </span>
+          {['ONE WALLET', 'ANY CHAIN', 'ANY TEAM'].map((word) => (
+            <span
+              key={word}
+              className="block w-full text-center font-black uppercase"
+              style={{
+                fontSize: 'clamp(3rem, 9vw, 8rem)',
+                WebkitTextStroke: '1px rgba(255,255,255,0.08)',
+                color: 'transparent',
+                letterSpacing: '-0.02em',
+                lineHeight: 1,
+              }}
+            >
+              {word}
+            </span>
+          ))}
         </div>
 
         {/* Foreground content */}
@@ -92,10 +71,10 @@ export default function LandingPage() {
           <div
             className="mb-8 text-center font-black uppercase leading-none"
             style={{
-              fontSize: 'clamp(4.5rem, 14vw, 12rem)',
+              fontSize: 'clamp(2.5rem, 6vw, 5rem)',
               color: '#2aabab',
               letterSpacing: '-0.02em',
-              textShadow: '0 0 80px rgba(42,171,171,0.45)',
+              textShadow: '0 0 60px rgba(42,171,171,0.4)',
             }}
           >
             PAY GLOBAL
@@ -424,23 +403,6 @@ export default function LandingPage() {
 
       {/* ── Footer CTA ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden px-6 py-32 text-center">
-        {/* Ghost big text in background */}
-        <div
-          className="pointer-events-none absolute inset-0 flex select-none items-center justify-center"
-          aria-hidden="true"
-        >
-          <span
-            className="font-black uppercase"
-            style={{
-              fontSize: 'clamp(4rem, 14vw, 11rem)',
-              WebkitTextStroke: '1px rgba(255,255,255,0.05)',
-              color: 'transparent',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            GET STARTED
-          </span>
-        </div>
         <div className="relative z-10 mx-auto max-w-xl">
           <h2 className="mb-4 text-4xl font-bold text-white">
             Ready to run payroll
