@@ -1,34 +1,51 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageSquare, Bug, Send, Loader2, CheckCircle2, ChevronDown } from 'lucide-react'
+import { MessageSquare, Bug, Send, Loader2, CheckCircle2, ChevronDown, Sparkles, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Tab = 'feedback' | 'bug'
 
 const CATEGORIES = [
-  { value: 'general',  label: 'General feedback' },
-  { value: 'feature',  label: 'Feature request' },
-  { value: 'other',    label: 'Other' },
+  { value: 'general', label: 'General feedback' },
+  { value: 'feature', label: 'Feature request'  },
+  { value: 'other',   label: 'Other'             },
 ]
+
+function SuccessState({ title, body, onReset, resetLabel }: {
+  title: string; body: string; onReset: () => void; resetLabel: string
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-12 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-900/30 border border-green-800/50">
+        <CheckCircle2 className="h-8 w-8 text-green-400" />
+      </div>
+      <div>
+        <p className="text-lg font-semibold text-white">{title}</p>
+        <p className="mt-1 text-sm text-gray-400">{body}</p>
+      </div>
+      <button onClick={onReset} className="mt-1 text-sm font-medium text-brand-400 hover:underline">
+        {resetLabel}
+      </button>
+    </div>
+  )
+}
 
 export default function FeedbackPage() {
   const [tab, setTab] = useState<Tab>('feedback')
 
-  // Feedback form
   const [category,  setCategory]  = useState('general')
   const [message,   setMessage]   = useState('')
   const [fbLoading, setFbLoading] = useState(false)
   const [fbDone,    setFbDone]    = useState(false)
   const [fbError,   setFbError]   = useState('')
 
-  // Bug report form
-  const [title,      setTitle]      = useState('')
-  const [description,setDescription]= useState('')
-  const [steps,      setSteps]      = useState('')
-  const [bgLoading,  setBgLoading]  = useState(false)
-  const [bgDone,     setBgDone]     = useState(false)
-  const [bgError,    setBgError]    = useState('')
+  const [title,       setTitle]       = useState('')
+  const [description, setDescription] = useState('')
+  const [steps,       setSteps]       = useState('')
+  const [bgLoading,   setBgLoading]   = useState(false)
+  const [bgDone,      setBgDone]      = useState(false)
+  const [bgError,     setBgError]     = useState('')
 
   async function submitFeedback(e: React.FormEvent) {
     e.preventDefault()
@@ -62,9 +79,7 @@ export default function FeedbackPage() {
       })
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to submit')
       setBgDone(true)
-      setTitle('')
-      setDescription('')
-      setSteps('')
+      setTitle(''); setDescription(''); setSteps('')
     } catch (err) {
       setBgError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -74,16 +89,16 @@ export default function FeedbackPage() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="mb-2 text-2xl font-bold text-white">Feedback &amp; Support</h1>
-      <p className="mb-6 text-sm text-gray-400">
-        Help us improve Architect Pay — share your thoughts or let us know about any issues.
-      </p>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white">Feedback &amp; Support</h1>
+        <p className="mt-0.5 text-sm text-gray-500">
+          Help us improve Architect Pay — we read every submission.
+        </p>
+      </div>
 
-      {/* Tab toggle */}
-      <div
-        className="mb-6 flex gap-1 rounded-xl p-1"
-        style={{ background: '#0d1926', border: '1px solid rgba(42,171,171,0.12)' }}
-      >
+      {/* Tabs */}
+      <div className="mb-5 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-900/60 p-1">
         <button
           onClick={() => { setTab('feedback'); setFbDone(false) }}
           className={cn(
@@ -91,8 +106,7 @@ export default function FeedbackPage() {
             tab === 'feedback' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300',
           )}
         >
-          <MessageSquare className="h-4 w-4" />
-          Send Feedback
+          <Sparkles className="h-4 w-4" /> Send Feedback
         </button>
         <button
           onClick={() => { setTab('bug'); setBgDone(false) }}
@@ -101,30 +115,26 @@ export default function FeedbackPage() {
             tab === 'bug' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300',
           )}
         >
-          <Bug className="h-4 w-4" />
-          Report a Bug
+          <Bug className="h-4 w-4" /> Report a Bug
         </button>
       </div>
 
-      {/* ── Feedback form ── */}
+      {/* Feedback form */}
       {tab === 'feedback' && (
-        <div className="card">
+        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-6">
           {fbDone ? (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-400" />
-              <p className="text-lg font-semibold text-white">Thanks for your feedback!</p>
-              <p className="text-sm text-gray-400">We read every submission and use it to make Architect Pay better.</p>
-              <button
-                onClick={() => setFbDone(false)}
-                className="mt-2 text-sm text-brand-400 hover:underline"
-              >
-                Send another
-              </button>
-            </div>
+            <SuccessState
+              title="Thanks for your feedback!"
+              body="We read every submission and use it to make Architect Pay better."
+              onReset={() => setFbDone(false)}
+              resetLabel="Send another"
+            />
           ) : (
             <form onSubmit={submitFeedback} className="space-y-4">
               {fbError && (
-                <div className="rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">{fbError}</div>
+                <div className="flex items-start gap-2.5 rounded-xl border border-red-900/50 bg-red-900/20 px-4 py-3 text-sm text-red-400">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{fbError}
+                </div>
               )}
 
               <div>
@@ -133,7 +143,7 @@ export default function FeedbackPage() {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="input-base appearance-none pr-9"
+                    className="w-full appearance-none rounded-xl border border-gray-700 bg-gray-800 py-2.5 pl-4 pr-10 text-sm text-white outline-none focus:border-brand-500/50"
                   >
                     {CATEGORIES.map((c) => (
                       <option key={c.value} value={c.value}>{c.label}</option>
@@ -144,15 +154,15 @@ export default function FeedbackPage() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Your feedback
-                  <span className="ml-2 text-xs font-normal text-gray-500">{message.length}/2000</span>
-                </label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-300">Your feedback</label>
+                  <span className="text-xs text-gray-600">{message.length}/2000</span>
+                </div>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="input-base min-h-[140px] resize-y"
-                  placeholder="Tell us what you think, what you'd like to see, or anything on your mind..."
+                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[140px] resize-y"
+                  placeholder="Tell us what you think, what you'd like to see, or anything on your mind…"
                   maxLength={2000}
                   required
                   minLength={10}
@@ -162,35 +172,32 @@ export default function FeedbackPage() {
               <button
                 type="submit"
                 disabled={fbLoading || message.length < 10}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {fbLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {fbLoading ? 'Sending...' : 'Send Feedback'}
+                {fbLoading ? 'Sending…' : 'Send Feedback'}
               </button>
             </form>
           )}
         </div>
       )}
 
-      {/* ── Bug report form ── */}
+      {/* Bug report form */}
       {tab === 'bug' && (
-        <div className="card">
+        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-6">
           {bgDone ? (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-400" />
-              <p className="text-lg font-semibold text-white">Bug report received!</p>
-              <p className="text-sm text-gray-400">We&apos;ll investigate and fix it as soon as possible.</p>
-              <button
-                onClick={() => setBgDone(false)}
-                className="mt-2 text-sm text-brand-400 hover:underline"
-              >
-                Report another
-              </button>
-            </div>
+            <SuccessState
+              title="Bug report received!"
+              body="We'll investigate and fix it as soon as possible."
+              onReset={() => setBgDone(false)}
+              resetLabel="Report another"
+            />
           ) : (
             <form onSubmit={submitBug} className="space-y-4">
               {bgError && (
-                <div className="rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">{bgError}</div>
+                <div className="flex items-start gap-2.5 rounded-xl border border-red-900/50 bg-red-900/20 px-4 py-3 text-sm text-red-400">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{bgError}
+                </div>
               )}
 
               <div>
@@ -199,8 +206,8 @@ export default function FeedbackPage() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="input-base"
-                  placeholder='e.g. "Payment stuck on Processing" or "Balance not updating"'
+                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50"
+                  placeholder='e.g. "Payment stuck on Processing"'
                   maxLength={150}
                   required
                   minLength={3}
@@ -208,15 +215,15 @@ export default function FeedbackPage() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Describe the issue
-                  <span className="ml-2 text-xs font-normal text-gray-500">{description.length}/3000</span>
-                </label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-300">Describe the issue</label>
+                  <span className="text-xs text-gray-600">{description.length}/3000</span>
+                </div>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="input-base min-h-[120px] resize-y"
-                  placeholder="What were you doing when it happened? What did you expect to happen?"
+                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[120px] resize-y"
+                  placeholder="What were you doing when it happened? What did you expect?"
                   maxLength={3000}
                   required
                   minLength={10}
@@ -225,13 +232,13 @@ export default function FeedbackPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Steps to reproduce <span className="text-gray-500">(optional)</span>
+                  Steps to reproduce <span className="text-gray-600 font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={steps}
                   onChange={(e) => setSteps(e.target.value)}
-                  className="input-base min-h-[90px] resize-y"
-                  placeholder={'1. Go to Send Payment\n2. Enter amount\n3. Click Send\n4. ...'}
+                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[90px] resize-y"
+                  placeholder={'1. Go to Send Payment\n2. Enter amount\n3. Click Send\n4. …'}
                   maxLength={2000}
                 />
               </div>
@@ -239,15 +246,23 @@ export default function FeedbackPage() {
               <button
                 type="submit"
                 disabled={bgLoading || title.length < 3 || description.length < 10}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {bgLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bug className="h-4 w-4" />}
-                {bgLoading ? 'Submitting...' : 'Submit Bug Report'}
+                {bgLoading ? 'Submitting…' : 'Submit Bug Report'}
               </button>
             </form>
           )}
         </div>
       )}
+
+      {/* Footer note */}
+      <div className="mt-4 flex items-center gap-2 rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-3">
+        <MessageSquare className="h-4 w-4 shrink-0 text-gray-600" />
+        <p className="text-xs text-gray-600">
+          You can also reach us via the community Discord or open a GitHub issue for public bugs.
+        </p>
+      </div>
     </div>
   )
 }
