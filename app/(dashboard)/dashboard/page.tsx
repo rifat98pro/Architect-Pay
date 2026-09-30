@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
-import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers } from 'lucide-react'
+import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers, Wallet } from 'lucide-react'
 import DepositModal from '@/components/deposit-modal'
 import { useTheme } from '@/context/theme-context'
 
