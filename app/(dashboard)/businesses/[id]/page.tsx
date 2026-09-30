@@ -286,11 +286,11 @@ export default function BusinessEmployeesPage() {
       ) : (
         <div className="rounded-2xl overflow-hidden" style={card}>
           {/* Table header */}
-          <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-3 text-xs font-medium uppercase tracking-wide" style={{ borderBottom: `1px solid ${divider}`, background: L ? '#f5f8fb' : 'rgba(18,32,49,0.6)', color: t3 }}>
+          <div className="grid grid-cols-[180px_1fr_100px_64px] items-center gap-4 px-6 py-3 text-xs font-medium uppercase tracking-wide" style={{ borderBottom: `1px solid ${divider}`, background: L ? '#f5f8fb' : 'rgba(18,32,49,0.6)', color: t3 }}>
             <span>Employee</span>
-            <span className="w-44">Wallet</span>
-            <span className="w-24 text-right">Salary/run</span>
-            <span className="w-16" />
+            <span>Wallet</span>
+            <span className="text-right">Salary/run</span>
+            <span />
           </div>
 
           <div style={{ background: L ? '#ffffff' : 'rgba(12,24,38,0.3)' }}>
@@ -298,23 +298,23 @@ export default function BusinessEmployeesPage() {
               editingId === emp.id && editState ? (
                 <div key={emp.id} style={{ borderTop: `1px solid ${divider}` }}>
                   {editError && <div className="mx-6 mt-3 rounded-xl bg-red-900/30 px-3 py-2 text-xs text-red-400">{editError}</div>}
-                  <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-3" style={{ background: L ? '#eef4ff' : 'rgba(30,58,138,0.08)' }}>
-                    {/* Name + role stacked */}
+                  <div className="grid grid-cols-[180px_1fr_100px_64px] items-center gap-4 px-6 py-3" style={{ background: L ? '#eef4ff' : 'rgba(30,58,138,0.08)' }}>
+                    {/* Name + role stacked — matches 180px employee column */}
                     <div className="flex flex-col gap-1.5 min-w-0">
                       <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} placeholder="Full name" className="input-base text-sm" maxLength={100} style={input} />
                       <input type="text" value={editState.role} onChange={(e) => setEditState({ ...editState, role: e.target.value })} placeholder="Role" className="input-base text-xs" maxLength={100} style={input} />
                     </div>
-                    {/* Wallet — matches w-44 column */}
-                    <div className="w-44">
-                      <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="0x..." className="input-base font-mono text-[10px] w-full" style={input} />
+                    {/* Wallet — matches 1fr wallet column, shows full address */}
+                    <div className="min-w-0">
+                      <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="0x..." className="input-base font-mono text-xs w-full" style={input} />
                     </div>
-                    {/* Salary — matches w-24 column */}
-                    <div className="w-24 relative">
+                    {/* Salary — matches 100px salary column */}
+                    <div className="relative">
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: t3 }}>$</span>
                       <input type="number" step="0.01" min="0.01" value={editState.salary} onChange={(e) => setEditState({ ...editState, salary: e.target.value })} className="input-base pl-5 text-xs w-full text-right" style={input} />
                     </div>
-                    {/* Save / Cancel icons — matches w-16 column */}
-                    <div className="w-16 flex items-center justify-end gap-1">
+                    {/* Save / Cancel icons — matches 64px actions column */}
+                    <div className="flex items-center justify-end gap-1">
                       <button onClick={() => saveEdit(emp.id)} disabled={editSaving} className="rounded-lg p-1.5 bg-brand-500 text-white hover:bg-brand-600 transition disabled:opacity-50">
                         {editSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                       </button>
@@ -325,7 +325,7 @@ export default function BusinessEmployeesPage() {
                   </div>
                 </div>
               ) : (
-                <div key={emp.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-4 transition" style={{ borderTop: `1px solid ${divider}` }} onMouseEnter={e => (e.currentTarget.style.background = rowHover)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                <div key={emp.id} className="grid grid-cols-[180px_1fr_100px_64px] items-center gap-4 px-6 py-4 transition" style={{ borderTop: `1px solid ${divider}` }} onMouseEnter={e => (e.currentTarget.style.background = rowHover)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   {/* Employee info */}
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-sm font-bold text-brand-400">
@@ -333,26 +333,26 @@ export default function BusinessEmployeesPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="font-medium truncate" style={{ color: t1 }}>{emp.name}</div>
-                      {emp.role && <div className="text-xs" style={{ color: t3 }}>{emp.role}</div>}
+                      {emp.role && <div className="text-xs truncate" style={{ color: t3 }}>{emp.role}</div>}
                     </div>
                   </div>
 
                   {/* Wallet */}
-                  <div className="w-44 flex items-center gap-1.5">
-                    <span className="font-mono text-xs" style={{ color: t3 }}>{truncateAddress(emp.walletAddress, 8)}</span>
-                    <button onClick={() => copyAddress(emp.id, emp.walletAddress)} className="rounded p-0.5 hover:text-brand-400 transition" style={{ color: t3 }}>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-mono text-xs truncate" style={{ color: t3 }}>{emp.walletAddress}</span>
+                    <button onClick={() => copyAddress(emp.id, emp.walletAddress)} className="shrink-0 rounded p-0.5 hover:text-brand-400 transition" style={{ color: t3 }}>
                       {copiedId === emp.id ? <CheckCheck className="h-3 w-3 text-brand-400" /> : <Copy className="h-3 w-3" />}
                     </button>
                   </div>
 
                   {/* Salary */}
-                  <div className="w-24 text-right">
+                  <div className="text-right">
                     <span className="font-semibold" style={{ color: t1 }}>${parseFloat(emp.salary).toFixed(2)}</span>
                     <div className="text-xs" style={{ color: t3 }}>USDC</div>
                   </div>
 
                   {/* Actions */}
-                  <div className="w-16 flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-1">
                     <button onClick={() => startEdit(emp)} className="rounded-lg p-1.5 transition" style={{ color: t3 }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
