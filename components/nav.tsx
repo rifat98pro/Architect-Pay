@@ -4,8 +4,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { LayoutDashboard, Send, History, Building2, Banknote, LogOut, Droplets, Settings, MessageSquare, ArrowUpDown, LifeBuoy } from 'lucide-react'
+import { LayoutDashboard, Send, History, Building2, Banknote, LogOut, Droplets, Settings, MessageSquare, ArrowUpDown, LifeBuoy, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/context/theme-context'
 
 const navItems = [
   { href: '/dashboard',  label: 'Dashboard',    icon: LayoutDashboard },
@@ -20,8 +21,9 @@ const navItems = [
 ]
 
 export default function Nav() {
-  const pathname    = usePathname()
+  const pathname         = usePathname()
   const { logout, user } = useAuth()
+  const { theme, toggle } = useTheme()
 
   return (
     <aside
@@ -86,6 +88,22 @@ export default function Nav() {
           Get Faucet
         </a>
       </nav>
+
+      {/* Theme toggle */}
+      <button
+        onClick={toggle}
+        className="mb-3 flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition hover:bg-gray-800/40 hover:text-white"
+      >
+        <span className="flex items-center gap-3">
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        </span>
+        <span className="flex h-5 w-9 items-center rounded-full px-0.5 transition-all"
+          style={{ background: theme === 'light' ? '#2aabab' : 'rgba(255,255,255,0.1)' }}>
+          <span className="h-4 w-4 rounded-full bg-white shadow transition-transform"
+            style={{ transform: theme === 'light' ? 'translateX(16px)' : 'translateX(0)' }} />
+        </span>
+      </button>
 
       {/* User + logout */}
       <div

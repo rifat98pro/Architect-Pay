@@ -4,7 +4,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen">
       <Nav />
-      <main className="flex-1 overflow-y-auto bg-[#060b14] p-8">{children}</main>
+      <main className="flex-1 overflow-y-auto p-8" style={{ backgroundColor: 'var(--ap-main)', transition: 'background-color 0.25s ease' }}>{children}</main>
     </div>
   )
 }

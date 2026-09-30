@@ -3,17 +3,116 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Design tokens ── */
   :root {
     --background: 215 55% 7%;
     --foreground: 0 0% 100%;
+
+    /* Surface colors */
+    --ap-bg:          #060b14;
+    --ap-main:        #060b14;
+    --ap-card:        rgba(18,32,49,0.8);
+    --ap-card-border: rgba(255,255,255,0.07);
+    --ap-input-bg:    rgba(18,32,49,0.6);
+
+    /* Text */
+    --ap-text-1: #ffffff;
+    --ap-text-2: #8faab8;
+    --ap-text-3: #45607a;
+
+    /* Dividers */
+    --ap-border: rgba(255,255,255,0.07);
+
+    /* Table / list rows */
+    --ap-row-hover: rgba(255,255,255,0.03);
+  }
+
+  /* ── Light theme overrides ── */
+  html.light {
+    --ap-bg:          #f0f4f8;
+    --ap-main:        #f0f4f8;
+    --ap-card:        #ffffff;
+    --ap-card-border: rgba(0,0,0,0.08);
+    --ap-input-bg:    #ffffff;
+
+    --ap-text-1: #0b1e47;
+    --ap-text-2: #324862;
+    --ap-text-3: #637d96;
+
+    --ap-border: rgba(0,0,0,0.08);
+    --ap-row-hover: rgba(0,0,0,0.02);
   }
 
   body {
-    background-color: #07101e;
+    background-color: var(--ap-bg);
+    @apply text-white antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  /* Dark body gradient */
+  html:not(.light) body {
     background-image:
       radial-gradient(ellipse 80% 40% at 50% -10%, rgba(42,171,171,0.08) 0%, transparent 60%),
       radial-gradient(ellipse 60% 30% at 80% 100%, rgba(11,30,71,0.4) 0%, transparent 60%);
-    @apply text-white antialiased;
+  }
+
+  /* ── Light mode global resets ── */
+  html.light body {
+    background-image: none;
+    color: var(--ap-text-1);
+  }
+
+  /* Cards / panels */
+  html.light .rounded-2xl.border,
+  html.light .rounded-xl.border {
+    background: var(--ap-card) !important;
+    border-color: var(--ap-card-border) !important;
+  }
+
+  /* Table header rows */
+  html.light .border-b {
+    border-color: var(--ap-card-border) !important;
+  }
+
+  /* Divide lines */
+  html.light .divide-y > * {
+    border-color: rgba(0,0,0,0.06) !important;
+  }
+
+  /* Row hover */
+  html.light .hover\:bg-gray-800\/30:hover {
+    background-color: rgba(0,0,0,0.03) !important;
+  }
+
+  /* Text overrides */
+  html.light .text-white   { color: var(--ap-text-1) !important; }
+  html.light .text-gray-400,
+  html.light .text-gray-500 { color: var(--ap-text-2) !important; }
+  html.light .text-gray-600 { color: var(--ap-text-3) !important; }
+
+  /* Input backgrounds */
+  html.light input,
+  html.light textarea,
+  html.light select {
+    background: var(--ap-input-bg) !important;
+    color: var(--ap-text-1) !important;
+    border-color: rgba(0,0,0,0.12) !important;
+  }
+
+  /* Main content area */
+  html.light main {
+    background-color: var(--ap-main) !important;
+  }
+
+  /* Gray surface backgrounds */
+  html.light .bg-gray-900\/60,
+  html.light .bg-gray-900,
+  html.light .bg-gray-800\/20,
+  html.light .bg-gray-800\/30,
+  html.light .bg-gray-800\/50,
+  html.light .bg-gray-800\/60,
+  html.light .bg-gray-800 {
+    background-color: var(--ap-card) !important;
   }
 }
 

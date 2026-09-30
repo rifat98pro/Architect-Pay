@@ -11,8 +11,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const STATUS = { label: 'All Systems Operational', ok: true }
-
 const CATEGORIES = [
   {
     icon: <Wallet className="h-5 w-5" />,
@@ -148,23 +146,6 @@ export default function SupportPage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Support Center</h1>
         <p className="mt-0.5 text-sm text-gray-500">Find answers or contact our team.</p>
-      </div>
-
-      {/* Status bar */}
-      <div className="flex items-center justify-between rounded-xl border px-4 py-3"
-        style={{ borderColor: STATUS.ok ? 'rgba(34,197,94,0.2)' : 'rgba(248,113,113,0.2)', background: STATUS.ok ? 'rgba(34,197,94,0.05)' : 'rgba(248,113,113,0.05)' }}>
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: STATUS.ok ? '#22c55e' : '#f87171', boxShadow: STATUS.ok ? '0 0 6px #22c55e' : '0 0 6px #f87171' }} />
-          <span className="text-sm font-medium" style={{ color: STATUS.ok ? '#22c55e' : '#f87171' }}>{STATUS.label}</span>
-        </div>
-        <a
-          href="https://testnet.arcscan.app"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors"
-        >
-          Arc Testnet Explorer <ExternalLink className="h-3 w-3" />
-        </a>
       </div>
 
       {/* Search */}
