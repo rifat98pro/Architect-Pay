@@ -6,8 +6,7 @@ import { useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, RefreshCw, CheckCircle2,
-  ArrowLeftRight, Calendar, MessageCircle, X, Mail, Github,
-  Twitter, Send,
+  ArrowLeftRight, Calendar, MessageCircle, X, Twitter,
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -411,30 +410,16 @@ export default function LandingPage() {
               {
                 icon: <Twitter className="h-5 w-5" />,
                 label: 'Twitter / X',
-                handle: '@ArchitectPay',
-                href: 'https://twitter.com/ArchitectPay',
+                handle: '@architectpay',
+                href: 'https://x.com/architectpay',
                 color: '#1d9bf0',
               },
               {
-                icon: <Send className="h-5 w-5" />,
-                label: 'Telegram',
-                handle: 't.me/architectpay',
-                href: 'https://t.me/architectpay',
-                color: '#2aabee',
-              },
-              {
-                icon: <Github className="h-5 w-5" />,
-                label: 'GitHub',
-                handle: 'github.com/rifat98pro',
-                href: 'https://github.com/rifat98pro',
-                color: '#e2eaf4',
-              },
-              {
-                icon: <Mail className="h-5 w-5" />,
-                label: 'Email',
-                handle: 'support@architectpay.xyz',
-                href: 'mailto:support@architectpay.xyz',
-                color: '#34d399',
+                icon: <Code2 className="h-5 w-5" />,
+                label: 'Docs',
+                handle: 'Read the documentation',
+                href: '/docs',
+                color: '#2aabab',
               },
             ].map((s) => (
               <a
@@ -497,8 +482,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-5">
             <Link href="/docs" className="transition-colors hover:text-white">Docs</Link>
-            <a href="mailto:support@architectpay.xyz" className="transition-colors hover:text-white">Support</a>
-            <a href="https://github.com/rifat98pro" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">GitHub</a>
+            <a href="https://x.com/architectpay" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Twitter</a>
             <p className="hidden sm:block">All transactions use testnet USDC — no real money involved.</p>
           </div>
         </div>
@@ -526,18 +510,11 @@ export default function LandingPage() {
             <div className="space-y-2">
               {[
                 {
-                  icon: <Mail className="h-4 w-4" />,
-                  label: 'Email support',
-                  sub: 'support@architectpay.xyz',
-                  href: 'mailto:support@architectpay.xyz',
-                  color: '#34d399',
-                },
-                {
-                  icon: <Send className="h-4 w-4" />,
-                  label: 'Telegram',
-                  sub: 'Chat with us directly',
-                  href: 'https://t.me/architectpay',
-                  color: '#2aabee',
+                  icon: <Twitter className="h-4 w-4" />,
+                  label: 'Twitter / X',
+                  sub: '@architectpay',
+                  href: 'https://x.com/architectpay',
+                  color: '#1d9bf0',
                 },
                 {
                   icon: <Code2 className="h-4 w-4" />,
