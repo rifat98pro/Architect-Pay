@@ -2,13 +2,17 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, RefreshCw, CheckCircle2,
-  ArrowLeftRight, Calendar,
+  ArrowLeftRight, Calendar, MessageCircle, X, Mail, Github,
+  Twitter, Send,
 } from 'lucide-react'
 
 export default function LandingPage() {
+  const [supportOpen, setSupportOpen] = useState(false)
+
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: '#000', color: '#e2eaf4' }}>
 
@@ -24,10 +28,10 @@ export default function LandingPage() {
           </div>
 
           <nav className="hidden items-center gap-8 text-sm font-medium md:flex" style={{ color: '#888' }}>
-            <a href="#features"     className="transition-colors hover:text-white">Features</a>
+            <a href="#features"  className="transition-colors hover:text-white">Features</a>
             <a href="#developer" className="transition-colors hover:text-white">Developers</a>
-            <a href="#use-cases"    className="transition-colors hover:text-white">Use Cases</a>
-            <a href="#developer"    className="transition-colors hover:text-white">Docs</a>
+            <a href="#use-cases" className="transition-colors hover:text-white">Use Cases</a>
+            <Link href="/docs"   className="transition-colors hover:text-white">Docs</Link>
           </nav>
 
           <Link
@@ -395,6 +399,73 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Socials ────────────────────────────────────────────────────────── */}
+      <section className="px-6 py-20 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Community</div>
+          <h2 className="mb-3 text-3xl font-bold text-white">Stay connected</h2>
+          <p className="mb-10 text-sm" style={{ color: '#555' }}>Follow our journey, get updates, and join the community.</p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {[
+              {
+                icon: <Twitter className="h-5 w-5" />,
+                label: 'Twitter / X',
+                handle: '@ArchitectPay',
+                href: 'https://twitter.com/ArchitectPay',
+                color: '#1d9bf0',
+              },
+              {
+                icon: <Send className="h-5 w-5" />,
+                label: 'Telegram',
+                handle: 't.me/architectpay',
+                href: 'https://t.me/architectpay',
+                color: '#2aabee',
+              },
+              {
+                icon: <Github className="h-5 w-5" />,
+                label: 'GitHub',
+                handle: 'github.com/rifat98pro',
+                href: 'https://github.com/rifat98pro',
+                color: '#e2eaf4',
+              },
+              {
+                icon: <Mail className="h-5 w-5" />,
+                label: 'Email',
+                handle: 'support@architectpay.xyz',
+                href: 'mailto:support@architectpay.xyz',
+                color: '#34d399',
+              },
+            ].map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-2xl border px-6 py-4 transition-all hover:scale-105"
+                style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = s.color + '50'
+                  el.style.background  = s.color + '10'
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = 'rgba(255,255,255,0.07)'
+                  el.style.background  = 'rgba(255,255,255,0.03)'
+                }}
+              >
+                <span style={{ color: s.color }}>{s.icon}</span>
+                <div className="text-left">
+                  <div className="text-xs font-semibold text-white">{s.label}</div>
+                  <div className="text-xs" style={{ color: '#555' }}>{s.handle}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Footer CTA ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden px-6 py-32 text-center">
         <div className="relative z-10 mx-auto max-w-xl">
@@ -418,15 +489,102 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t px-6 py-8 text-center text-xs" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#444' }}>
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 sm:flex-row sm:justify-between">
+      <footer className="border-t px-6 py-8 text-xs" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#444' }}>
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
             <Image src="/logo.png" alt="Architect Pay" width={18} height={18} className="rounded-md object-contain opacity-50" />
             <span>Architect Pay · Built on Arc Testnet · Powered by Circle CCTP V2</span>
           </div>
-          <p>All transactions use testnet USDC — no real money involved.</p>
+          <div className="flex items-center gap-5">
+            <Link href="/docs" className="transition-colors hover:text-white">Docs</Link>
+            <a href="mailto:support@architectpay.xyz" className="transition-colors hover:text-white">Support</a>
+            <a href="https://github.com/rifat98pro" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">GitHub</a>
+            <p className="hidden sm:block">All transactions use testnet USDC — no real money involved.</p>
+          </div>
         </div>
       </footer>
+
+      {/* ── Floating Support Widget ─────────────────────────────────────────── */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+
+        {/* Support panel */}
+        {supportOpen && (
+          <div
+            className="w-72 rounded-2xl border p-5 shadow-2xl"
+            style={{ background: '#0c1a2e', borderColor: 'rgba(42,171,171,0.25)', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-white text-sm">Get Support</p>
+                <p className="text-xs mt-0.5" style={{ color: '#555' }}>We usually reply within 24 hours</p>
+              </div>
+              <button onClick={() => setSupportOpen(false)} style={{ color: '#555' }} className="hover:text-white transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                {
+                  icon: <Mail className="h-4 w-4" />,
+                  label: 'Email support',
+                  sub: 'support@architectpay.xyz',
+                  href: 'mailto:support@architectpay.xyz',
+                  color: '#34d399',
+                },
+                {
+                  icon: <Send className="h-4 w-4" />,
+                  label: 'Telegram',
+                  sub: 'Chat with us directly',
+                  href: 'https://t.me/architectpay',
+                  color: '#2aabee',
+                },
+                {
+                  icon: <Code2 className="h-4 w-4" />,
+                  label: 'Read the Docs',
+                  sub: 'API reference & guides',
+                  href: '/docs',
+                  color: '#a78bfa',
+                },
+              ].map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target={item.href.startsWith('http') ? '_blank' : undefined}
+                  rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className="flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-white/20"
+                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: item.color + '15', color: item.color }}>
+                    {item.icon}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-white">{item.label}</div>
+                    <div className="text-xs" style={{ color: '#555' }}>{item.sub}</div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Toggle button */}
+        <button
+          onClick={() => setSupportOpen((v) => !v)}
+          className="flex h-13 w-13 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
+          style={{
+            background: supportOpen ? '#1a1a1a' : '#2aabab',
+            boxShadow: supportOpen ? 'none' : '0 0 30px rgba(42,171,171,0.4)',
+            width: '52px',
+            height: '52px',
+          }}
+          aria-label="Support"
+        >
+          {supportOpen
+            ? <X className="h-5 w-5 text-white" />
+            : <MessageCircle className="h-5 w-5 text-black" />}
+        </button>
+      </div>
 
     </div>
   )
