@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
@@ -85,10 +85,43 @@ export default function HistoryPage() {
   const [swaps,    setSwaps]    = useState<SwapRecord[]>([])
   const [loading,  setLoading]  = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const mintPollRef             = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
+
+  // Auto-complete any PROCESSING cross-chain payments (in case user navigated away from payments page)
+  const paymentsRef = useRef(payments)
+  paymentsRef.current = payments
+
+  useEffect(() => {
+    if (loading) return
+
+    const tryMint = async () => {
+      const processing = paymentsRef.current.filter((p) => p.status === 'PROCESSING')
+      if (!processing.length) {
+        if (mintPollRef.current) { clearInterval(mintPollRef.current); mintPollRef.current = null }
+        return
+      }
+      for (const p of processing) {
+        try {
+          const res  = await fetch(`/api/payments/${p.id}/mint`, { method: 'POST' })
+          const data = await res.json()
+          if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+            setPayments((prev) =>
+              prev.map((x) => x.id === p.id ? { ...x, status: data.status, txHash: data.txHash ?? x.txHash } : x)
+            )
+          }
+        } catch { /* retry next tick */ }
+      }
+    }
+
+    tryMint()
+    mintPollRef.current = setInterval(tryMint, 10_000)
+    return () => { if (mintPollRef.current) { clearInterval(mintPollRef.current); mintPollRef.current = null } }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   useEffect(() => {
     if (!user?.id) return
