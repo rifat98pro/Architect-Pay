@@ -8,6 +8,7 @@ import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers, Walle
 import DepositModal from '@/components/deposit-modal'
 import { useTheme } from '@/context/theme-context'
 import TokenLogo from '@/components/token-logo'
+import ChainLogo from '@/components/chain-logo'
 
 const CHAIN_LABEL: Record<string, string> = {
   'ARC-TESTNET':  'Arc Testnet',
@@ -31,13 +32,6 @@ interface WalletData {
   chainBalances:     Record<string, string>
 }
 
-const CHAIN_DOTS: Record<string, string> = {
-  'ARC-TESTNET':  '#2aabab',
-  'ETH-SEPOLIA':  '#627eea',
-  'BASE-SEPOLIA': '#0052ff',
-  'ARB-SEPOLIA':  '#12aaff',
-  'MATIC-AMOY':   '#8247e5',
-}
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -191,10 +185,7 @@ export default function DashboardPage() {
               }}
             >
               <div className="flex items-center gap-3">
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ background: CHAIN_DOTS[chain] ?? '#6b7280', boxShadow: `0 0 6px ${CHAIN_DOTS[chain] ?? '#6b7280'}60` }}
-                />
+                <ChainLogo chain={chain} size={28} />
                 <div>
                   <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#0b1e47' : '#c5d3ed' }}>{CHAIN_LABEL[chain] ?? chain}</div>
                   {chain === 'ARC-TESTNET' && (
@@ -230,10 +221,7 @@ export default function DashboardPage() {
               }}
             >
               <div className="flex items-center gap-3">
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ background: CHAIN_DOTS[chain] ?? '#6b7280', boxShadow: `0 0 6px ${CHAIN_DOTS[chain] ?? '#6b7280'}60` }}
-                />
+                <ChainLogo chain={chain} size={28} />
                 <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#1e3a8a' : '#93c5fd' }}>{EURC_CHAIN_LABEL[chain] ?? chain}</div>
               </div>
               <div className="text-right">

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight, ShieldCheck, AlertTriangle, Clock } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
 import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
@@ -56,6 +56,7 @@ export default function PaymentsPage() {
   const [loading, setLoading]                     = useState(false)
   const [error, setError]                         = useState('')
   const [success, setSuccess]                     = useState('')
+  const [crossChainNotice, setCrossChainNotice]   = useState(false)
   const [confirming, setConfirming]               = useState(false)
 
   const [planLoading, setPlanLoading]   = useState(false)
@@ -165,6 +166,7 @@ export default function PaymentsPage() {
     if (!canSend) return
     setError('')
     setSuccess('')
+    setCrossChainNotice(false)
     setConfirming(true)
   }
 
@@ -185,6 +187,7 @@ export default function PaymentsPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Payment failed')
       setSuccess(`${amount} ${token} sent successfully!`)
+      setCrossChainNotice(token === 'EURC' && (isCrossChain || isAggregate))
       setWalletAddress(''); setUsernameInput(''); setResolvedAddress(''); setResolvedName('')
       setLookupState('idle'); setAmount(''); setLabel(''); setPlan(null)
       const bal = await fetch('/api/wallet/balance').then((r) => r.json())
@@ -212,6 +215,23 @@ export default function PaymentsPage() {
         {success && (
           <div className="flex items-start gap-3 rounded-xl border border-green-900/50 bg-green-900/20 px-4 py-3 text-sm text-green-400">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{success}
+          </div>
+        )}
+        {crossChainNotice && (
+          <div className="rounded-xl border border-amber-800/40 bg-amber-900/20 px-4 py-3">
+            <div className="flex items-center gap-2 text-amber-400 font-medium text-sm mb-1.5">
+              <Clock className="h-4 w-4 shrink-0" /> EURC cross-chain transfer in progress
+            </div>
+            <p className="text-xs text-amber-400/80 leading-relaxed mb-2.5">
+              Cross-chain EURC transfers can take <span className="font-semibold text-amber-300">up to 15 minutes</span> to arrive on the destination chain. Your funds are safe and being processed via CCTP.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/history')}
+              className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-semibold text-amber-300 transition"
+            >
+              Track in History →
+            </button>
           </div>
         )}
 

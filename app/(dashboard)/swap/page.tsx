@@ -214,8 +214,20 @@ export default function SwapPage() {
           </div>
         )}
         {pending && (
-          <div className="mb-3 flex items-center gap-2 rounded-xl bg-yellow-900/20 border border-yellow-900/40 px-4 py-3 text-sm text-yellow-400">
-            <Clock className="h-4 w-4 shrink-0" /> Swap submitted — tokens arriving on destination chain shortly.
+          <div className="mb-3 rounded-xl bg-amber-900/20 border border-amber-800/40 px-4 py-3 text-sm">
+            <div className="flex items-center gap-2 text-amber-400 font-medium mb-1.5">
+              <Clock className="h-4 w-4 shrink-0" /> EURC cross-chain transfer submitted
+            </div>
+            <p className="text-amber-400/80 text-xs leading-relaxed mb-2">
+              Cross-chain EURC transfers take <span className="font-semibold text-amber-300">up to 15 minutes</span> to arrive on the destination chain. Your funds are safe — the transaction is being processed via CCTP.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/history')}
+              className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-semibold text-amber-300 transition"
+            >
+              Track in History →
+            </button>
           </div>
         )}
 
