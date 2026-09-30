@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
-import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers, Wallet } from 'lucide-react'
+import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers } from 'lucide-react'
 import DepositModal from '@/components/deposit-modal'
+import { useTheme } from '@/context/theme-context'
 
 const CHAIN_LABEL: Record<string, string> = {
   'ARC-TESTNET':  'Arc Testnet',
@@ -45,6 +46,7 @@ export default function DashboardPage() {
   const [copied, setCopied]            = useState(false)
   const [refreshing, setRefreshing]    = useState(false)
   const [depositOpen, setDepositOpen]  = useState(false)
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -118,10 +120,14 @@ export default function DashboardPage() {
         {/* USDC total */}
         <div
           className="relative overflow-hidden rounded-2xl p-5"
-          style={{
-            background:  'linear-gradient(135deg, #0b1e47 0%, #091a30 100%)',
-            border:      '1px solid rgba(42,171,171,0.2)',
-            boxShadow:   '0 0 40px rgba(42,171,171,0.07)',
+          style={theme === 'light' ? {
+            background: '#ffffff',
+            border:     '1px solid rgba(42,171,171,0.25)',
+            boxShadow:  '0 2px 12px rgba(42,171,171,0.08)',
+          } : {
+            background: 'linear-gradient(135deg, #0b1e47 0%, #091a30 100%)',
+            border:     '1px solid rgba(42,171,171,0.2)',
+            boxShadow:  '0 0 40px rgba(42,171,171,0.07)',
           }}
         >
           <div className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-brand-500/10 blur-2xl" />
@@ -129,22 +135,26 @@ export default function DashboardPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/15">
               <TrendingUp className="h-4 w-4 text-brand-400" />
             </div>
-            <span className="text-sm font-medium text-gray-400">Total USDC</span>
+            <span className="text-sm font-medium" style={{ color: theme === 'light' ? '#45607a' : '#8faab8' }}>Total USDC</span>
           </div>
-          <div className="text-3xl font-bold tracking-tight text-white">
+          <div className="text-3xl font-bold tracking-tight" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
             ${formatUSDC(totalUsdc)}
             <span className="ml-2 text-base font-normal text-brand-400">USDC</span>
           </div>
-          <div className="mt-1 text-xs text-gray-500">Across all chains</div>
+          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Across all chains</div>
         </div>
 
         {/* EURC total */}
         <div
           className="relative overflow-hidden rounded-2xl p-5"
-          style={{
-            background:  'linear-gradient(135deg, #0b1836 0%, #0c142b 100%)',
-            border:      '1px solid rgba(59,130,246,0.2)',
-            boxShadow:   '0 0 40px rgba(59,130,246,0.06)',
+          style={theme === 'light' ? {
+            background: '#ffffff',
+            border:     '1px solid rgba(59,130,246,0.25)',
+            boxShadow:  '0 2px 12px rgba(59,130,246,0.08)',
+          } : {
+            background: 'linear-gradient(135deg, #0b1836 0%, #0c142b 100%)',
+            border:     '1px solid rgba(59,130,246,0.2)',
+            boxShadow:  '0 0 40px rgba(59,130,246,0.06)',
           }}
         >
           <div className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-blue-500/10 blur-2xl" />
@@ -152,13 +162,13 @@ export default function DashboardPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15">
               <Layers className="h-4 w-4 text-blue-400" />
             </div>
-            <span className="text-sm font-medium text-gray-400">Total EURC</span>
+            <span className="text-sm font-medium" style={{ color: theme === 'light' ? '#45607a' : '#8faab8' }}>Total EURC</span>
           </div>
-          <div className="text-3xl font-bold tracking-tight text-white">
+          <div className="text-3xl font-bold tracking-tight" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
             {parseFloat(totalEurc).toFixed(2)}
             <span className="ml-2 text-base font-normal text-blue-400">EURC</span>
           </div>
-          <div className="mt-1 text-xs text-gray-500">Unified Euro stablecoin</div>
+          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Unified Euro stablecoin</div>
         </div>
       </div>
 

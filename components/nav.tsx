@@ -35,7 +35,7 @@ export default function Nav() {
     >
       {/* Logo */}
       <div className="mb-8 px-3">
-        <div className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="relative">
             <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-brand-500/30 to-navy-800/30 blur-sm" />
             <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
@@ -44,7 +44,7 @@ export default function Nav() {
             <span style={{ color: '#ffffff' }}>Architect</span>
             <span style={{ color: '#2aabab' }}> Pay</span>
           </span>
-        </div>
+        </Link>
         <div className="mt-1 flex items-center gap-1.5 px-0.5">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand-500 shadow-[0_0_6px_rgba(42,171,171,0.8)]" />
           <span className="text-xs text-gray-500">Arc Testnet</span>
