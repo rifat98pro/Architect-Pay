@@ -71,6 +71,27 @@ function toMicroUsdc(amount: string): bigint {
   return BigInt(Math.round(parseFloat(amount) * 1_000_000))
 }
 
+async function getUsdcFee(srcDomain: number, dstDomain: number, amountMicro: bigint): Promise<{
+  feeAmount:         bigint
+  totalToApprove:    bigint
+  finalityThreshold: number
+}> {
+  const url = `${IRIS_API}/v2/burn/USDC/fees/${srcDomain}/${dstDomain}`
+  const res  = await fetch(url)
+  if (!res.ok) throw new Error(`Failed to fetch CCTP fee: ${res.status}`)
+
+  const tiers = await res.json() as Array<{ finalityThreshold: number; minimumFee: number }>
+  const sorted = [...tiers].sort((a, b) => a.finalityThreshold - b.finalityThreshold)
+  const tier   = sorted[0]
+
+  if (tier.minimumFee === 0) {
+    return { feeAmount: BigInt(0), totalToApprove: amountMicro, finalityThreshold: tier.finalityThreshold }
+  }
+  const basisPoints = BigInt(Math.round(tier.minimumFee * 100))
+  const feeAmount   = (amountMicro * basisPoints) / BigInt(10_000)
+  return { feeAmount, totalToApprove: amountMicro + feeAmount, finalityThreshold: tier.finalityThreshold }
+}
+
 async function pollAttestationByTxHash(srcDomain: number, burnTxHash: string): Promise<{ message: string; attestation: string }> {
   const url   = `${IRIS_API}/v2/messages/${srcDomain}?transactionHash=${burnTxHash}`
   const LIMIT = 120
@@ -223,17 +244,19 @@ export async function cctpBurn({
 
     console.log(`[cctp/usdc] burn phase: ${sourceChain} → ${destChain ?? 'ARC-TESTNET'}`)
 
+    const { feeAmount, totalToApprove, finalityThreshold } = await getUsdcFee(srcMeta.cctpDomain, dstDomain, amountMicro)
+
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, amountMicro] }),
+      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
     const burnTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, BigInt(0), 1000] }),
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
     })
     const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => { throw new Error(`[step2-depositForBurn] ${e.message}`) })
     console.log(`[cctp/usdc] burn confirmed: ${burnTxHash}`)
@@ -308,11 +331,13 @@ export async function cctpBurnFast({
     const burnToken   = srcMeta.usdcAddress
     const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
 
+    const { feeAmount, totalToApprove, finalityThreshold } = await getUsdcFee(srcMeta.cctpDomain, dstDomain, amountMicro)
+
     // Wait for approve to confirm — depositForBurn requires allowance to be on-chain
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, amountMicro] }),
+      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
@@ -320,7 +345,7 @@ export async function cctpBurnFast({
     const burnCircleTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, BigInt(0), 1000] }),
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
     })
 
     console.log(`[cctp/usdc] burn submitted (no-wait): circleId=${burnCircleTxId}`)
