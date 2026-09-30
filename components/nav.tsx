@@ -29,8 +29,13 @@ export default function Nav() {
     <aside
       className="flex h-screen w-56 flex-col px-3 py-6"
       style={{
-        background:  'linear-gradient(180deg, #0b1829 0%, #081422 60%, #060f1c 100%)',
-        borderRight: '1px solid rgba(42,171,171,0.12)',
+        background:  theme === 'light'
+          ? '#ffffff'
+          : 'linear-gradient(180deg, #0b1829 0%, #081422 60%, #060f1c 100%)',
+        borderRight: theme === 'light'
+          ? '1px solid rgba(0,0,0,0.08)'
+          : '1px solid rgba(42,171,171,0.12)',
+        transition: 'background 0.25s ease, border-color 0.25s ease',
       }}
     >
       {/* Logo */}
@@ -41,7 +46,7 @@ export default function Nav() {
             <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
           </div>
           <span className="text-base font-bold tracking-tight">
-            <span style={{ color: '#ffffff' }}>Architect</span>
+            <span style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>Architect</span>
             <span style={{ color: '#2aabab' }}> Pay</span>
           </span>
         </Link>
@@ -61,7 +66,7 @@ export default function Nav() {
               href={href}
               className={cn(
                 'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                active ? 'text-brand-400' : 'text-gray-400 hover:text-white',
+                active ? 'text-brand-400' : theme === 'light' ? 'text-gray-500 hover:text-gray-900' : 'text-gray-400 hover:text-white',
               )}
               style={active ? {
                 background:  'linear-gradient(90deg, rgba(42,171,171,0.12) 0%, rgba(42,171,171,0.04) 100%)',
@@ -76,13 +81,13 @@ export default function Nav() {
           )
         })}
 
-        <div className="my-2 mx-3 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
+        <div className="my-2 mx-3 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)' }} />
 
         <a
           href="https://faucet.circle.com/"
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-800/50 hover:text-white"
+          className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${theme === 'light' ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900' : 'text-gray-500 hover:bg-gray-800/50 hover:text-white'}`}
         >
           <Droplets className="h-4 w-4 group-hover:text-brand-500 transition" />
           Get Faucet
@@ -92,7 +97,7 @@ export default function Nav() {
       {/* Theme toggle */}
       <button
         onClick={toggle}
-        className="mb-3 flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition hover:bg-gray-800/40 hover:text-white"
+        className={`mb-3 flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition ${theme === 'light' ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900' : 'text-gray-400 hover:bg-gray-800/40 hover:text-white'}`}
       >
         <span className="flex items-center gap-3">
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -108,11 +113,20 @@ export default function Nav() {
       {/* User + logout */}
       <div
         className="mt-4 rounded-xl p-3"
-        style={{ background: 'rgba(42,171,171,0.04)', border: '1px solid rgba(42,171,171,0.08)' }}
+        style={{
+          background: theme === 'light' ? '#f0f4f8' : 'rgba(42,171,171,0.04)',
+          border: theme === 'light' ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(42,171,171,0.08)',
+        }}
       >
         {user && (
           <div className="mb-3 flex items-center gap-2.5">
-            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
+            <div
+              className="h-8 w-8 shrink-0 overflow-hidden rounded-full"
+              style={{
+                border: theme === 'light' ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.1)',
+                background: theme === 'light' ? '#dde6f0' : '#1a2d44',
+              }}
+            >
               {user.image ? (
                 <img src={user.image} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
@@ -122,14 +136,14 @@ export default function Nav() {
               )}
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-medium text-white truncate">{user.name ?? user.email}</div>
-              <div className="text-xs text-gray-500 truncate">{user.email}</div>
+              <div className="text-sm font-medium truncate" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>{user.name ?? user.email}</div>
+              <div className="text-xs truncate" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>{user.email}</div>
             </div>
           </div>
         )}
         <button
           onClick={logout}
-          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-800/60 hover:text-white"
+          className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition ${theme === 'light' ? 'text-gray-500 hover:bg-gray-200/60 hover:text-gray-900' : 'text-gray-500 hover:bg-gray-800/60 hover:text-white'}`}
         >
           <LogOut className="h-4 w-4" />
           Sign out
