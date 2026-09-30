@@ -390,7 +390,11 @@ export default function PaymentsPage() {
               max={availableBalance}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full rounded-xl border border-gray-700 bg-gray-800 py-3.5 pl-4 pr-20 text-xl font-semibold text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50"
+              className={`w-full rounded-xl border py-3.5 pl-4 pr-20 text-xl font-semibold text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 bg-gray-800 ${
+                parseFloat(amount || '0') > parseFloat(availableBalance)
+                  ? 'border-red-500/60'
+                  : 'border-gray-700'
+              }`}
               placeholder="0.00"
               required
             />
@@ -399,7 +403,14 @@ export default function PaymentsPage() {
             </span>
           </div>
 
-          {amount && (
+          {parseFloat(amount || '0') > parseFloat(availableBalance) && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+              Insufficient funds — max {token === 'EURC' ? '' : '$'}{availableBalance} {token}
+            </div>
+          )}
+
+          {amount && parseFloat(amount) <= parseFloat(availableBalance) && (
             <button
               type="button"
               onClick={() => setAmount(availableBalance)}
@@ -471,7 +482,7 @@ export default function PaymentsPage() {
 
         <button
           type="submit"
-          disabled={loading || !canSend || !amount || eurcSrcBlocked || (isAggregate && (!planFeasible || planLoading))}
+          disabled={loading || !canSend || !amount || eurcSrcBlocked || (isAggregate && (!planFeasible || planLoading)) || parseFloat(amount || '0') > parseFloat(availableBalance)}
           className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-brand-500 py-3.5 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading
@@ -479,9 +490,11 @@ export default function PaymentsPage() {
             : <ShieldCheck className="h-4 w-4" />}
           {loading
             ? 'Sending…'
-            : isAggregate
-              ? `Review & Send${amount ? ` $${amount}` : ''} USDC`
-              : `Review & Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
+            : parseFloat(amount || '0') > parseFloat(availableBalance)
+              ? 'Insufficient funds'
+              : isAggregate
+                ? `Review & Send${amount ? ` $${amount}` : ''} USDC`
+                : `Review & Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
         </button>
       </form>
 
