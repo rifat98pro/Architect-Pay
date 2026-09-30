@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useTheme } from '@/context/theme-context'
 import { Loader2, Check, Camera, Trash2 } from 'lucide-react'
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -17,6 +18,7 @@ function readFileAsBase64(file: File): Promise<string> {
 export default function SettingsPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { theme } = useTheme()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [username,     setUsername]     = useState('')
@@ -128,14 +130,14 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-lg">
-      <h1 className="mb-2 text-2xl font-bold text-white">Account Settings</h1>
-      <p className="mb-6 text-sm text-gray-400">
+      <h1 className="mb-2 text-2xl font-bold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>Account Settings</h1>
+      <p className="mb-6 text-sm" style={{ color: theme === 'light' ? '#637d96' : '#8faab8' }}>
         Manage your profile and Architect Pay username.
       </p>
 
       {/* Profile picture section */}
-      <div className="mb-5 rounded-2xl border border-gray-700/60 bg-gray-900/60 p-5">
-        <h2 className="mb-4 text-sm font-semibold text-gray-300">Profile Photo</h2>
+      <div className="mb-5 rounded-2xl border p-5" style={{ background: theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)', borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)' }}>
+        <h2 className="mb-4 text-sm font-semibold" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>Profile Photo</h2>
         <div className="flex items-center gap-5">
           {/* Avatar */}
           <div className="relative shrink-0">
@@ -193,15 +195,15 @@ export default function SettingsPage() {
       </div>
 
       {/* Profile info form */}
-      <div className="rounded-2xl border border-gray-700/60 bg-gray-900/60 p-5">
-        <h2 className="mb-4 text-sm font-semibold text-gray-300">Profile Info</h2>
+      <div className="rounded-2xl border p-5" style={{ background: theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)', borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)' }}>
+        <h2 className="mb-4 text-sm font-semibold" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>Profile Info</h2>
 
         {error   && <div className="mb-4 rounded-xl bg-red-900/30 px-4 py-3 text-sm text-red-400">{error}</div>}
         {success && <div className="mb-4 flex items-center gap-2 rounded-xl bg-green-900/30 px-4 py-3 text-sm text-green-400"><Check className="h-4 w-4" />{success}</div>}
 
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Display name</label>
+            <label className="mb-1.5 block text-sm font-medium" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>Display name</label>
             <input
               type="text"
               value={displayName}
@@ -213,17 +215,31 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>
               Username
-              <span className="ml-2 text-xs font-normal text-gray-500">lowercase letters, numbers, underscores only</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>lowercase letters, numbers, underscores only</span>
             </label>
-            <div className="flex items-center gap-0 input-base overflow-hidden p-0">
-              <span className="flex h-full items-center px-3 text-sm text-gray-500 border-r border-gray-700 bg-gray-800/50">@</span>
+            <div
+              className="flex items-center overflow-hidden rounded-lg border"
+              style={{
+                background:   theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+                borderColor:  theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)',
+              }}
+            >
+              <span
+                className="flex h-full items-center px-3 py-2.5 text-sm border-r"
+                style={{
+                  background:  theme === 'light' ? '#f0f4f8' : 'rgba(18,32,49,0.8)',
+                  borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)',
+                  color:       theme === 'light' ? '#637d96' : '#45607a',
+                }}
+              >@</span>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                className="flex-1 bg-transparent px-3 py-2.5 font-mono text-white outline-none placeholder:text-gray-600"
+                className="flex-1 bg-transparent px-3 py-2.5 font-mono outline-none"
+                style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}
                 placeholder="yourname"
                 minLength={3}
                 maxLength={30}
@@ -236,9 +252,9 @@ export default function SettingsPage() {
             )}
           </div>
 
-          <div className="rounded-xl bg-gray-800/50 px-4 py-3">
-            <div className="text-xs font-medium text-gray-500 mb-0.5">Account email</div>
-            <div className="font-mono text-sm text-gray-300">{user?.email}</div>
+          <div className="rounded-xl px-4 py-3" style={{ background: theme === 'light' ? '#f0f4f8' : 'rgba(18,32,49,0.5)' }}>
+            <div className="text-xs font-medium mb-0.5" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Account email</div>
+            <div className="font-mono text-sm" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>{user?.email}</div>
           </div>
 
           <button type="submit" disabled={saving} className="btn-primary w-full flex items-center justify-center gap-2">
