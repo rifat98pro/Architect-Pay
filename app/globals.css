@@ -69,9 +69,14 @@
     border-color: var(--ap-card-border) !important;
   }
 
+  /* All border colors */
+  html.light [class*="border-gray"] {
+    border-color: rgba(0,0,0,0.1) !important;
+  }
+
   /* Table header rows */
   html.light .border-b {
-    border-color: var(--ap-card-border) !important;
+    border-color: rgba(0,0,0,0.08) !important;
   }
 
   /* Divide lines */
@@ -79,16 +84,34 @@
     border-color: rgba(0,0,0,0.06) !important;
   }
 
+  /* Divider bars (h-px bg-gray-800 etc.) */
+  html.light [class*="bg-gray-7"],
+  html.light [class*="bg-gray-8"],
+  html.light [class*="bg-gray-9"] {
+    background-color: rgba(0,0,0,0.06) !important;
+  }
+
   /* Row hover */
-  html.light .hover\:bg-gray-800\/30:hover {
-    background-color: rgba(0,0,0,0.03) !important;
+  html.light .hover\:bg-gray-800\/30:hover,
+  html.light .hover\:bg-gray-700:hover,
+  html.light .hover\:bg-gray-800:hover {
+    background-color: rgba(0,0,0,0.04) !important;
+  }
+
+  /* Buttons with dark border/bg */
+  html.light button[class*="border-gray"],
+  html.light button[class*="bg-gray"] {
+    background-color: #ffffff !important;
+    border-color: rgba(0,0,0,0.12) !important;
+    color: var(--ap-text-1) !important;
   }
 
   /* Text overrides */
-  html.light .text-white   { color: var(--ap-text-1) !important; }
-  html.light .text-gray-400,
+  html.light .text-white    { color: var(--ap-text-1) !important; }
+  html.light .text-gray-400 { color: var(--ap-text-2) !important; }
   html.light .text-gray-500 { color: var(--ap-text-2) !important; }
   html.light .text-gray-600 { color: var(--ap-text-3) !important; }
+  html.light .text-gray-700 { color: var(--ap-text-3) !important; }
 
   /* Input backgrounds */
   html.light input,
@@ -104,16 +127,18 @@
     background-color: var(--ap-main) !important;
   }
 
-  /* Gray surface backgrounds */
-  html.light .bg-gray-900\/60,
-  html.light .bg-gray-900,
-  html.light .bg-gray-800\/20,
-  html.light .bg-gray-800\/30,
-  html.light .bg-gray-800\/50,
-  html.light .bg-gray-800\/60,
-  html.light .bg-gray-800 {
+  /* All gray surface backgrounds */
+  html.light [class*="bg-gray-9"],
+  html.light [class*="bg-gray-8"],
+  html.light [class*="bg-\[#"] {
     background-color: var(--ap-card) !important;
   }
+
+  /* Sections with dark inline bg */
+  html.light [style*="background: rgba(18,32"] { background: var(--ap-card) !important; }
+  html.light [style*="background: rgba(255,255,255,0.02)"] { background: rgba(0,0,0,0.02) !important; }
+  html.light [style*="background: rgba(255,255,255,0.03)"] { background: rgba(0,0,0,0.02) !important; }
+  html.light [style*="background-color: rgba(18"] { background-color: var(--ap-card) !important; }
 }
 
 @layer utilities {

@@ -100,7 +100,12 @@ export default function DashboardPage() {
           <button
             onClick={refresh}
             disabled={refreshing}
-            className="flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition disabled:opacity-50"
+            style={{
+              borderColor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)',
+              background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+              color:       theme === 'light' ? '#324862' : '#8faab8',
+            }}
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -176,13 +181,17 @@ export default function DashboardPage() {
       <div>
         <div className="mb-3 flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">USDC by Chain</span>
-          <div className="flex-1 h-px bg-gray-800" />
+          <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }} />
         </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {Object.entries(wallet?.chainBalances ?? {}).map(([chain, bal]) => (
             <div
               key={chain}
-              className="flex items-center justify-between rounded-xl border border-gray-700/50 bg-gray-900/60 px-4 py-3.5 transition hover:border-gray-600"
+              className="flex items-center justify-between rounded-xl border px-4 py-3.5 transition"
+              style={{
+                background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+                borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)',
+              }}
             >
               <div className="flex items-center gap-3">
                 <span
@@ -190,14 +199,14 @@ export default function DashboardPage() {
                   style={{ background: CHAIN_DOTS[chain] ?? '#6b7280', boxShadow: `0 0 6px ${CHAIN_DOTS[chain] ?? '#6b7280'}60` }}
                 />
                 <div>
-                  <div className="text-sm font-medium text-gray-200">{CHAIN_LABEL[chain] ?? chain}</div>
+                  <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#0b1e47' : '#c5d3ed' }}>{CHAIN_LABEL[chain] ?? chain}</div>
                   {chain === 'ARC-TESTNET' && (
                     <div className="text-xs text-brand-500">Primary</div>
                   )}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-semibold text-white">${formatUSDC(bal)}</div>
+                <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>${formatUSDC(bal)}</div>
                 <div className="text-xs text-gray-500">USDC</div>
               </div>
             </div>
@@ -209,23 +218,27 @@ export default function DashboardPage() {
       <div>
         <div className="mb-3 flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-blue-500/70">EURC by Chain</span>
-          <div className="flex-1 h-px bg-gray-800" />
+          <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }} />
         </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           {Object.entries(wallet?.eurcChainBalances ?? {}).map(([chain, bal]) => (
             <div
               key={chain}
-              className="flex items-center justify-between rounded-xl border border-blue-900/30 bg-blue-950/20 px-4 py-3.5"
+              className="flex items-center justify-between rounded-xl border px-4 py-3.5"
+              style={{
+                background:  theme === 'light' ? '#eef4ff' : 'rgba(30,58,138,0.12)',
+                borderColor: theme === 'light' ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)',
+              }}
             >
               <div className="flex items-center gap-3">
                 <span
                   className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ background: CHAIN_DOTS[chain] ?? '#6b7280', boxShadow: `0 0 6px ${CHAIN_DOTS[chain] ?? '#6b7280'}60` }}
                 />
-                <div className="text-sm font-medium text-gray-300">{EURC_CHAIN_LABEL[chain] ?? chain}</div>
+                <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#1e3a8a' : '#93c5fd' }}>{EURC_CHAIN_LABEL[chain] ?? chain}</div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-semibold text-white">{parseFloat(bal).toFixed(2)}</div>
+                <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#1e3a8a' : '#ffffff' }}>{parseFloat(bal).toFixed(2)}</div>
                 <div className="text-xs text-blue-500">EURC</div>
               </div>
             </div>
@@ -234,16 +247,16 @@ export default function DashboardPage() {
       </div>
 
       {/* Wallet address */}
-      <div className="rounded-2xl border border-gray-700/50 bg-gray-900/40 p-4">
+      <div className="rounded-2xl border p-4" style={{ background: theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.4)', borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)' }}>
         <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
           <Wallet className="h-3.5 w-3.5" />
           Wallet Address
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-800/60 px-4 py-3">
-          <span className="truncate font-mono text-sm text-gray-300">{wallet?.address ?? '—'}</span>
+        <div className="flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ background: theme === 'light' ? '#f0f4f8' : 'rgba(18,32,49,0.6)' }}>
+          <span className="truncate font-mono text-sm" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>{wallet?.address ?? '—'}</span>
           <button
             onClick={copyAddress}
-            className="shrink-0 rounded-lg p-1.5 text-gray-500 hover:bg-gray-700 hover:text-brand-400 transition"
+            className="shrink-0 rounded-lg p-1.5 text-gray-500 hover:text-brand-400 transition"
           >
             {copied ? <CheckCheck className="h-4 w-4 text-brand-400" /> : <Copy className="h-4 w-4" />}
           </button>
