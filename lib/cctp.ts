@@ -116,6 +116,45 @@ async function pollAttestationByTxHash(srcDomain: number, burnTxHash: string): P
   throw new Error('Iris attestation timed out after 10 minutes')
 }
 
+// Single non-blocking check — returns null if attestation not yet available.
+export async function checkAttestationOnce(srcDomain: number, burnTxHash: string): Promise<{ message: string; attestation: string } | null> {
+  try {
+    const url = `${IRIS_API}/v2/messages/${srcDomain}?transactionHash=${burnTxHash}`
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const data = await res.json()
+    const msg  = data?.messages?.[0]
+    if (msg?.status === 'complete' && msg?.attestation && msg?.message) {
+      return { message: msg.message as string, attestation: msg.attestation as string }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+// Mint phase only — call after checkAttestationOnce returns non-null.
+export async function mintFromAttestation({
+  message,
+  attestation,
+  receiverWalletId,
+  destTransmitter,
+}: {
+  message:          string
+  attestation:      string
+  receiverWalletId: string
+  destTransmitter:  string
+}): Promise<string> {
+  const mintTxId = await executeContractCall({
+    walletId:        receiverWalletId,
+    contractAddress: destTransmitter,
+    callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
+  })
+  const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[mint-receiveMessage] ${e.message}`) })
+  console.log(`[cctp] mint confirmed: ${mintTxHash}`)
+  return mintTxHash
+}
+
 // ── EURC CCTPx helpers ────────────────────────────────────────────────────────
 
 async function getCctpxQuote(srcDomain: number, dstDomain: number, amountMicro: bigint): Promise<{

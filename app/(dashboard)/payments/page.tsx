@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight, ShieldCheck, AlertTriangle, Clock } from 'lucide-react'
@@ -58,6 +58,8 @@ export default function PaymentsPage() {
   const [success, setSuccess]                     = useState('')
   const [crossChainNotice, setCrossChainNotice]   = useState(false)
   const [confirming, setConfirming]               = useState(false)
+  const [pendingPaymentId, setPendingPaymentId]   = useState<string | null>(null)
+  const pollRef                                   = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [planLoading, setPlanLoading]   = useState(false)
   const [plan, setPlan]                 = useState<AggregatePlanEntry[] | null>(null)
@@ -170,6 +172,39 @@ export default function PaymentsPage() {
     setConfirming(true)
   }
 
+  // Poll the mint endpoint every 10 seconds until COMPLETED
+  function startPolling(paymentId: string, isEurcCrossChain: boolean) {
+    if (pollRef.current) clearInterval(pollRef.current)
+
+    const poll = async () => {
+      try {
+        const res  = await fetch(`/api/payments/${paymentId}/mint`, { method: 'POST' })
+        const data = await res.json()
+        if (data.status === 'COMPLETED') {
+          if (pollRef.current) clearInterval(pollRef.current)
+          pollRef.current = null
+          setPendingPaymentId(null)
+          setSuccess('Transfer completed successfully!')
+          if (isEurcCrossChain) setCrossChainNotice(false)
+          const bal = await fetch('/api/wallet/balance').then((r) => r.json())
+          setChainBalances(bal.chainBalances ?? {})
+          setEurcChainBalances(bal.eurcChainBalances ?? {})
+        } else if (data.status === 'FAILED') {
+          if (pollRef.current) clearInterval(pollRef.current)
+          pollRef.current = null
+          setPendingPaymentId(null)
+          setError(data.error ?? 'Transfer failed')
+        }
+      } catch { /* retry next tick */ }
+    }
+
+    poll() // immediate first check
+    pollRef.current = setInterval(poll, 10_000)
+  }
+
+  // Cleanup polling on unmount
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
+
   // Step 2: actually send after user confirms
   async function confirmSend() {
     setConfirming(false)
@@ -186,8 +221,19 @@ export default function PaymentsPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Payment failed')
-      setSuccess(`${amount} ${token} sent successfully!`)
-      setCrossChainNotice(token === 'EURC' && (isCrossChain || isAggregate))
+
+      const isEurcCrossChain = token === 'EURC' && (isCrossChain || isAggregate)
+
+      if (data.pending && data.paymentId) {
+        // Cross-chain: burn done, minting in progress — poll until complete
+        setSuccess(`${amount} ${token} transfer initiated! Completing on destination chain…`)
+        setCrossChainNotice(isEurcCrossChain)
+        setPendingPaymentId(data.paymentId)
+        startPolling(data.paymentId, isEurcCrossChain)
+      } else {
+        setSuccess(`${amount} ${token} sent successfully!`)
+      }
+
       setWalletAddress(''); setUsernameInput(''); setResolvedAddress(''); setResolvedName('')
       setLookupState('idle'); setAmount(''); setLabel(''); setPlan(null)
       const bal = await fetch('/api/wallet/balance').then((r) => r.json())
@@ -214,7 +260,10 @@ export default function PaymentsPage() {
         )}
         {success && (
           <div className="flex items-start gap-3 rounded-xl border border-green-900/50 bg-green-900/20 px-4 py-3 text-sm text-green-400">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{success}
+            {pendingPaymentId
+              ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+              : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
+            {success}
           </div>
         )}
         {crossChainNotice && (
@@ -494,9 +543,7 @@ export default function PaymentsPage() {
         {loading && (isCrossChain || isAggregate) && (
           <div className="flex items-start gap-3 rounded-xl border border-blue-800/40 bg-blue-900/15 px-4 py-3 text-sm text-blue-300">
             <Loader2 className="mt-0.5 h-4 w-4 animate-spin shrink-0" />
-            {isAggregate
-              ? 'Aggregating across chains via CCTP (~2–3 min per chain). Do not close this window.'
-              : `Cross-chain in progress: burning on ${selectedSrcChain.label} → minting on ${selectedDestChain.label}. Do not close.`}
+            Initiating cross-chain transfer…
           </div>
         )}
 
