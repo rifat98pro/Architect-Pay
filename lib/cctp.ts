@@ -273,15 +273,17 @@ export async function cctpBurnFast({
 
     const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
-    // Submit approve — don't wait (SCA nonce ordering ensures burn runs after)
-    await executeContractCall({
+    // Wait for approve to confirm — burn requires the allowance to be set on-chain
+    const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: eurcAddress,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
     })
+    await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
-    const destAddress         = encodePacked(['address'], [recipientAddress as `0x${string}`])
-    const burnCircleTxId      = await executeContractCall({
+    // Submit burn — don't wait, return Circle tx ID immediately
+    const destAddress    = encodePacked(['address'], [recipientAddress as `0x${string}`])
+    const burnCircleTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: CCTS_ADDRESS,
       callData:        encodeFunctionData({
@@ -303,14 +305,15 @@ export async function cctpBurnFast({
     const burnToken   = srcMeta.usdcAddress
     const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
 
-    // Submit approve — don't wait
-    await executeContractCall({
+    // Wait for approve to confirm — depositForBurn requires allowance to be on-chain
+    const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, amountMicro] }),
     })
+    await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
-    // Submit burn immediately (SCA queue ensures approve executes first)
+    // Submit burn — don't wait, return Circle tx ID immediately
     const burnCircleTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
