@@ -184,16 +184,13 @@ export default function SwapPage() {
     }
   }
 
-  const amountNum  = parseFloat(amount || '0')
-  const rate       = eurcUsd ?? 1.1
-  // EURC→USDC: multiply by EUR/USD rate; USDC→EURC: divide
-  const amountOut  = direction === 'eurc-to-usdc'
-    ? amountNum * rate
-    : amountNum / rate
-  const payUsd     = direction === 'eurc-to-usdc'
-    ? amountNum * rate   // EURC in → USD value
-    : amountNum          // USDC in → already USD
-  const canSwap    = amountNum > 0 && amountNum <= parseFloat(inBal)
+  const amountNum      = parseFloat(amount || '0')
+  const rate           = eurcUsd ?? 1.1
+  const amountOut      = direction === 'eurc-to-usdc' ? amountNum * rate : amountNum / rate
+  const payUsd         = direction === 'eurc-to-usdc' ? amountNum * rate : amountNum
+  const inBalNum       = parseFloat(inBal)
+  const insufficientFunds = amountNum > 0 && amountNum > inBalNum
+  const canSwap        = amountNum > 0 && !insufficientFunds
 
   return (
     <div className="flex flex-col items-center pt-4">
@@ -256,6 +253,12 @@ export default function SwapPage() {
                 Balance: {balLoading ? '...' : inBal} {tokenIn}
               </button>
             </div>
+            {insufficientFunds && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+                Insufficient funds — max {inBal} {tokenIn}
+              </div>
+            )}
           </div>
 
           {/* Flip button */}
@@ -307,6 +310,8 @@ export default function SwapPage() {
           >
             {loading
               ? <><Loader2 className="h-4 w-4 animate-spin" /> Swapping...</>
+              : insufficientFunds
+              ? 'Insufficient funds'
               : canSwap
               ? `Swap ${amount} ${tokenIn} → ${tokenOut}`
               : 'Enter an amount'
