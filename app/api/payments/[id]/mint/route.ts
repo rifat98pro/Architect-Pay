@@ -7,12 +7,13 @@ export const maxDuration = 60
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const payment = await db.payment.findUnique({ where: { id: params.id } })
+  const { id } = await params
+  const payment = await db.payment.findUnique({ where: { id } })
   if (!payment || payment.senderId !== user.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
@@ -51,7 +52,7 @@ export async function POST(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Mint failed'
     // Don't mark as FAILED yet — attestation may succeed on retry
-    console.error(`[payments/${params.id}/mint] mint error:`, message)
+    console.error(`[payments/${id}/mint] mint error:`, message)
     return NextResponse.json({ status: 'PROCESSING', error: message })
   }
 }
