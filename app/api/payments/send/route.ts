@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
-import { sendUsdcPayment, waitForTransaction, getWalletBalance, getOrCreateChainWalletId } from '@/lib/circle'
+import { sendUsdcPayment, waitForTransaction, getOrCreateChainWalletId } from '@/lib/circle'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
-import { cctpBurn } from '@/lib/cctp'
+import { cctpBurnFast } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 import { z } from 'zod'
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         ? wallet.circleWalletId
         : await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain as CctpSourceChain)
 
-      const burn = await cctpBurn({
+      const burn = await cctpBurnFast({
         sourceChain:      sourceChain as CctpSourceChain,
         sourceWalletId,
         destChain:        destChain === 'ARC-TESTNET' ? undefined : destChain as CctpSourceChain,
@@ -136,10 +136,11 @@ export async function POST(req: NextRequest) {
         token,
       })
 
+      // Store Circle tx ID (prefixed) — mint endpoint resolves to on-chain hash once confirmed
       await db.payment.update({
         where: { id: payment.id },
         data: {
-          burnTxHash:       burn.burnTxHash,
+          burnTxHash:       `circle_tx:${burn.burnCircleTxId}`,
           srcDomain:        burn.srcDomain,
           receiverWalletId: burn.receiverWalletId,
           destTransmitter:  burn.destTransmitter,

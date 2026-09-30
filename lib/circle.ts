@@ -274,6 +274,19 @@ export async function executeContractCall({
 }
 
 /**
+ * Check a Circle transaction's current state without blocking.
+ */
+export async function checkTransaction(txId: string): Promise<{ state: string; txHash?: string }> {
+  const client = getClient()
+  const res    = await client.getTransaction({ id: txId } as Parameters<typeof client.getTransaction>[0])
+  const tx     = res.data?.transaction as Record<string, unknown> | undefined
+  return {
+    state:  (tx?.state  as string | undefined) ?? 'UNKNOWN',
+    txHash: tx?.txHash as string | undefined,
+  }
+}
+
+/**
  * Poll Circle until a transaction reaches CONFIRMED or COMPLETE state.
  * Throws if it FAILED. Times out after ~5 minutes.
  */
