@@ -119,7 +119,10 @@ export default function PaymentsPage() {
     : token === 'EURC'
       ? parseFloat(eurcChainBalances[sourceChain] ?? '0').toFixed(2)
       : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
-  const filteredDestChains = token === 'EURC' ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id)) : DEST_CHAINS
+  const filteredDestChains  = token === 'EURC' ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id)) : DEST_CHAINS
+  const amountNum           = parseFloat(amount || '0')
+  const availableNum        = parseFloat(availableBalance)
+  const insufficientFunds   = amountNum > 0 && amountNum > availableNum
 
   const fetchPlan = useCallback(async (amt: string) => {
     const n = parseFloat(amt)
@@ -387,13 +390,10 @@ export default function PaymentsPage() {
               type="number"
               step="0.01"
               min="0.01"
-              max={availableBalance}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className={`w-full rounded-xl border py-3.5 pl-4 pr-20 text-xl font-semibold text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 bg-gray-800 ${
-                parseFloat(amount || '0') > parseFloat(availableBalance)
-                  ? 'border-red-500/60'
-                  : 'border-gray-700'
+                insufficientFunds ? 'border-red-500/60' : 'border-gray-700'
               }`}
               placeholder="0.00"
               required
@@ -403,14 +403,14 @@ export default function PaymentsPage() {
             </span>
           </div>
 
-          {parseFloat(amount || '0') > parseFloat(availableBalance) && (
+          {insufficientFunds && (
             <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
               Insufficient funds — max {token === 'EURC' ? '' : '$'}{availableBalance} {token}
             </div>
           )}
 
-          {amount && parseFloat(amount) <= parseFloat(availableBalance) && (
+          {amount && !insufficientFunds && (
             <button
               type="button"
               onClick={() => setAmount(availableBalance)}
@@ -482,7 +482,7 @@ export default function PaymentsPage() {
 
         <button
           type="submit"
-          disabled={loading || !canSend || !amount || eurcSrcBlocked || (isAggregate && (!planFeasible || planLoading)) || parseFloat(amount || '0') > parseFloat(availableBalance)}
+          disabled={loading || !canSend || !amount || eurcSrcBlocked || insufficientFunds || (isAggregate && (!planFeasible || planLoading))}
           className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-brand-500 py-3.5 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading
@@ -490,7 +490,7 @@ export default function PaymentsPage() {
             : <ShieldCheck className="h-4 w-4" />}
           {loading
             ? 'Sending…'
-            : parseFloat(amount || '0') > parseFloat(availableBalance)
+            : insufficientFunds
               ? 'Insufficient funds'
               : isAggregate
                 ? `Review & Send${amount ? ` $${amount}` : ''} USDC`
