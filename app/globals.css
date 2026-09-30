@@ -56,89 +56,87 @@
       radial-gradient(ellipse 60% 30% at 80% 100%, rgba(11,30,71,0.4) 0%, transparent 60%);
   }
 
-  /* ── Light mode global resets ── */
-  html.light body {
-    background-image: none;
-    color: var(--ap-text-1);
+  /* ── Light mode: dashboard only ── */
+  /* Body background */
+  html.light body { background-image: none; }
+
+  /* Main content area */
+  html.light [data-scope="dashboard"] main {
+    background-color: var(--ap-main) !important;
   }
 
   /* Cards / panels */
-  html.light .rounded-2xl.border,
-  html.light .rounded-xl.border {
+  html.light [data-scope="dashboard"] .rounded-2xl.border,
+  html.light [data-scope="dashboard"] .rounded-xl.border {
     background: var(--ap-card) !important;
     border-color: var(--ap-card-border) !important;
   }
 
   /* All border colors */
-  html.light [class*="border-gray"] {
+  html.light [data-scope="dashboard"] [class*="border-gray"] {
     border-color: rgba(0,0,0,0.1) !important;
   }
 
   /* Table header rows */
-  html.light .border-b {
+  html.light [data-scope="dashboard"] .border-b {
     border-color: rgba(0,0,0,0.08) !important;
   }
 
   /* Divide lines */
-  html.light .divide-y > * {
+  html.light [data-scope="dashboard"] .divide-y > * {
     border-color: rgba(0,0,0,0.06) !important;
   }
 
-  /* Divider bars (h-px bg-gray-800 etc.) */
-  html.light [class*="bg-gray-7"],
-  html.light [class*="bg-gray-8"],
-  html.light [class*="bg-gray-9"] {
+  /* Divider bars */
+  html.light [data-scope="dashboard"] [class*="bg-gray-7"],
+  html.light [data-scope="dashboard"] [class*="bg-gray-8"],
+  html.light [data-scope="dashboard"] [class*="bg-gray-9"] {
     background-color: rgba(0,0,0,0.06) !important;
   }
 
   /* Row hover */
-  html.light .hover\:bg-gray-800\/30:hover,
-  html.light .hover\:bg-gray-700:hover,
-  html.light .hover\:bg-gray-800:hover {
+  html.light [data-scope="dashboard"] .hover\:bg-gray-800\/30:hover,
+  html.light [data-scope="dashboard"] .hover\:bg-gray-700:hover,
+  html.light [data-scope="dashboard"] .hover\:bg-gray-800:hover {
     background-color: rgba(0,0,0,0.04) !important;
   }
 
   /* Buttons with dark border/bg */
-  html.light button[class*="border-gray"],
-  html.light button[class*="bg-gray"] {
+  html.light [data-scope="dashboard"] button[class*="border-gray"],
+  html.light [data-scope="dashboard"] button[class*="bg-gray"] {
     background-color: #ffffff !important;
     border-color: rgba(0,0,0,0.12) !important;
     color: var(--ap-text-1) !important;
   }
 
   /* Text overrides */
-  html.light .text-white    { color: var(--ap-text-1) !important; }
-  html.light .text-gray-400 { color: var(--ap-text-2) !important; }
-  html.light .text-gray-500 { color: var(--ap-text-2) !important; }
-  html.light .text-gray-600 { color: var(--ap-text-3) !important; }
-  html.light .text-gray-700 { color: var(--ap-text-3) !important; }
+  html.light [data-scope="dashboard"] .text-white    { color: var(--ap-text-1) !important; }
+  html.light [data-scope="dashboard"] .text-gray-400 { color: var(--ap-text-2) !important; }
+  html.light [data-scope="dashboard"] .text-gray-500 { color: var(--ap-text-2) !important; }
+  html.light [data-scope="dashboard"] .text-gray-600 { color: var(--ap-text-3) !important; }
+  html.light [data-scope="dashboard"] .text-gray-700 { color: var(--ap-text-3) !important; }
 
   /* Input backgrounds */
-  html.light input,
-  html.light textarea,
-  html.light select {
+  html.light [data-scope="dashboard"] input,
+  html.light [data-scope="dashboard"] textarea,
+  html.light [data-scope="dashboard"] select {
     background: var(--ap-input-bg) !important;
     color: var(--ap-text-1) !important;
     border-color: rgba(0,0,0,0.12) !important;
   }
 
-  /* Main content area */
-  html.light main {
-    background-color: var(--ap-main) !important;
-  }
-
   /* All gray surface backgrounds */
-  html.light [class*="bg-gray-9"],
-  html.light [class*="bg-gray-8"],
-  html.light [class*="bg-\[#"] {
+  html.light [data-scope="dashboard"] [class*="bg-gray-9"],
+  html.light [data-scope="dashboard"] [class*="bg-gray-8"],
+  html.light [data-scope="dashboard"] [class*="bg-\[#"] {
     background-color: var(--ap-card) !important;
   }
 
   /* Sections with dark inline bg */
-  html.light [style*="background: rgba(18,32"] { background: var(--ap-card) !important; }
-  html.light [style*="background: rgba(255,255,255,0.02)"] { background: rgba(0,0,0,0.02) !important; }
-  html.light [style*="background: rgba(255,255,255,0.03)"] { background: rgba(0,0,0,0.02) !important; }
-  html.light [style*="background-color: rgba(18"] { background-color: var(--ap-card) !important; }
+  html.light [data-scope="dashboard"] [style*="background: rgba(18,32"] { background: var(--ap-card) !important; }
+  html.light [data-scope="dashboard"] [style*="background: rgba(255,255,255,0.02)"] { background: rgba(0,0,0,0.02) !important; }
+  html.light [data-scope="dashboard"] [style*="background: rgba(255,255,255,0.03)"] { background: rgba(0,0,0,0.02) !important; }
+  html.light [data-scope="dashboard"] [style*="background-color: rgba(18"] { background-color: var(--ap-card) !important; }
 }
 
 @layer utilities {
