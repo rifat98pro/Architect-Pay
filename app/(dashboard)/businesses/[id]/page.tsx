@@ -319,15 +319,17 @@ export default function BusinessEmployeesPage() {
             <input type="text" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} className="input-base" required maxLength={100} style={input} />
             <input type="text" placeholder="Role (e.g. Engineer)" value={role} onChange={(e) => setRole(e.target.value)} className="input-base" maxLength={100} style={input} />
             <div className="sm:col-span-2">
-              <div className="mb-2 flex gap-1 rounded-xl p-1" style={{ background: '#0d1926', border: '1px solid rgba(42,171,171,0.12)' }}>
+              <div className="mb-2 flex gap-1 rounded-xl p-1" style={{ background: L ? '#eef2f7' : '#0d1926', border: `1px solid ${L ? 'rgba(0,0,0,0.08)' : 'rgba(42,171,171,0.12)'}` }}>
                 <button type="button" onClick={() => setWalletMode('address')}
                   className={cn('flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-all',
-                    walletMode === 'address' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300')}>
+                    walletMode === 'address' ? 'bg-brand-500/15 text-brand-400' : '')}
+                  style={walletMode !== 'address' ? { color: t3 } : {}}>
                   <Wallet className="h-3 w-3" /> Wallet Address
                 </button>
                 <button type="button" onClick={() => setWalletMode('username')}
                   className={cn('flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-all',
-                    walletMode === 'username' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300')}>
+                    walletMode === 'username' ? 'bg-brand-500/15 text-brand-400' : '')}
+                  style={walletMode !== 'username' ? { color: t3 } : {}}>
                   <AtSign className="h-3 w-3" /> Architect Pay Username
                 </button>
               </div>
@@ -337,11 +339,12 @@ export default function BusinessEmployeesPage() {
                   className="input-base font-mono text-xs" pattern="^0x[a-fA-F0-9]{40}$" title="Valid EVM address" required style={input} />
               ) : (
                 <div>
-                  <div className="flex items-center input-base overflow-hidden p-0">
-                    <span className="flex h-full items-center px-3 text-sm text-gray-500 border-r border-gray-700 bg-gray-800/50">@</span>
+                  <div className="flex items-center input-base overflow-hidden p-0" style={input}>
+                    <span className="flex h-full items-center px-3 text-sm shrink-0" style={{ color: t3, borderRight: `1px solid ${divider}`, background: L ? '#f0f4f8' : 'rgba(255,255,255,0.04)' }}>@</span>
                     <input type="text" placeholder="username" value={usernameInput}
                       onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className="flex-1 bg-transparent px-3 py-2.5 text-sm text-white outline-none placeholder:text-gray-600"
+                      className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none"
+                      style={{ color: t1 }}
                       autoComplete="off" required />
                   </div>
                   {lookupState === 'loading' && <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500"><Loader2 className="h-3 w-3 animate-spin" /> Looking up...</div>}
