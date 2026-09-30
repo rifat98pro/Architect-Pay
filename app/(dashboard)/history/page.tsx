@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TokenLogo from '@/components/token-logo'
+import { useTheme } from '@/context/theme-context'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
@@ -56,16 +57,19 @@ interface PayrollRun {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { icon: React.ReactNode; label: string; cls: string }> = {
-    COMPLETED:  { icon: <CheckCircle2 className="h-3 w-3" />, label: 'Completed',  cls: 'bg-green-900/30 text-green-400 border-green-900/50' },
-    FAILED:     { icon: <XCircle className="h-3 w-3" />,      label: 'Failed',     cls: 'bg-red-900/30 text-red-400 border-red-900/50' },
-    PENDING:    { icon: <Clock className="h-3 w-3" />,         label: 'Pending',    cls: 'bg-yellow-900/30 text-yellow-400 border-yellow-900/50' },
-    PROCESSING: { icon: <RefreshCw className="h-3 w-3 animate-spin" />, label: 'Processing', cls: 'bg-blue-900/30 text-blue-400 border-blue-900/50' },
-    PARTIAL:    { icon: <AlertTriangle className="h-3 w-3" />, label: 'Partial',   cls: 'bg-amber-900/30 text-amber-400 border-amber-900/50' },
+  const { theme } = useTheme()
+  const L = theme === 'light'
+
+  const map: Record<string, { icon: React.ReactNode; label: string; dark: string; light: string }> = {
+    COMPLETED:  { icon: <CheckCircle2 className="h-3 w-3" />, label: 'Completed',  dark: 'bg-green-900/30 text-green-400 border-green-900/50',   light: 'bg-green-100 text-green-700 border-green-300' },
+    FAILED:     { icon: <XCircle className="h-3 w-3" />,      label: 'Failed',     dark: 'bg-red-900/30 text-red-400 border-red-900/50',         light: 'bg-red-100 text-red-600 border-red-300' },
+    PENDING:    { icon: <Clock className="h-3 w-3" />,         label: 'Pending',    dark: 'bg-yellow-900/30 text-yellow-400 border-yellow-900/50', light: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+    PROCESSING: { icon: <RefreshCw className="h-3 w-3 animate-spin" />, label: 'Processing', dark: 'bg-blue-900/30 text-blue-400 border-blue-900/50', light: 'bg-blue-100 text-blue-700 border-blue-300' },
+    PARTIAL:    { icon: <AlertTriangle className="h-3 w-3" />, label: 'Partial',   dark: 'bg-amber-900/30 text-amber-400 border-amber-900/50',   light: 'bg-amber-100 text-amber-700 border-amber-300' },
   }
   const s = map[status] ?? map.PENDING
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium', s.cls)}>
+    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium', L ? s.light : s.dark)}>
       {s.icon}{s.label}
     </span>
   )
