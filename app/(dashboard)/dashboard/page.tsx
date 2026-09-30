@@ -7,6 +7,7 @@ import { formatUSDC, truncateAddress } from '@/lib/utils'
 import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers, Wallet } from 'lucide-react'
 import DepositModal from '@/components/deposit-modal'
 import { useTheme } from '@/context/theme-context'
+import TokenLogo from '@/components/token-logo'
 
 const CHAIN_LABEL: Record<string, string> = {
   'ARC-TESTNET':  'Arc Testnet',
@@ -137,9 +138,7 @@ export default function DashboardPage() {
         >
           <div className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-brand-500/10 blur-2xl" />
           <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/15">
-              <TrendingUp className="h-4 w-4 text-brand-400" />
-            </div>
+            <TokenLogo token="USDC" size={28} />
             <span className="text-sm font-medium" style={{ color: theme === 'light' ? '#45607a' : '#8faab8' }}>Total USDC</span>
           </div>
           <div className="text-3xl font-bold tracking-tight" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
@@ -164,9 +163,7 @@ export default function DashboardPage() {
         >
           <div className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-blue-500/10 blur-2xl" />
           <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15">
-              <Layers className="h-4 w-4 text-blue-400" />
-            </div>
+            <TokenLogo token="EURC" size={28} />
             <span className="text-sm font-medium" style={{ color: theme === 'light' ? '#45607a' : '#8faab8' }}>Total EURC</span>
           </div>
           <div className="text-3xl font-bold tracking-tight" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
@@ -207,7 +204,9 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>${formatUSDC(bal)}</div>
-                <div className="text-xs text-gray-500">USDC</div>
+                <div className="flex items-center justify-end gap-1 text-xs text-gray-500">
+                  <TokenLogo token="USDC" size={12} />USDC
+                </div>
               </div>
             </div>
           ))}
@@ -239,7 +238,9 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#1e3a8a' : '#ffffff' }}>{parseFloat(bal).toFixed(2)}</div>
-                <div className="text-xs text-blue-500">EURC</div>
+                <div className="flex items-center justify-end gap-1 text-xs text-blue-500">
+                  <TokenLogo token="EURC" size={12} />EURC
+                </div>
               </div>
             </div>
           ))}

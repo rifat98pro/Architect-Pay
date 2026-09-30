@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react'
+import TokenLogo from '@/components/token-logo'
 import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
 
@@ -222,10 +223,12 @@ export default function PaymentsPage() {
                 <button
                   key={t} type="button" onClick={() => setToken(t)}
                   className={cn(
-                    'flex flex-1 items-center justify-center rounded-lg py-2 text-sm font-semibold transition-all',
+                    'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all',
                     token === t ? 'bg-brand-500/15 text-brand-400 shadow-sm' : 'text-gray-500 hover:text-gray-300',
                   )}
-                >{t}</button>
+                >
+                  <TokenLogo token={t} size={16} />{t}
+                </button>
               ))}
             </div>
           )}
@@ -391,7 +394,9 @@ export default function PaymentsPage() {
               placeholder="0.00"
               required
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">{token}</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm font-semibold text-gray-400">
+              <TokenLogo token={token} size={16} />{token}
+            </span>
           </div>
 
           {amount && (
@@ -508,7 +513,8 @@ export default function PaymentsPage() {
               {/* Amount */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Amount</span>
-                <span className="text-sm font-bold text-white">
+                <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                  <TokenLogo token={token} size={16} />
                   {token === 'EURC' ? '' : '$'}{amount} {token}
                 </span>
               </div>

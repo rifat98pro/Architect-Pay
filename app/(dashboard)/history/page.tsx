@@ -9,6 +9,7 @@ import {
   ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import TokenLogo from '@/components/token-logo'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
@@ -159,7 +160,7 @@ export default function HistoryPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold text-white">${formatUSDC(p.amount)}</div>
-                    <div className="text-xs text-gray-500">USDC</div>
+                    <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token="USDC" size={12} />USDC</div>
                     {p.txHash && (
                       <a
                         href={`${ARC_EXPLORER}/tx/${p.txHash}`}
@@ -202,8 +203,10 @@ export default function HistoryPage() {
                   <div key={s.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                        <TokenLogo token={s.tokenIn as 'USDC' | 'EURC'} size={16} />
                         <span className="text-brand-400">{s.tokenIn}</span>
                         <ArrowLeftRight className="h-3.5 w-3.5 text-gray-500" />
+                        <TokenLogo token={s.tokenOut as 'USDC' | 'EURC'} size={16} />
                         <span className="text-purple-400">{s.tokenOut}</span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-2">
@@ -226,13 +229,13 @@ export default function HistoryPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-semibold text-white">{parseFloat(s.amountIn).toFixed(4)}</div>
-                      <div className="text-xs text-gray-500">{s.tokenIn}</div>
+                      <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={s.tokenIn as 'USDC'|'EURC'} size={12} />{s.tokenIn}</div>
                     </div>
                     <div className="text-right">
                       {s.amountOut && parseFloat(s.amountOut) > 0 ? (
                         <>
                           <div className="text-sm font-semibold text-white">{parseFloat(s.amountOut).toFixed(4)}</div>
-                          <div className="text-xs text-gray-500">{s.tokenOut}</div>
+                          <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={s.tokenOut as 'USDC'|'EURC'} size={12} />{s.tokenOut}</div>
                         </>
                       ) : (
                         <span className="text-xs text-gray-600">—</span>
@@ -285,7 +288,7 @@ export default function HistoryPage() {
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="text-sm font-bold text-white">${parseFloat(run.totalAmount).toFixed(2)}</div>
-                      <div className="text-xs text-gray-500">USDC</div>
+                      <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token="USDC" size={12} />USDC</div>
                     </div>
                     <StatusBadge status={run.status} />
                     <ChevronDown className={cn('h-4 w-4 text-gray-500 transition-transform shrink-0', open && 'rotate-180')} />

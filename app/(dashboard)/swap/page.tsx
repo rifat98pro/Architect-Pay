@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { ArrowDown, ChevronDown, Loader2, CheckCircle2, Clock, RefreshCw, Settings } from 'lucide-react'
+import TokenLogo from '@/components/token-logo'
 
 type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
 type Chain = 'ARC-TESTNET' | 'ETH-SEPOLIA' | 'BASE-SEPOLIA'
@@ -44,9 +45,7 @@ function ChainDropdown({
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-xl bg-gray-800/80 px-3 py-2.5 hover:bg-gray-700/80 transition border border-gray-700/50"
       >
-        <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold ${colorClass}`}>
-          {tokenLabel[0]}
-        </div>
+        <TokenLogo token={tokenLabel as 'USDC' | 'EURC'} size={28} />
         <div className="text-left">
           <div className="text-sm font-semibold text-white leading-none">{tokenLabel}</div>
           <div className="text-[10px] text-gray-400 mt-0.5">{selected.short}</div>
