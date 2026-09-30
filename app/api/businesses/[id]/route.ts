@@ -22,6 +22,7 @@ export async function PATCH(
   const parsed = z.object({
     name:         z.string().min(1).max(100).optional(),
     scheduledDay: z.number().int().min(1).max(28).nullable().optional(),
+    logoUrl:      z.string().nullable().optional(),
   }).safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })

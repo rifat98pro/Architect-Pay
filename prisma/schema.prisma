@@ -76,6 +76,7 @@ model Business {
   userId       String
   user         User         @relation(fields: [userId], references: [id])
   name         String
+  logoUrl      String?
   createdAt    DateTime     @default(now())
   scheduledDay Int?         // 1–28: day of month to auto-run payroll
   employees    Employee[]
