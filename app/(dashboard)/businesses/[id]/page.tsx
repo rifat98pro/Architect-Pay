@@ -296,22 +296,30 @@ export default function BusinessEmployeesPage() {
           <div style={{ background: L ? '#ffffff' : 'rgba(12,24,38,0.3)' }}>
             {employees.map((emp) =>
               editingId === emp.id && editState ? (
-                <div key={emp.id} className="px-6 py-4 space-y-3" style={{ background: L ? '#eef4ff' : 'rgba(30,58,138,0.08)', borderTop: `1px solid ${divider}`, borderBottom: `1px solid ${divider}` }}>
-                  {editError && <div className="rounded-xl bg-red-900/30 px-3 py-2 text-xs text-red-400">{editError}</div>}
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} placeholder="Full name" className="input-base text-sm" maxLength={100} style={input} />
-                    <input type="text" value={editState.role} onChange={(e) => setEditState({ ...editState, role: e.target.value })} placeholder="Role" className="input-base text-sm" maxLength={100} style={input} />
-                    <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="Wallet address" className="input-base font-mono text-xs sm:col-span-2" style={input} />
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style={{ color: t3 }}>$</span>
-                      <input type="number" step="0.01" min="0.01" value={editState.salary} onChange={(e) => setEditState({ ...editState, salary: e.target.value })} className="input-base pl-7 text-sm" style={input} />
+                <div key={emp.id} style={{ borderTop: `1px solid ${divider}` }}>
+                  {editError && <div className="mx-6 mt-3 rounded-xl bg-red-900/30 px-3 py-2 text-xs text-red-400">{editError}</div>}
+                  <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-3" style={{ background: L ? '#eef4ff' : 'rgba(30,58,138,0.08)' }}>
+                    {/* Name + role stacked */}
+                    <div className="flex flex-col gap-1.5 min-w-0">
+                      <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} placeholder="Full name" className="input-base text-sm" maxLength={100} style={input} />
+                      <input type="text" value={editState.role} onChange={(e) => setEditState({ ...editState, role: e.target.value })} placeholder="Role" className="input-base text-xs" maxLength={100} style={input} />
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => saveEdit(emp.id)} disabled={editSaving} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-600 transition">
-                        {editSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
+                    {/* Wallet — matches w-44 column */}
+                    <div className="w-44">
+                      <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="0x..." className="input-base font-mono text-[10px] w-full" style={input} />
+                    </div>
+                    {/* Salary — matches w-24 column */}
+                    <div className="w-24 relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: t3 }}>$</span>
+                      <input type="number" step="0.01" min="0.01" value={editState.salary} onChange={(e) => setEditState({ ...editState, salary: e.target.value })} className="input-base pl-5 text-xs w-full text-right" style={input} />
+                    </div>
+                    {/* Save / Cancel icons — matches w-16 column */}
+                    <div className="w-16 flex items-center justify-end gap-1">
+                      <button onClick={() => saveEdit(emp.id)} disabled={editSaving} className="rounded-lg p-1.5 bg-brand-500 text-white hover:bg-brand-600 transition disabled:opacity-50">
+                        {editSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                       </button>
-                      <button onClick={cancelEdit} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs transition" style={{ border: `1px solid ${divider}`, color: t2, background: L ? '#f0f4f8' : 'transparent' }}>
-                        <X className="h-3.5 w-3.5" /> Cancel
+                      <button onClick={cancelEdit} className="rounded-lg p-1.5 transition" style={{ border: `1px solid ${divider}`, color: t2 }}>
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
