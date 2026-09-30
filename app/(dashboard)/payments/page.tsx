@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { usePendingPayments } from '@/context/pending-payments-context'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight, ShieldCheck, AlertTriangle, Clock } from 'lucide-react'
@@ -45,6 +46,7 @@ function SectionLabel({ step, title, subtitle }: { step: number; title: string; 
 export default function PaymentsPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { addPending }                 = usePendingPayments()
 
   const [chainBalances, setChainBalances]         = useState<Record<string, string>>({})
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
@@ -225,10 +227,11 @@ export default function PaymentsPage() {
       const isEurcCrossChain = token === 'EURC' && (isCrossChain || isAggregate)
 
       if (data.pending && data.paymentId) {
-        // Cross-chain: burn done, minting in progress — poll until complete
+        // Cross-chain: burn done, minting in progress — poll until complete (globally, survives navigation)
         setSuccess(`${amount} ${token} transfer initiated! Completing on destination chain…`)
         setCrossChainNotice(isEurcCrossChain)
         setPendingPaymentId(data.paymentId)
+        addPending(data.paymentId)
         startPolling(data.paymentId, isEurcCrossChain)
       } else {
         setSuccess(`${amount} ${token} sent successfully!`)
