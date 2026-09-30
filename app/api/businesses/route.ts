@@ -14,7 +14,7 @@ export async function GET() {
   const businesses = await db.business.findMany({
     where:   { userId: user.id },
     orderBy: { createdAt: 'asc' },
-    select:  { id: true, name: true, createdAt: true },
+    select:  { id: true, name: true, createdAt: true, scheduledDay: true, _count: { select: { employees: true } } },
   })
 
   return NextResponse.json({ businesses })
