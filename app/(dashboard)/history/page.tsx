@@ -19,6 +19,7 @@ interface Payment {
   recipientAddress: string
   recipientLabel:   string | null
   amount:           string
+  token:            string
   status:           string
   txHash:           string | null
   createdAt:        string
@@ -197,7 +198,7 @@ export default function HistoryPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold text-white">${formatUSDC(p.amount)}</div>
-                    <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token="USDC" size={12} />USDC</div>
+                    <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
                     {p.txHash && (
                       <a
                         href={`${ARC_EXPLORER}/tx/${p.txHash}`}
