@@ -41,6 +41,7 @@ export function computeAggregatePlan(
 
   if (remaining > 0.001) {
     const others = CCTP_SOURCE_CHAINS
+      .filter((c) => c !== 'ARC-TESTNET')
       .map((c) => ({ chain: c, bal: chainBalances[c] ?? 0 }))
       .filter((x) => x.bal > 0)
       .sort((a, b) => b.bal - a.bal)
