@@ -17,16 +17,19 @@ const APPROVE_ABI = {
   outputs:          [{ name: '', type: 'bool' }],
 }
 
-// USDC: CCTP V2 standard 4-arg depositForBurn (TokenMessengerV2)
+// USDC: CCTP V2 7-arg depositForBurn (TokenMessengerV2)
 const DEPOSIT_FOR_BURN_ABI = {
   type:            'function' as const,
   name:            'depositForBurn',
   stateMutability: 'nonpayable' as const,
   inputs: [
-    { name: 'amount',            type: 'uint256' },
-    { name: 'destinationDomain', type: 'uint32'  },
-    { name: 'mintRecipient',     type: 'bytes32' },
-    { name: 'burnToken',         type: 'address' },
+    { name: 'amount',               type: 'uint256' },
+    { name: 'destinationDomain',    type: 'uint32'  },
+    { name: 'mintRecipient',        type: 'bytes32' },
+    { name: 'burnToken',            type: 'address' },
+    { name: 'destinationCaller',    type: 'bytes32' },
+    { name: 'maxFee',               type: 'uint256' },
+    { name: 'minFinalityThreshold', type: 'uint32'  },
   ],
   outputs: [],
 }
@@ -230,7 +233,7 @@ export async function cctpBurn({
     const burnTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken] }),
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, BigInt(0), 0] }),
     })
     const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => { throw new Error(`[step2-depositForBurn] ${e.message}`) })
     console.log(`[cctp/usdc] burn confirmed: ${burnTxHash}`)
@@ -317,7 +320,7 @@ export async function cctpBurnFast({
     const burnCircleTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken] }),
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, BigInt(0), 0] }),
     })
 
     console.log(`[cctp/usdc] burn submitted (no-wait): circleId=${burnCircleTxId}`)

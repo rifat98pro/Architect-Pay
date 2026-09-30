@@ -112,14 +112,6 @@ export async function POST(req: NextRequest) {
       })
       txHash = result.txHash ?? await waitForTransaction(result.id)
     } else {
-      // ── Cross-chain: collect platform fee on source chain first ─────────────
-      await sendUsdcPayment({
-        fromWalletId: sourceWalletId,
-        toAddress:    FEE_RECIPIENT,
-        amount:       platformFee.toFixed(6),
-        token,
-      })
-
       // ── Cross-chain: burn only — mint happens via polling ───────────────────
       const destWalletId = destChain === 'ARC-TESTNET'
         ? wallet.circleWalletId
@@ -135,6 +127,16 @@ export async function POST(req: NextRequest) {
         amount,
         token,
       })
+
+      // Burn submitted — now safe to collect the platform fee
+      if (platformFee > 0) {
+        sendUsdcPayment({
+          fromWalletId: sourceWalletId,
+          toAddress:    FEE_RECIPIENT,
+          amount:       platformFee.toFixed(6),
+          token,
+        }).catch((e) => console.error('[payments/send] fee collection failed:', e))
+      }
 
       // Store Circle tx ID (prefixed) — mint endpoint resolves to on-chain hash once confirmed
       await db.payment.update({
