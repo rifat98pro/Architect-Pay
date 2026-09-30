@@ -94,6 +94,8 @@ export default function SwapPage() {
     'ETH-SEPOLIA':  { usdc: '0', eurc: '0' },
     'BASE-SEPOLIA': { usdc: '0', eurc: '0' },
   })
+  const [eurcUsd,    setEurcUsd]    = useState<number | null>(null)
+  const [rateLoading,setRateLoading]= useState(true)
   const [balLoading, setBalLoading] = useState(true)
   const [loading,    setLoading]    = useState(false)
   const [pending,    setPending]    = useState(false)
@@ -129,6 +131,21 @@ export default function SwapPage() {
   }
 
   useEffect(() => { if (user?.id) fetchBalances() }, [user?.id])
+
+  useEffect(() => {
+    async function fetchRate() {
+      setRateLoading(true)
+      try {
+        const res  = await fetch('/api/price')
+        const data = await res.json()
+        setEurcUsd(data.eurcUsd)
+      } catch { setEurcUsd(1.1) }
+      finally  { setRateLoading(false) }
+    }
+    fetchRate()
+    const id = setInterval(fetchRate, 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   const tokenIn  = direction === 'eurc-to-usdc' ? 'EURC' : 'USDC'
   const tokenOut = direction === 'eurc-to-usdc' ? 'USDC' : 'EURC'
@@ -168,8 +185,16 @@ export default function SwapPage() {
     }
   }
 
-  const amountNum = parseFloat(amount || '0')
-  const canSwap   = amountNum > 0 && amountNum <= parseFloat(inBal)
+  const amountNum  = parseFloat(amount || '0')
+  const rate       = eurcUsd ?? 1.1
+  // EURC→USDC: multiply by EUR/USD rate; USDC→EURC: divide
+  const amountOut  = direction === 'eurc-to-usdc'
+    ? amountNum * rate
+    : amountNum / rate
+  const payUsd     = direction === 'eurc-to-usdc'
+    ? amountNum * rate   // EURC in → USD value
+    : amountNum          // USDC in → already USD
+  const canSwap    = amountNum > 0 && amountNum <= parseFloat(inBal)
 
   return (
     <div className="flex flex-col items-center pt-4">
@@ -222,7 +247,7 @@ export default function SwapPage() {
             </div>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-xs text-gray-600">
-                {amountNum > 0 ? `≈ $${amountNum.toFixed(2)}` : '$0.00'}
+                {amountNum > 0 ? `≈ $${payUsd.toFixed(2)}` : '$0.00'}
               </span>
               <button
                 type="button"
@@ -251,7 +276,7 @@ export default function SwapPage() {
             <div className="mb-3 text-xs font-medium text-gray-500">You receive</div>
             <div className="flex items-center gap-3">
               <div className="flex-1 text-3xl font-semibold text-gray-400 w-0 min-w-0 truncate">
-                {amountNum > 0 ? `≈ ${amountNum.toFixed(2)}` : '0'}
+                {amountNum > 0 ? `≈ ${amountOut.toFixed(4)}` : '0'}
               </div>
               <ChainDropdown
                 value={destChain}
@@ -261,7 +286,14 @@ export default function SwapPage() {
               />
             </div>
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-gray-600">1:1 rate · 1% max slippage</span>
+              <span className="text-xs text-gray-600">
+                {rateLoading
+                  ? 'Fetching rate...'
+                  : direction === 'eurc-to-usdc'
+                    ? `1 EURC ≈ ${rate.toFixed(4)} USDC · live rate`
+                    : `1 USDC ≈ ${(1 / rate).toFixed(4)} EURC · live rate`
+                }
+              </span>
               <span className="text-xs text-gray-600">
                 Balance: {balLoading ? '...' : outBal} {tokenOut}
               </span>
