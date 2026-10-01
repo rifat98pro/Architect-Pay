@@ -169,8 +169,9 @@ export default function HistoryPage() {
           const res  = await fetch(`/api/payments/${p.id}/mint`, { method: 'POST' })
           const data = await res.json()
           if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+            const completedAt = new Date().toISOString()
             setPayments((prev) =>
-              prev.map((x) => x.id === p.id ? { ...x, status: data.status, txHash: data.txHash ?? x.txHash } : x)
+              prev.map((x) => x.id === p.id ? { ...x, status: data.status, txHash: data.txHash ?? x.txHash, updatedAt: completedAt } : x)
             )
           }
         } catch { /* retry next tick */ }
