@@ -251,6 +251,10 @@ export default function PaymentsPage() {
 
       const isEurcCrossChain = token === 'EURC' && (isCrossChain || isAggregate)
 
+      // Clear form fields first — success state is set after so it survives the clear
+      clearPayForm(); setResolvedAddress(''); setResolvedName('')
+      setLookupState('idle'); setPlan(null)
+
       if (data.pending && data.paymentId) {
         // Cross-chain: burn done, minting in progress — poll until complete (globally, survives navigation)
         setSuccess(`${amount} ${token} transfer initiated! Completing on destination chain…`)
@@ -261,9 +265,6 @@ export default function PaymentsPage() {
       } else {
         setSuccess(`${amount} ${token} sent successfully!`)
       }
-
-      clearPayForm(); setResolvedAddress(''); setResolvedName('')
-      setLookupState('idle'); setPlan(null)
       const bal = await fetch('/api/wallet/balance').then((r) => r.json())
       setChainBalances(bal.chainBalances ?? {})
       setEurcChainBalances(bal.eurcChainBalances ?? {})
