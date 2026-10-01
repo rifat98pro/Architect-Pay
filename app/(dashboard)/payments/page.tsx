@@ -385,7 +385,7 @@ export default function PaymentsPage() {
               {eurcSrcBlocked ? (
                 <><XCircle className="h-3.5 w-3.5 shrink-0" /> EURC cross-chain not supported from this chain</>
               ) : isCrossChain ? (
-                <><ArrowRight className="h-3.5 w-3.5 shrink-0" /><ChainLogo chain={sourceChain} size={14} />{selectedSrcChain.label} → <ChainLogo chain={destChain} size={14} />{selectedDestChain.label} · ~2–3 min · ~1% fee</>
+                <><ArrowRight className="h-3.5 w-3.5 shrink-0" /><ChainLogo chain={sourceChain} size={14} />{selectedSrcChain.label} → <ChainLogo chain={destChain} size={14} />{selectedDestChain.label} · ~2–3 min · ~0.01% fee</>
               ) : (
                 <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Same-chain — instant, no fees</>
               )}
