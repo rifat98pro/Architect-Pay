@@ -640,7 +640,7 @@ export default function PaymentsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">Platform fee (0.01%)</span>
                   <span className="text-xs text-amber-400">
-                    ~{token === 'EURC' ? '' : '$'}{Math.max(parseFloat(amount || '0') * 0.0001, 0.10).toFixed(2)} {token}
+                    ~{token === 'EURC' ? '' : '$'}{(parseFloat(amount || '0') * 0.0001).toFixed(4)} {token}
                   </span>
                 </div>
               ) : (
