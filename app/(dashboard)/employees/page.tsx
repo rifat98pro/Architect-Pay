@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useFormPersist } from '@/lib/hooks/use-form-persist'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck } from 'lucide-react'
@@ -32,10 +33,12 @@ export default function EmployeesPage() {
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState('')
 
-  const [name,    setName]    = useState('')
-  const [address, setAddress] = useState('')
-  const [salary,  setSalary]  = useState('')
-  const [role,    setRole]    = useState('')
+  const [addForm, setAddForm, clearAddForm] = useFormPersist('employees-add', { name: '', address: '', salary: '', role: '' })
+  const { name, address, salary, role } = addForm
+  const setName    = (v: string) => setAddForm({ name: v })
+  const setAddress = (v: string) => setAddForm({ address: v })
+  const setSalary  = (v: string) => setAddForm({ salary: v })
+  const setRole    = (v: string) => setAddForm({ role: v })
 
   const [copiedId,     setCopiedId]     = useState<string | null>(null)
   const [editingId,    setEditingId]    = useState<string | null>(null)
@@ -70,7 +73,7 @@ export default function EmployeesPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(JSON.stringify(data.error))
       setEmployees((prev) => [...prev, data.employee])
-      setName(''); setAddress(''); setSalary(''); setRole('')
+      clearAddForm()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add employee')
     } finally {

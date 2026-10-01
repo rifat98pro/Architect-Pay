@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useFormPersist } from '@/lib/hooks/use-form-persist'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { ArrowDown, ChevronDown, Loader2, CheckCircle2, Clock, RefreshCw, Settings } from 'lucide-react'
@@ -84,10 +85,17 @@ export default function SwapPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
-  const [srcChain,   setSrcChain]   = useState<Chain>('ARC-TESTNET')
-  const [destChain,  setDestChain]  = useState<Chain>('ARC-TESTNET')
-  const [direction,  setDirection]  = useState<Direction>('eurc-to-usdc')
-  const [amount,     setAmount]     = useState('')
+  const [swapForm, setSwapForm, clearSwapAmount] = useFormPersist('swap-form', {
+    srcChain:  'ARC-TESTNET' as Chain,
+    destChain: 'ARC-TESTNET' as Chain,
+    direction: 'eurc-to-usdc' as Direction,
+    amount:    '',
+  })
+  const { srcChain, destChain, direction, amount } = swapForm
+  const setSrcChain  = (v: Chain)      => setSwapForm({ srcChain: v, amount: '' })
+  const setDestChain = (v: Chain)      => setSwapForm({ destChain: v })
+  const setDirection = (v: Direction)  => setSwapForm({ direction: v, amount: '' })
+  const setAmount    = (v: string)     => setSwapForm({ amount: v })
   const [bals,       setBals]       = useState<BalMap>({
     'ARC-TESTNET':  { usdc: '0', eurc: '0' },
     'ETH-SEPOLIA':  { usdc: '0', eurc: '0' },
@@ -152,7 +160,7 @@ export default function SwapPage() {
   const outBal   = direction === 'eurc-to-usdc' ? bals[destChain].usdc : bals[destChain].eurc
 
   function flip() {
-    setDirection((d) => d === 'eurc-to-usdc' ? 'usdc-to-eurc' : 'eurc-to-usdc')
+    setDirection(direction === 'eurc-to-usdc' ? 'usdc-to-eurc' : 'eurc-to-usdc')
     setAmount('')
     setError('')
     setSuccess(false)

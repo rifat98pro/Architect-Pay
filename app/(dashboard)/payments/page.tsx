@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useFormPersist } from '@/lib/hooks/use-form-persist'
 import { usePendingPayments } from '@/context/pending-payments-context'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
@@ -50,11 +51,26 @@ export default function PaymentsPage() {
 
   const [chainBalances, setChainBalances]         = useState<Record<string, string>>({})
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
-  const [sourceChain, setSourceChain]             = useState('ARC-TESTNET')
-  const [destChain, setDestChain]                 = useState('ARC-TESTNET')
-  const [token, setToken]                         = useState<'USDC' | 'EURC'>('USDC')
-  const [amount, setAmount]                       = useState('')
-  const [label, setLabel]                         = useState('')
+  const [payForm, setPayForm, clearPayForm] = useFormPersist('payment-form', {
+    sourceChain:   'ARC-TESTNET',
+    destChain:     'ARC-TESTNET',
+    token:         'USDC' as 'USDC' | 'EURC',
+    amount:        '',
+    label:         '',
+    recipientMode: 'wallet' as RecipientMode,
+    walletAddress: '',
+    usernameInput: '',
+  })
+  const { sourceChain, destChain, token, amount, label, recipientMode, walletAddress, usernameInput } = payForm
+  const setSourceChain   = (v: string)              => setPayForm({ sourceChain: v })
+  const setDestChain     = (v: string)              => setPayForm({ destChain: v })
+  const setToken         = (v: 'USDC' | 'EURC')    => setPayForm({ token: v })
+  const setAmount        = (v: string)              => setPayForm({ amount: v })
+  const setLabel         = (v: string)              => setPayForm({ label: v })
+  const setRecipientMode = (v: RecipientMode)       => setPayForm({ recipientMode: v, walletAddress: '', usernameInput: '' })
+  const setWalletAddress = (v: string)              => setPayForm({ walletAddress: v })
+  const setUsernameInput = (v: string)              => setPayForm({ usernameInput: v })
+
   const [loading, setLoading]                     = useState(false)
   const [error, setError]                         = useState('')
   const [success, setSuccess]                     = useState('')
@@ -68,9 +84,6 @@ export default function PaymentsPage() {
   const [planFeasible, setPlanFeasible] = useState(true)
   const [planFee, setPlanFee]           = useState('0')
 
-  const [recipientMode, setRecipientMode]     = useState<RecipientMode>('wallet')
-  const [walletAddress, setWalletAddress]     = useState('')
-  const [usernameInput, setUsernameInput]     = useState('')
   const [lookupState, setLookupState]         = useState<LookupState>('idle')
   const [resolvedAddress, setResolvedAddress] = useState('')
   const [resolvedName, setResolvedName]       = useState('')
@@ -237,8 +250,8 @@ export default function PaymentsPage() {
         setSuccess(`${amount} ${token} sent successfully!`)
       }
 
-      setWalletAddress(''); setUsernameInput(''); setResolvedAddress(''); setResolvedName('')
-      setLookupState('idle'); setAmount(''); setLabel(''); setPlan(null)
+      clearPayForm(); setResolvedAddress(''); setResolvedName('')
+      setLookupState('idle'); setPlan(null)
       const bal = await fetch('/api/wallet/balance').then((r) => r.json())
       setChainBalances(bal.chainBalances ?? {})
       setEurcChainBalances(bal.eurcChainBalances ?? {})

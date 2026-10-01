@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useFormPersist } from '@/lib/hooks/use-form-persist'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck, ArrowLeft, AtSign, Wallet, CheckCircle2, XCircle, Camera } from 'lucide-react'
@@ -31,15 +32,20 @@ export default function BusinessEmployeesPage() {
   const [error,      setError]      = useState('')
   const [showForm,   setShowForm]   = useState(false)
 
-  const [name,    setName]    = useState('')
-  const [address, setAddress] = useState('')
-  const [salary,  setSalary]  = useState('')
-  const [role,    setRole]    = useState('')
-
   type WalletMode = 'address' | 'username'
   type LookupState = 'idle' | 'loading' | 'found' | 'notfound'
-  const [walletMode,       setWalletMode]       = useState<WalletMode>('address')
-  const [usernameInput,    setUsernameInput]    = useState('')
+
+  const [addForm, setAddForm, clearAddForm] = useFormPersist(`biz-${bizId}-add-emp`, {
+    name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '',
+  })
+  const { name, address, salary, role, walletMode, usernameInput } = addForm
+  const setName          = (v: string)     => setAddForm({ name: v })
+  const setAddress       = (v: string)     => setAddForm({ address: v })
+  const setSalary        = (v: string)     => setAddForm({ salary: v })
+  const setRole          = (v: string)     => setAddForm({ role: v })
+  const setWalletMode    = (v: WalletMode) => setAddForm({ walletMode: v, usernameInput: '', address: '' })
+  const setUsernameInput = (v: string)     => setAddForm({ usernameInput: v })
+
   const [lookupState,      setLookupState]      = useState<LookupState>('idle')
   const [resolvedAddress,  setResolvedAddress]  = useState('')
   const [resolvedName,     setResolvedName]     = useState('')
@@ -108,7 +114,7 @@ export default function BusinessEmployeesPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(JSON.stringify(data.error))
       setEmployees((prev) => [...prev, data.employee])
-      setName(''); setAddress(''); setUsernameInput(''); setSalary(''); setRole('')
+      clearAddForm()
       setResolvedAddress(''); setResolvedName(''); setLookupState('idle')
       setShowForm(false)
     } catch (err) {
