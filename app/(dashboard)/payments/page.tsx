@@ -52,19 +52,21 @@ export default function PaymentsPage() {
   const [chainBalances, setChainBalances]         = useState<Record<string, string>>({})
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
   const [payForm, setPayForm, clearPayForm] = useFeatureState('payment-form', {
-    sourceChain:      'ARC-TESTNET',
-    destChain:        'ARC-TESTNET',
-    token:            'USDC' as 'USDC' | 'EURC',
-    amount:           '',
-    label:            '',
-    recipientMode:    'wallet' as RecipientMode,
-    walletAddress:    '',
-    usernameInput:    '',
-    success:          '',
-    confirming:       false,
-    pendingPaymentId: null as string | null,
+    sourceChain:        'ARC-TESTNET',
+    destChain:          'ARC-TESTNET',
+    token:              'USDC' as 'USDC' | 'EURC',
+    amount:             '',
+    label:              '',
+    recipientMode:      'wallet' as RecipientMode,
+    walletAddress:      '',
+    usernameInput:      '',
+    success:            '',
+    confirming:         false,
+    pendingPaymentId:   null as string | null,
+    loading:            false,
+    crossChainNotice:   false,
   })
-  const { sourceChain, destChain, token, amount, label, recipientMode, walletAddress, usernameInput, success, confirming, pendingPaymentId } = payForm
+  const { sourceChain, destChain, token, amount, label, recipientMode, walletAddress, usernameInput, success, confirming, pendingPaymentId, loading, crossChainNotice } = payForm
   const setSourceChain      = (v: string)            => setPayForm({ sourceChain: v })
   const setDestChain        = (v: string)            => setPayForm({ destChain: v })
   const setToken            = (v: 'USDC' | 'EURC')  => setPayForm({ token: v })
@@ -76,10 +78,10 @@ export default function PaymentsPage() {
   const setSuccess          = (v: string)            => setPayForm({ success: v })
   const setConfirming       = (v: boolean)           => setPayForm({ confirming: v })
   const setPendingPaymentId = (v: string | null)     => setPayForm({ pendingPaymentId: v })
+  const setLoading          = (v: boolean)           => setPayForm({ loading: v })
+  const setCrossChainNotice = (v: boolean)           => setPayForm({ crossChainNotice: v })
 
-  const [loading, setLoading]                     = useState(false)
   const [error, setError]                         = useState('')
-  const [crossChainNotice, setCrossChainNotice]   = useState(false)
   const pollRef                                   = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [planLoading, setPlanLoading]   = useState(false)
@@ -222,6 +224,13 @@ export default function PaymentsPage() {
 
   // Cleanup polling on unmount
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
+
+  // Restart polling if user navigated away while a cross-chain transfer was pending
+  useEffect(() => {
+    if (!pendingPaymentId || pollRef.current) return
+    startPolling(pendingPaymentId, crossChainNotice)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Step 2: actually send after user confirms
   async function confirmSend() {
