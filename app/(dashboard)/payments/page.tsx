@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useFormPersist } from '@/lib/hooks/use-form-persist'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { usePendingPayments } from '@/context/pending-payments-context'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
@@ -51,32 +51,35 @@ export default function PaymentsPage() {
 
   const [chainBalances, setChainBalances]         = useState<Record<string, string>>({})
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
-  const [payForm, setPayForm, clearPayForm] = useFormPersist('payment-form', {
-    sourceChain:   'ARC-TESTNET',
-    destChain:     'ARC-TESTNET',
-    token:         'USDC' as 'USDC' | 'EURC',
-    amount:        '',
-    label:         '',
-    recipientMode: 'wallet' as RecipientMode,
-    walletAddress: '',
-    usernameInput: '',
+  const [payForm, setPayForm, clearPayForm] = useFeatureState('payment-form', {
+    sourceChain:      'ARC-TESTNET',
+    destChain:        'ARC-TESTNET',
+    token:            'USDC' as 'USDC' | 'EURC',
+    amount:           '',
+    label:            '',
+    recipientMode:    'wallet' as RecipientMode,
+    walletAddress:    '',
+    usernameInput:    '',
+    success:          '',
+    confirming:       false,
+    pendingPaymentId: null as string | null,
   })
-  const { sourceChain, destChain, token, amount, label, recipientMode, walletAddress, usernameInput } = payForm
-  const setSourceChain   = (v: string)              => setPayForm({ sourceChain: v })
-  const setDestChain     = (v: string)              => setPayForm({ destChain: v })
-  const setToken         = (v: 'USDC' | 'EURC')    => setPayForm({ token: v })
-  const setAmount        = (v: string)              => setPayForm({ amount: v })
-  const setLabel         = (v: string)              => setPayForm({ label: v })
-  const setRecipientMode = (v: RecipientMode)       => setPayForm({ recipientMode: v, walletAddress: '', usernameInput: '' })
-  const setWalletAddress = (v: string)              => setPayForm({ walletAddress: v })
-  const setUsernameInput = (v: string)              => setPayForm({ usernameInput: v })
+  const { sourceChain, destChain, token, amount, label, recipientMode, walletAddress, usernameInput, success, confirming, pendingPaymentId } = payForm
+  const setSourceChain      = (v: string)            => setPayForm({ sourceChain: v })
+  const setDestChain        = (v: string)            => setPayForm({ destChain: v })
+  const setToken            = (v: 'USDC' | 'EURC')  => setPayForm({ token: v })
+  const setAmount           = (v: string)            => setPayForm({ amount: v })
+  const setLabel            = (v: string)            => setPayForm({ label: v })
+  const setRecipientMode    = (v: RecipientMode)     => setPayForm({ recipientMode: v, walletAddress: '', usernameInput: '' })
+  const setWalletAddress    = (v: string)            => setPayForm({ walletAddress: v })
+  const setUsernameInput    = (v: string)            => setPayForm({ usernameInput: v })
+  const setSuccess          = (v: string)            => setPayForm({ success: v })
+  const setConfirming       = (v: boolean)           => setPayForm({ confirming: v })
+  const setPendingPaymentId = (v: string | null)     => setPayForm({ pendingPaymentId: v })
 
   const [loading, setLoading]                     = useState(false)
   const [error, setError]                         = useState('')
-  const [success, setSuccess]                     = useState('')
   const [crossChainNotice, setCrossChainNotice]   = useState(false)
-  const [confirming, setConfirming]               = useState(false)
-  const [pendingPaymentId, setPendingPaymentId]   = useState<string | null>(null)
   const pollRef                                   = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [planLoading, setPlanLoading]   = useState(false)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
@@ -80,12 +81,19 @@ export default function HistoryPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
-  const [tab,      setTab]      = useState<'payments' | 'payroll' | 'swaps'>('payments')
+  const [historyUI, setHistoryUI] = useFeatureState('history-ui', {
+    tab:      'payments' as 'payments' | 'payroll' | 'swaps',
+    expanded: null as string | null,
+  })
+  const tab      = historyUI.tab
+  const expanded = historyUI.expanded
+  const setTab      = (v: 'payments' | 'payroll' | 'swaps') => setHistoryUI({ tab: v })
+  const setExpanded = (v: string | null)                     => setHistoryUI({ expanded: v })
+
   const [payments, setPayments] = useState<Payment[]>([])
   const [runs,     setRuns]     = useState<PayrollRun[]>([])
   const [swaps,    setSwaps]    = useState<SwapRecord[]>([])
   const [loading,  setLoading]  = useState(true)
-  const [expanded, setExpanded] = useState<string | null>(null)
   const mintPollRef             = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {

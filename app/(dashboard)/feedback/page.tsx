@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { MessageSquare, Bug, Send, Loader2, CheckCircle2, ChevronDown, Sparkles, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,20 +33,23 @@ function SuccessState({ title, body, onReset, resetLabel }: {
 }
 
 export default function FeedbackPage() {
-  const [tab, setTab] = useState<Tab>('feedback')
+  const [feedbackForm, setFeedbackForm] = useFeatureState('feedback-form', {
+    tab:         'feedback' as Tab,
+    category:    'general',
+    message:     '',
+    title:       '',
+    description: '',
+    steps:       '',
+  })
+  const { tab, category, message, title, description, steps } = feedbackForm
+  const setTab = (v: Tab) => setFeedbackForm({ tab: v })
 
-  const [category,  setCategory]  = useState('general')
-  const [message,   setMessage]   = useState('')
   const [fbLoading, setFbLoading] = useState(false)
   const [fbDone,    setFbDone]    = useState(false)
   const [fbError,   setFbError]   = useState('')
-
-  const [title,       setTitle]       = useState('')
-  const [description, setDescription] = useState('')
-  const [steps,       setSteps]       = useState('')
-  const [bgLoading,   setBgLoading]   = useState(false)
-  const [bgDone,      setBgDone]      = useState(false)
-  const [bgError,     setBgError]     = useState('')
+  const [bgLoading, setBgLoading] = useState(false)
+  const [bgDone,    setBgDone]    = useState(false)
+  const [bgError,   setBgError]   = useState('')
 
   async function submitFeedback(e: React.FormEvent) {
     e.preventDefault()
@@ -59,7 +63,7 @@ export default function FeedbackPage() {
       })
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to submit')
       setFbDone(true)
-      setMessage('')
+      setFeedbackForm({ message: '' })
     } catch (err) {
       setFbError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -79,7 +83,7 @@ export default function FeedbackPage() {
       })
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to submit')
       setBgDone(true)
-      setTitle(''); setDescription(''); setSteps('')
+      setFeedbackForm({ title: '', description: '', steps: '' })
     } catch (err) {
       setBgError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -142,7 +146,7 @@ export default function FeedbackPage() {
                 <div className="relative">
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => setFeedbackForm({ category: e.target.value })}
                     className="w-full appearance-none rounded-xl border border-gray-700 bg-gray-800 py-2.5 pl-4 pr-10 text-sm text-white outline-none focus:border-brand-500/50"
                   >
                     {CATEGORIES.map((c) => (
@@ -160,7 +164,7 @@ export default function FeedbackPage() {
                 </div>
                 <textarea
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(e) => setFeedbackForm({ message: e.target.value })}
                   className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[140px] resize-y"
                   placeholder="Tell us what you think, what you'd like to see, or anything on your mind…"
                   maxLength={2000}
@@ -205,7 +209,7 @@ export default function FeedbackPage() {
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => setFeedbackForm({ title: e.target.value })}
                   className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50"
                   placeholder='e.g. "Payment stuck on Processing"'
                   maxLength={150}
@@ -221,7 +225,7 @@ export default function FeedbackPage() {
                 </div>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => setFeedbackForm({ description: e.target.value })}
                   className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[120px] resize-y"
                   placeholder="What were you doing when it happened? What did you expect?"
                   maxLength={3000}
@@ -236,7 +240,7 @@ export default function FeedbackPage() {
                 </label>
                 <textarea
                   value={steps}
-                  onChange={(e) => setSteps(e.target.value)}
+                  onChange={(e) => setFeedbackForm({ steps: e.target.value })}
                   className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[90px] resize-y"
                   placeholder={'1. Go to Send Payment\n2. Enter amount\n3. Click Send\n4. …'}
                   maxLength={2000}

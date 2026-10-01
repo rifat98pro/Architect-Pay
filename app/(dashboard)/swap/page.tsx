@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useFormPersist } from '@/lib/hooks/use-form-persist'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { ArrowDown, ChevronDown, Loader2, CheckCircle2, Clock, RefreshCw, Settings } from 'lucide-react'
@@ -85,7 +85,7 @@ export default function SwapPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
-  const [swapForm, setSwapForm, clearSwapAmount] = useFormPersist('swap-form', {
+  const [swapForm, setSwapForm, clearSwapAmount] = useFeatureState('swap-form', {
     srcChain:  'ARC-TESTNET' as Chain,
     destChain: 'ARC-TESTNET' as Chain,
     direction: 'eurc-to-usdc' as Direction,

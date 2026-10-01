@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useFormPersist } from '@/lib/hooks/use-form-persist'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck } from 'lucide-react'
@@ -33,7 +33,7 @@ export default function EmployeesPage() {
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState('')
 
-  const [addForm, setAddForm, clearAddForm] = useFormPersist('employees-add', { name: '', address: '', salary: '', role: '' })
+  const [addForm, setAddForm, clearAddForm] = useFeatureState('employees-add', { name: '', address: '', salary: '', role: '' })
   const { name, address, salary, role } = addForm
   const setName    = (v: string) => setAddForm({ name: v })
   const setAddress = (v: string) => setAddForm({ address: v })

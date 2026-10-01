@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, Clock } from 'lucide-react'
@@ -46,8 +47,16 @@ export default function PayrollPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
+  const [payrollUI, setPayrollUI] = useFeatureState('payroll-ui', {
+    businessId: '',
+    expanded:   null as string | null,
+  })
+  const businessId  = payrollUI.businessId
+  const expanded    = payrollUI.expanded
+  const setBusinessId = (v: string)      => setPayrollUI({ businessId: v })
+  const setExpanded   = (v: string | null) => setPayrollUI({ expanded: v })
+
   const [businesses,    setBusinesses]    = useState<{ id: string; name: string; scheduledDay?: number | null }[]>([])
-  const [businessId,    setBusinessId]    = useState<string>('')
   const [scheduleDay,   setScheduleDay]   = useState<number | null>(null)
   const [pendingDay,    setPendingDay]    = useState<number | null>(null)
   const [editingSched,  setEditingSched]  = useState(false)
@@ -59,7 +68,6 @@ export default function PayrollPage() {
   const [running,       setRunning]       = useState(false)
   const [error,         setError]         = useState('')
   const [success,       setSuccess]       = useState('')
-  const [expanded,      setExpanded]      = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')

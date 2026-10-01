@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useTheme } from '@/context/theme-context'
@@ -20,11 +21,18 @@ export default function BusinessesPage() {
   const divider = L ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)'
   const inputStyle = { background: L ? '#ffffff' : 'rgba(18,32,49,0.6)', border: `1px solid ${L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)'}`, color: t1 }
 
+  const [bizUI, setBizUI] = useFeatureState('businesses-ui', {
+    showForm: false,
+    newName:  '',
+  })
+  const showForm  = bizUI.showForm
+  const newName   = bizUI.newName
+  const setShowForm = (v: boolean) => setBizUI({ showForm: v })
+  const setNewName  = (v: string)  => setBizUI({ newName: v })
+
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [loading,    setLoading]    = useState(true)
-  const [newName,    setNewName]    = useState('')
   const [adding,     setAdding]     = useState(false)
-  const [showForm,   setShowForm]   = useState(false)
   const [error,      setError]      = useState('')
 
   const [renamingId,   setRenamingId]   = useState<string | null>(null)

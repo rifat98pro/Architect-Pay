@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useFormPersist } from '@/lib/hooks/use-form-persist'
+import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck, ArrowLeft, AtSign, Wallet, CheckCircle2, XCircle, Camera } from 'lucide-react'
@@ -30,14 +30,14 @@ export default function BusinessEmployeesPage() {
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
   const [error,      setError]      = useState('')
-  const [showForm,   setShowForm]   = useState(false)
-
   type WalletMode = 'address' | 'username'
   type LookupState = 'idle' | 'loading' | 'found' | 'notfound'
 
-  const [addForm, setAddForm, clearAddForm] = useFormPersist(`biz-${bizId}-add-emp`, {
-    name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '',
+  const [addForm, setAddForm, clearAddForm] = useFeatureState(`biz-${bizId}-add-emp`, {
+    showForm: false, name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '',
   })
+  const showForm    = addForm.showForm
+  const setShowForm = (v: boolean) => setAddForm({ showForm: v })
   const { name, address, salary, role, walletMode, usernameInput } = addForm
   const setName          = (v: string)     => setAddForm({ name: v })
   const setAddress       = (v: string)     => setAddForm({ address: v })
