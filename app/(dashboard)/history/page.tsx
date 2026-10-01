@@ -24,6 +24,7 @@ interface Payment {
   status:           string
   txHash:           string | null
   createdAt:        string
+  updatedAt:        string
 }
 
 interface PayrollEntry {
@@ -74,6 +75,56 @@ function StatusBadge({ status }: { status: string }) {
     <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium', L ? s.light : s.dark)}>
       {s.icon}{s.label}
     </span>
+  )
+}
+
+function formatElapsed(secs: number): string {
+  if (secs < 60) return `${secs}s`
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  if (m < 60) return `${m}m ${s}s`
+  const h = Math.floor(m / 60)
+  return `${h}h ${m % 60}m`
+}
+
+function TxTimer({ createdAt, updatedAt, status }: {
+  createdAt: string
+  updatedAt?: string
+  status: string
+}) {
+  const isActive = status === 'PENDING' || status === 'PROCESSING'
+  const [elapsed, setElapsed] = useState(0)
+
+  useEffect(() => {
+    if (isActive) {
+      const start = new Date(createdAt).getTime()
+      const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000)))
+      tick()
+      const id = setInterval(tick, 1000)
+      return () => clearInterval(id)
+    } else if (updatedAt) {
+      const ms = new Date(updatedAt).getTime() - new Date(createdAt).getTime()
+      setElapsed(Math.max(0, Math.floor(ms / 1000)))
+    }
+  }, [isActive, createdAt, updatedAt])
+
+  if (isActive) {
+    return (
+      <div className="mt-1 flex items-center gap-1.5 text-xs text-yellow-500/80">
+        <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-500" />
+        {formatElapsed(elapsed)}
+      </div>
+    )
+  }
+  if (!updatedAt || elapsed < 1) return null
+  return (
+    <div className={cn(
+      'mt-1 flex items-center gap-1.5 text-xs',
+      status === 'COMPLETED' ? 'text-green-500/70' : 'text-gray-600',
+    )}>
+      <Clock className="h-3 w-3" />
+      Took {formatElapsed(elapsed)}
+    </div>
   )
 }
 
@@ -203,6 +254,7 @@ export default function HistoryPage() {
                       <span className="text-gray-700">·</span>
                       <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
                     </div>
+                    <TxTimer createdAt={p.createdAt} updatedAt={p.updatedAt} status={p.status} />
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold text-white">${formatUSDC(p.amount)}</div>
@@ -260,6 +312,7 @@ export default function HistoryPage() {
                         <span className="text-gray-700">·</span>
                         <span className="text-xs text-gray-600">{new Date(s.createdAt).toLocaleDateString()}</span>
                       </div>
+                      <TxTimer createdAt={s.createdAt} status={s.status} />
                       {s.txHash && (
                         <a
                           href={`${ARC_EXPLORER}/tx/${s.txHash}`}
@@ -331,6 +384,7 @@ export default function HistoryPage() {
                         {failed > 0 && <span className="text-red-500">{failed} failed</span>}
                         <span>{run.entries.length} total</span>
                       </div>
+                      <TxTimer createdAt={run.createdAt} status={run.status} />
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="text-sm font-bold text-white">${parseFloat(run.totalAmount).toFixed(2)}</div>
