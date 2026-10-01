@@ -7,9 +7,9 @@ import { useState } from 'react'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
-  const [tab, setTab]           = useState<'google' | 'email'>('google')
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
+  const [tab, setTab]               = useState<'google' | 'email'>('google')
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword]     = useState('')
   const [showPw, setShowPw]     = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
@@ -23,7 +23,7 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const res = await signIn('credentials', { email, password, redirect: false })
+    const res = await signIn('credentials', { identifier, password, redirect: false })
     setLoading(false)
     if (res?.error) {
       setError('Invalid email or password')
@@ -91,13 +91,14 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleEmail} className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-400">Email</label>
+                <label className="mb-1.5 block text-xs font-medium text-gray-400">Email or Username</label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
-                  placeholder="you@example.com"
+                  placeholder="you@example.com or username"
+                  autoComplete="username"
                   className="w-full rounded-xl border border-gray-700 bg-gray-800/60 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30"
                 />
               </div>
@@ -116,6 +117,11 @@ export default function LoginPage() {
                     {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+              </div>
+              <div className="flex justify-end">
+                <Link href="/forgot-password" className="text-xs text-gray-500 hover:text-brand-400 transition">
+                  Forgot password?
+                </Link>
               </div>
               {error && <p className="text-xs text-red-400">{error}</p>}
               <button
