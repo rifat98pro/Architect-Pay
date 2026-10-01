@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, Clock } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
+import ChainLogo from '@/components/chain-logo'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
@@ -224,7 +225,10 @@ export default function PayrollPage() {
         <div className="mb-6 grid grid-cols-3 gap-2">
           {Object.entries(chainBalances).filter(([, v]) => parseFloat(v) > 0).map(([chain, bal]) => (
             <div key={chain} className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-2.5">
-              <span className="text-xs text-gray-500">{chain.replace('-', ' ').replace('TESTNET', 'Testnet').replace('SEPOLIA', 'Sepolia')}</span>
+              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <ChainLogo chain={chain} size={13} />
+                {chain.replace('-', ' ').replace('TESTNET', 'Testnet').replace('SEPOLIA', 'Sepolia')}
+              </span>
               <span className="text-sm font-semibold text-white">${parseFloat(bal).toFixed(2)}</span>
             </div>
           ))}

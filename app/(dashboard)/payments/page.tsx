@@ -5,8 +5,10 @@ import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { usePendingPayments } from '@/context/pending-payments-context'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ChevronDown, ArrowRight, ShieldCheck, AlertTriangle, Clock } from 'lucide-react'
+import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ArrowRight, ShieldCheck, AlertTriangle, Clock } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
+import ChainLogo from '@/components/chain-logo'
+import ChainSelect from '@/components/chain-select'
 import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
 
@@ -338,46 +340,34 @@ export default function PaymentsPage() {
             {/* Source */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-gray-500">From</label>
-              <div className="relative">
-                <select
-                  value={sourceChain}
-                  onChange={(e) => { setSourceChain(e.target.value); setPlan(null) }}
-                  className="w-full appearance-none rounded-xl border border-gray-700 bg-gray-800 py-2.5 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500/50 disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {SOURCE_CHAINS
-                    .filter((c) => token === 'EURC' ? c.id !== 'ALL_CHAINS' && EURC_CHAINS.includes(c.id) : true)
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.id === 'ALL_CHAINS'
-                          ? `All — $${totalBalance.toFixed(2)}`
-                          : token === 'EURC'
-                            ? `${c.label} (${parseFloat(eurcChainBalances[c.id] ?? '0').toFixed(2)} EURC)`
-                            : `${c.label} ($${parseFloat(chainBalances[c.id] ?? '0').toFixed(2)})`}
-                      </option>
-                    ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-              </div>
+              <ChainSelect
+                value={sourceChain}
+                onChange={(v) => { setSourceChain(v); setPlan(null) }}
+                disabled={loading}
+                options={SOURCE_CHAINS
+                  .filter((c) => token === 'EURC' ? c.id !== 'ALL_CHAINS' && EURC_CHAINS.includes(c.id) : true)
+                  .map((c) => ({
+                    id:       c.id,
+                    label:    c.id === 'ALL_CHAINS' ? 'All Chains (Aggregate)' : c.label,
+                    sublabel: c.id === 'ALL_CHAINS'
+                      ? `$${totalBalance.toFixed(2)} across all`
+                      : token === 'EURC'
+                        ? `${parseFloat(eurcChainBalances[c.id] ?? '0').toFixed(2)} EURC`
+                        : `$${parseFloat(chainBalances[c.id] ?? '0').toFixed(2)} USDC`,
+                  }))}
+              />
             </div>
 
             {/* Destination */}
             {!isAggregate && (
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-gray-500">To</label>
-                <div className="relative">
-                  <select
-                    value={destChain}
-                    onChange={(e) => setDestChain(e.target.value)}
-                    className="w-full appearance-none rounded-xl border border-gray-700 bg-gray-800 py-2.5 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500/50 disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {filteredDestChains.map((c) => (
-                      <option key={c.id} value={c.id}>{c.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                </div>
+                <ChainSelect
+                  value={destChain}
+                  onChange={setDestChain}
+                  disabled={loading}
+                  options={filteredDestChains.map((c) => ({ id: c.id, label: c.label }))}
+                />
               </div>
             )}
           </div>
@@ -395,7 +385,7 @@ export default function PaymentsPage() {
               {eurcSrcBlocked ? (
                 <><XCircle className="h-3.5 w-3.5 shrink-0" /> EURC cross-chain not supported from this chain</>
               ) : isCrossChain ? (
-                <><ArrowRight className="h-3.5 w-3.5 shrink-0" /> Cross-chain via CCTP · {selectedSrcChain.label} → {selectedDestChain.label} · ~2–3 min · ~1% fee</>
+                <><ArrowRight className="h-3.5 w-3.5 shrink-0" /><ChainLogo chain={sourceChain} size={14} />{selectedSrcChain.label} → <ChainLogo chain={destChain} size={14} />{selectedDestChain.label} · ~2–3 min · ~1% fee</>
               ) : (
                 <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Same-chain — instant, no fees</>
               )}
@@ -630,11 +620,11 @@ export default function PaymentsPage() {
 
               {/* Route */}
               {!isAggregate && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Route</span>
-                  <span className="text-xs text-gray-300">
-                    {selectedSrcChain.label}
-                    {isCrossChain && <> <ArrowRight className="inline h-3 w-3" /> {selectedDestChain.label}</>}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-gray-500 shrink-0">Route</span>
+                  <span className="flex items-center justify-end gap-1 text-xs text-gray-300 flex-wrap">
+                    <ChainLogo chain={sourceChain} size={13} />{selectedSrcChain.label}
+                    {isCrossChain && <><ArrowRight className="h-3 w-3 shrink-0" /><ChainLogo chain={destChain} size={13} />{selectedDestChain.label}</>}
                   </span>
                 </div>
               )}

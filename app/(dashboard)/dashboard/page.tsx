@@ -171,7 +171,7 @@ export default function DashboardPage() {
       {/* USDC per-chain */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">USDC by Chain</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">USDC by All Supported Chains</span>
           <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }} />
         </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -207,7 +207,7 @@ export default function DashboardPage() {
       {/* EURC per-chain */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-widest text-blue-500/70">EURC by Chain</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-blue-500/70">EURC by All Supported Chains</span>
           <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }} />
         </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">

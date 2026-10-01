@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { ArrowDown, ChevronDown, Loader2, CheckCircle2, Clock, RefreshCw, Settings } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
+import ChainLogo from '@/components/chain-logo'
 
 type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
 type Chain = 'ARC-TESTNET' | 'ETH-SEPOLIA' | 'BASE-SEPOLIA'
@@ -49,7 +50,9 @@ function ChainDropdown({
         <TokenLogo token={tokenLabel as 'USDC' | 'EURC'} size={28} />
         <div className="text-left">
           <div className="text-sm font-semibold text-white leading-none">{tokenLabel}</div>
-          <div className="text-[10px] text-gray-400 mt-0.5">{selected.short}</div>
+          <div className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400">
+            <ChainLogo chain={value} size={10} />{selected.short}
+          </div>
         </div>
         <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
       </button>
@@ -62,7 +65,7 @@ function ChainDropdown({
               type="button"
               disabled={!c.swapSupported}
               onClick={() => { if (c.swapSupported) { onChange(c.id); setOpen(false) } }}
-              className={`flex w-full items-center justify-between px-4 py-3 text-sm transition ${
+              className={`flex w-full items-center gap-2.5 px-4 py-3 text-sm transition ${
                 !c.swapSupported
                   ? 'text-gray-600 cursor-not-allowed'
                   : value === c.id
@@ -70,7 +73,8 @@ function ChainDropdown({
                   : 'text-gray-300 hover:bg-gray-800'
               }`}
             >
-              <span>{c.label}</span>
+              <ChainLogo chain={c.id} size={18} />
+              <span className="flex-1">{c.label}</span>
               {!c.swapSupported && <span className="text-[10px] text-gray-700 bg-gray-800 px-1.5 py-0.5 rounded">mainnet only</span>}
               {value === c.id && c.swapSupported && <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />}
             </button>

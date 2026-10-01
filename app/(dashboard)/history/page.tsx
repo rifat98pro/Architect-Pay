@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TokenLogo from '@/components/token-logo'
+import ChainLogo from '@/components/chain-logo'
 import { useTheme } from '@/context/theme-context'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
@@ -295,9 +296,6 @@ export default function HistoryPage() {
             <div className="divide-y divide-gray-800/60">
               {swaps.map((s) => {
                 const isCross = s.srcChain !== s.destChain
-                const chainLabel = isCross
-                  ? `${s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','')} → ${s.destChain.replace('-TESTNET','').replace('-SEPOLIA','')}`
-                  : s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','')
                 return (
                   <div key={s.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
                     <div className="min-w-0">
@@ -308,8 +306,16 @@ export default function HistoryPage() {
                         <TokenLogo token={s.tokenOut as 'USDC' | 'EURC'} size={16} />
                         <span className="text-purple-400">{s.tokenOut}</span>
                       </div>
-                      <div className="mt-0.5 flex items-center gap-2">
-                        <span className="text-xs text-gray-500">{chainLabel}</span>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <ChainLogo chain={s.srcChain} size={12} />
+                        <span className="text-xs text-gray-500">{s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','')}</span>
+                        {isCross && (
+                          <>
+                            <ArrowLeftRight className="h-3 w-3 text-gray-700 shrink-0" />
+                            <ChainLogo chain={s.destChain} size={12} />
+                            <span className="text-xs text-gray-500">{s.destChain.replace('-TESTNET','').replace('-SEPOLIA','')}</span>
+                          </>
+                        )}
                         <span className="text-gray-700">·</span>
                         <span className="text-xs text-gray-600">{new Date(s.createdAt).toLocaleDateString()}</span>
                       </div>
