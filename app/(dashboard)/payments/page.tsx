@@ -668,11 +668,11 @@ export default function PaymentsPage() {
 
               {/* Recipient — full address highlighted */}
               <div>
-                <div className="mb-1.5 flex items-center gap-1.5 text-xs text-gray-500">
-                  <AlertTriangle className="h-3 w-3 text-amber-400" />
+                <div className="mb-1.5 flex items-center gap-1.5 text-xs text-amber-400 font-medium">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
                   Recipient address — verify carefully
                 </div>
-                <div className="break-all rounded-lg border border-amber-900/40 bg-amber-900/10 px-3 py-2 font-mono text-xs text-amber-200">
+                <div className="select-all break-all rounded-lg border border-amber-600/50 bg-[#1c0f00] px-3 py-2.5 font-mono text-xs leading-relaxed text-amber-200">
                   {recipientAddress}
                 </div>
                 {resolvedName && (
