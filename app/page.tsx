@@ -118,7 +118,7 @@ export default function LandingPage() {
           {[
             { value: '5 chains',  label: 'Supported networks'    },
             { value: '~2–3 min', label: 'Cross-chain settlement' },
-            { value: '0.1%',     label: 'Platform fee'           },
+            { value: '0.01%',    label: 'Platform fee'           },
             { value: 'Instant',  label: 'Arc → Arc transfers'    },
           ].map((s) => (
             <div key={s.label}>
