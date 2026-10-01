@@ -61,7 +61,7 @@ const FAQS = [
   {
     id: 'payments',
     q: 'What is the platform fee?',
-    a: 'Architect Pay charges a 0.1% fee on cross-chain payments, cross-chain swaps, and payroll runs. Same-chain transfers are always free.',
+    a: 'Architect Pay charges a 0.01% platform fee on cross-chain payments, cross-chain swaps, and payroll runs. Same-chain transfers are always free with no platform fee.',
   },
   {
     id: 'payments',

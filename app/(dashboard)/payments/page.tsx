@@ -387,7 +387,7 @@ export default function PaymentsPage() {
               ) : isCrossChain ? (
                 <><ArrowRight className="h-3.5 w-3.5 shrink-0" /><ChainLogo chain={sourceChain} size={14} />{selectedSrcChain.label} → <ChainLogo chain={destChain} size={14} />{selectedDestChain.label} · ~2–3 min · ~0.01% fee</>
               ) : (
-                <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Same-chain — instant, no fees</>
+                <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Same-chain — instant, no platform fee</>
               )}
             </div>
           )}
@@ -636,12 +636,17 @@ export default function PaymentsPage() {
               )}
 
               {/* Fee */}
-              {isCrossChain && (
+              {isCrossChain || isAggregate ? (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Platform fee (0.1%)</span>
+                  <span className="text-xs text-gray-500">Platform fee (0.01%)</span>
                   <span className="text-xs text-amber-400">
-                    ~{token === 'EURC' ? '' : '$'}{Math.max(parseFloat(amount || '0') * 0.001, 0.10).toFixed(2)} {token}
+                    ~{token === 'EURC' ? '' : '$'}{Math.max(parseFloat(amount || '0') * 0.0001, 0.10).toFixed(2)} {token}
                   </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Platform fee</span>
+                  <span className="text-xs text-green-400">Free — same chain</span>
                 </div>
               )}
 

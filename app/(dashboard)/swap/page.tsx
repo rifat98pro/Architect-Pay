@@ -326,6 +326,16 @@ export default function SwapPage() {
             </div>
           </div>
 
+          {/* Fee info */}
+          <div className={`mt-2 flex items-center justify-between rounded-xl px-3 py-2 text-xs ${
+            srcChain !== destChain
+              ? 'border border-amber-900/30 bg-amber-900/10 text-amber-500/80'
+              : 'border border-green-900/20 bg-green-900/10 text-green-500/70'
+          }`}>
+            <span>Platform fee</span>
+            <span>{srcChain !== destChain ? '0.01% (cross-chain)' : 'Free — same chain'}</span>
+          </div>
+
           {/* Swap button */}
           <button
             type="submit"

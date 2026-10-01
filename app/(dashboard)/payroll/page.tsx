@@ -209,6 +209,7 @@ export default function PayrollPage() {
             <DollarSign className="h-3.5 w-3.5" /> Total payout
           </div>
           <div className="text-2xl font-bold text-white">${totalSalary.toFixed(2)}</div>
+          <div className="mt-1 text-xs text-amber-500/70">+0.01% platform fee</div>
         </div>
         <div className="rounded-2xl border border-gray-700/60 bg-gray-900/60 px-5 py-4">
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
