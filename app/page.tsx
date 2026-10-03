@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, RefreshCw, CheckCircle2,
@@ -242,7 +241,7 @@ export default function LandingPage() {
                 null,
                 { label: 'receiveMessage on Arc',            bg: 'rgba(52,211,153,0.08)',  color: '#34d399' },
                 null,
-                { label: 'USDC in Arc wallet ✓',            bg: 'rgba(42,171,171,0.12)',  color: '#2aabab' },
+                { label: 'USDC in Arc wallet',               bg: 'rgba(42,171,171,0.12)',  color: '#2aabab' },
               ].map((item, i) =>
                 item === null
                   ? <ChevronRight key={i} className="h-4 w-4" style={{ color: 'rgba(255,255,255,0.15)' }} />
