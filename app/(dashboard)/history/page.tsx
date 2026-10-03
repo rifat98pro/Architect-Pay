@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
 import {
   CheckCircle2, XCircle, Clock, RefreshCw,
-  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight,
+  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TokenLogo from '@/components/token-logo'
@@ -22,6 +22,8 @@ interface Payment {
   recipientLabel:   string | null
   amount:           string
   token:            string
+  sourceChain:      string
+  destChain:        string
   status:           string
   txHash:           string | null
   createdAt:        string
@@ -251,8 +253,18 @@ export default function HistoryPage() {
                     <div className="truncate text-sm font-medium text-white">
                       {p.recipientLabel ?? truncateAddress(p.recipientAddress, 6)}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <span className="font-mono text-xs text-gray-500">{truncateAddress(p.recipientAddress, 6)}</span>
+                    <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      <ChainLogo chain={p.sourceChain} size={12} />
+                      <span className="text-xs text-gray-500">{p.sourceChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                      {p.sourceChain !== p.destChain && (
+                        <>
+                          <ArrowRight className="h-3 w-3 text-gray-700 shrink-0" />
+                          <ChainLogo chain={p.destChain} size={12} />
+                          <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                        </>
+                      )}
+                      <span className="text-gray-700">·</span>
+                      <span className="font-mono text-xs text-gray-600">{truncateAddress(p.recipientAddress, 5)}</span>
                       <span className="text-gray-700">·</span>
                       <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
                     </div>

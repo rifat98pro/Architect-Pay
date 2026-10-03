@@ -126,7 +126,8 @@ model Payment {
   recipientLabel   String?
   amount           String
   token            String   @default("USDC")
-  destChain        String   @default("Arc_Testnet")
+  sourceChain      String   @default("ARC-TESTNET")
+  destChain        String   @default("ARC-TESTNET")
 
   status           String   @default("PENDING")
   txHash           String?

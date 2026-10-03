@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
       amount,
       token,
       status:           'PROCESSING',
+      sourceChain,
       destChain,
     },
   })

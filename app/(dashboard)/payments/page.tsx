@@ -84,6 +84,7 @@ export default function PaymentsPage() {
   const setCrossChainNotice = (v: boolean)           => setPayForm({ crossChainNotice: v })
 
   const [error, setError]                         = useState('')
+  const [lastRoute, setLastRoute]                 = useState<{ src: string; dest: string } | null>(null)
   const pollRef                                   = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [planLoading, setPlanLoading]   = useState(false)
@@ -190,6 +191,7 @@ export default function PaymentsPage() {
     if (!canSend) return
     setError('')
     setSuccess('')
+    setLastRoute(null)
     setCrossChainNotice(false)
     setConfirming(true)
   }
@@ -253,9 +255,15 @@ export default function PaymentsPage() {
 
       const isEurcCrossChain = token === 'EURC' && (isCrossChain || isAggregate)
 
+      // Capture route before clearing form
+      const routeSrc   = sourceChain
+      const routeDest  = destChain
+      const routeCross = isCrossChain || isAggregate
+
       // Clear form fields first — success state is set after so it survives the clear
       clearPayForm(); setResolvedAddress(''); setResolvedName('')
       setLookupState('idle'); setPlan(null)
+      if (routeCross) setLastRoute({ src: routeSrc, dest: routeDest })
 
       if (data.pending && data.paymentId) {
         // Cross-chain: burn done, minting in progress — poll until complete (globally, survives navigation)
@@ -294,7 +302,18 @@ export default function PaymentsPage() {
             {pendingPaymentId
               ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
               : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
-            {success}
+            <div>
+              <div>{success}</div>
+              {lastRoute && (
+                <div className="mt-1 flex items-center gap-1 text-xs text-green-500/70">
+                  <ChainLogo chain={lastRoute.src} size={12} />
+                  <span>{lastRoute.src.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                  <ArrowRight className="h-3 w-3 shrink-0" />
+                  <ChainLogo chain={lastRoute.dest} size={12} />
+                  <span>{lastRoute.dest.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
         {crossChainNotice && (
