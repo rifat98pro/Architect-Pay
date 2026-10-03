@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, RefreshCw, CheckCircle2,
-  ArrowLeftRight, Calendar, MessageCircle, X,
+  ArrowLeftRight, Calendar,
 } from 'lucide-react'
 
 function XLogo({ size = 20 }: { size?: number }) {
@@ -18,8 +18,6 @@ function XLogo({ size = 20 }: { size?: number }) {
 }
 
 export default function LandingPage() {
-  const [supportOpen, setSupportOpen] = useState(false)
-
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: '#000', color: '#e2eaf4' }}>
 
@@ -490,73 +488,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* ── Floating Support Widget ─────────────────────────────────────────── */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-
-        {/* Support panel */}
-        {supportOpen && (
-          <div
-            className="w-72 rounded-2xl border p-5 shadow-2xl"
-            style={{ background: '#0c1a2e', borderColor: 'rgba(42,171,171,0.25)', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-white text-sm">Get Support</p>
-                <p className="text-xs mt-0.5" style={{ color: '#555' }}>We usually reply within 24 hours</p>
-              </div>
-              <button onClick={() => setSupportOpen(false)} style={{ color: '#555' }} className="hover:text-white transition-colors">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {[
-                {
-                  icon: <XLogo size={16} />,
-                  label: 'Twitter / X',
-                  sub: '@architectpay',
-                  href: 'https://x.com/architectpay',
-                  color: '#1d9bf0',
-                },
-              ].map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  target={item.href.startsWith('http') ? '_blank' : undefined}
-                  rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  className="flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-white/20"
-                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: item.color + '15', color: item.color }}>
-                    {item.icon}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-white">{item.label}</div>
-                    <div className="text-xs" style={{ color: '#555' }}>{item.sub}</div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Toggle button */}
-        <button
-          onClick={() => setSupportOpen((v) => !v)}
-          className="flex h-13 w-13 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
-          style={{
-            background: supportOpen ? '#1a1a1a' : '#2aabab',
-            boxShadow: supportOpen ? 'none' : '0 0 30px rgba(42,171,171,0.4)',
-            width: '52px',
-            height: '52px',
-          }}
-          aria-label="Support"
-        >
-          {supportOpen
-            ? <X className="h-5 w-5 text-white" />
-            : <MessageCircle className="h-5 w-5 text-black" />}
-        </button>
-      </div>
 
     </div>
   )
