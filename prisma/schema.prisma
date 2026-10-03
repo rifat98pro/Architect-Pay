@@ -137,6 +137,7 @@ model Payment {
   srcDomain        Int?
   receiverWalletId String?
   destTransmitter  String?
+  hopMeta          String?  // JSON for 2-hop CCTP (e.g. Polygon Amoy → Arc → destination)
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

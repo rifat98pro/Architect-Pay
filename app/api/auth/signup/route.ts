@@ -4,9 +4,9 @@ import { db } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { email, password, username, name, code } = body as Record<string, string>
+  const { email, password, username, name } = body as Record<string, string>
 
-  if (!email || !password || !username || !code) {
+  if (!email || !password || !username) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
   }
   if (password.length < 8) {
@@ -16,33 +16,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Username must be 3–20 characters (letters, numbers, underscores)' }, { status: 400 })
   }
 
-  // Verify OTP
-  const otp = await db.emailOtp.findFirst({
-    where:   { email },
-    orderBy: { createdAt: 'desc' },
-  })
-  if (!otp) {
-    return NextResponse.json({ error: 'No verification code found. Please request a new one.' }, { status: 400 })
-  }
-  if (otp.expiresAt < new Date()) {
-    await db.emailOtp.delete({ where: { id: otp.id } })
-    return NextResponse.json({ error: 'Verification code expired. Please request a new one.' }, { status: 400 })
-  }
-  const validCode = await bcrypt.compare(code, otp.code)
-  if (!validCode) {
-    return NextResponse.json({ error: 'Incorrect verification code' }, { status: 400 })
-  }
-
-  // Check duplicates (re-check in case of race)
   const existing = await db.user.findFirst({
-    where: { OR: [{ email }, { username }] },
+    where:  { OR: [{ email }, { username }] },
     select: { email: true, username: true },
   })
   if (existing?.email === email)       return NextResponse.json({ error: 'Email already in use' }, { status: 400 })
   if (existing?.username === username) return NextResponse.json({ error: 'Username already taken' }, { status: 400 })
-
-  // Delete OTP and create user
-  await db.emailOtp.delete({ where: { id: otp.id } })
 
   const passwordHash = await bcrypt.hash(password, 10)
   await db.user.create({
@@ -50,9 +29,8 @@ export async function POST(req: NextRequest) {
       email,
       passwordHash,
       username,
-      name:          name || username,
-      displayName:   name || username,
-      emailVerified: new Date(),
+      name:        name || username,
+      displayName: name || username,
     },
   })
 

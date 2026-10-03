@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { sendUsdcPayment, waitForTransaction, getOrCreateChainWalletId } from '@/lib/circle'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpBurnFast } from '@/lib/cctp'
-import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
+import { CCTP_SOURCE_CHAINS, SOURCE_CHAIN_META, type CctpSourceChain } from '@/lib/cctp-chains'
 import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 import { z } from 'zod'
 
@@ -117,13 +117,19 @@ export async function POST(req: NextRequest) {
         ? wallet.circleWalletId
         : await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain as CctpSourceChain)
 
+      // Polygon Amoy → non-Arc: Circle sandbox only supports direct burns to Arc from Amoy,
+      // so we route via Arc as an intermediate hop (Amoy → Arc → destination).
+      const needsHop = sourceChain === 'MATIC-AMOY' && destChain !== 'ARC-TESTNET'
+
       const burn = await cctpBurnFast({
         sourceChain:      sourceChain as CctpSourceChain,
         sourceWalletId,
-        destChain:        destChain === 'ARC-TESTNET' ? undefined : destChain as CctpSourceChain,
-        destWalletId,
+        // For hop 1 (or normal Arc dest): pass undefined so it routes to Arc
+        destChain:        (needsHop || destChain === 'ARC-TESTNET') ? undefined : destChain as CctpSourceChain,
+        destWalletId:     needsHop ? undefined : destWalletId,
         arcWalletId:      wallet.circleWalletId,
-        recipientAddress,
+        // Hop 1 mints to user's own Arc wallet; real recipient stored in hopMeta for hop 2
+        recipientAddress: needsHop ? wallet.walletAddress : recipientAddress,
         amount,
         token,
       })
@@ -146,6 +152,19 @@ export async function POST(req: NextRequest) {
           srcDomain:        burn.srcDomain,
           receiverWalletId: burn.receiverWalletId,
           destTransmitter:  burn.destTransmitter,
+          ...(needsHop && {
+            hopMeta: JSON.stringify({
+              hop:                   1,
+              arcWalletId:           wallet.circleWalletId,
+              finalDestChain:        destChain,
+              finalDestWalletId:     destWalletId,
+              finalDestDomain:       SOURCE_CHAIN_META[destChain as CctpSourceChain].cctpDomain,
+              finalDestTransmitter:  SOURCE_CHAIN_META[destChain as CctpSourceChain].messageTransmitterV2,
+              finalRecipientAddress: recipientAddress,
+              amount,
+              token,
+            }),
+          }),
         },
       })
 
