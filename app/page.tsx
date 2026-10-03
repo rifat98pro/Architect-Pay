@@ -31,6 +31,7 @@ export default function LandingPage() {
             <a href="#developer" className="transition-colors hover:text-white">Developers</a>
             <a href="#use-cases" className="transition-colors hover:text-white">Use Cases</a>
             <Link href="/docs"   className="transition-colors hover:text-white">Docs</Link>
+            <a href="#socials"   className="transition-colors hover:text-white">Socials</a>
           </nav>
 
           <Link
@@ -399,7 +400,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Socials ────────────────────────────────────────────────────────── */}
-      <section className="px-6 py-20 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <section id="socials" className="px-6 py-20 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Community</div>
           <h2 className="mb-3 text-3xl font-bold text-white">Stay connected</h2>
@@ -413,13 +414,6 @@ export default function LandingPage() {
                 handle: '@architectpay',
                 href: 'https://x.com/architectpay',
                 color: '#1d9bf0',
-              },
-              {
-                icon: <Code2 className="h-5 w-5" />,
-                label: 'Docs',
-                handle: 'Read the documentation',
-                href: '/docs',
-                color: '#2aabab',
               },
             ].map((s) => (
               <a
@@ -515,13 +509,6 @@ export default function LandingPage() {
                   sub: '@architectpay',
                   href: 'https://x.com/architectpay',
                   color: '#1d9bf0',
-                },
-                {
-                  icon: <Code2 className="h-4 w-4" />,
-                  label: 'Read the Docs',
-                  sub: 'API reference & guides',
-                  href: '/docs',
-                  color: '#a78bfa',
                 },
               ].map((item) => (
                 <a
