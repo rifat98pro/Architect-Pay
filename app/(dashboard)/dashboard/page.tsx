@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
-import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers, Wallet } from 'lucide-react'
+import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers, Wallet, CreditCard } from 'lucide-react'
 import DepositModal from '@/components/deposit-modal'
+import OnrampModal from '@/components/onramp-modal'
 import { useTheme } from '@/context/theme-context'
 import TokenLogo from '@/components/token-logo'
 import ChainLogo from '@/components/chain-logo'
@@ -40,7 +41,9 @@ export default function DashboardPage() {
   const [loading, setLoading]          = useState(true)
   const [copied, setCopied]            = useState(false)
   const [refreshing, setRefreshing]    = useState(false)
-  const [depositOpen, setDepositOpen]  = useState(false)
+  const [depositOpen,   setDepositOpen]   = useState(false)
+  const [onrampOpen,    setOnrampOpen]    = useState(false)
+  const [mainnetNotice, setMainnetNotice] = useState(false)
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -106,8 +109,16 @@ export default function DashboardPage() {
             Refresh
           </button>
           <button
-            onClick={() => setDepositOpen(true)}
+            onClick={() => setMainnetNotice(true)}
             className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition"
+          >
+            <CreditCard className="h-4 w-4" />
+            Deposit Funds
+          </button>
+          <button
+            onClick={() => setDepositOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 transition"
+            style={{ background: 'rgba(18,32,49,0.6)' }}
           >
             <ArrowDownCircle className="h-4 w-4" />
             Deposit
@@ -257,6 +268,42 @@ export default function DashboardPage() {
 
       {depositOpen && (
         <DepositModal onClose={() => setDepositOpen(false)} onSuccess={refresh} />
+      )}
+      {onrampOpen && (
+        <OnrampModal onClose={() => setOnrampOpen(false)} onSuccess={refresh} />
+      )}
+      {mainnetNotice && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setMainnetNotice(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 text-center"
+            style={{
+              background: 'linear-gradient(160deg, #0c1a2e 0%, #081422 100%)',
+              border:     '1px solid rgba(42,171,171,0.2)',
+              boxShadow:  '0 24px 64px rgba(0,0,0,0.6)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/15">
+                <CreditCard className="h-6 w-6 text-brand-400" />
+              </div>
+            </div>
+            <h3 className="mb-2 text-base font-bold text-white">Coming to Mainnet</h3>
+            <p className="mb-5 text-sm text-gray-400 leading-relaxed">
+              Deposit Funds from Debit card, Apple Pay, or Google Pay will be available on mainnet.
+            </p>
+            <button
+              onClick={() => setMainnetNotice(false)}
+              className="w-full rounded-xl bg-brand-500 py-2.5 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
