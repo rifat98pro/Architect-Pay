@@ -4,9 +4,9 @@ import { db } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { email, password, username, name } = body as Record<string, string>
+  const { email, password, username, name, code } = body as Record<string, string>
 
-  if (!email || !password || !username) {
+  if (!email || !password || !username || !code) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
   }
   if (password.length < 8) {
@@ -16,6 +16,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Username must be 3–20 characters (letters, numbers, underscores)' }, { status: 400 })
   }
 
+  // Verify OTP
+  const otp = await db.emailOtp.findFirst({
+    where:   { email },
+    orderBy: { createdAt: 'desc' },
+  })
+  if (!otp)                          return NextResponse.json({ error: 'No verification code found. Please request a new one.' }, { status: 400 })
+  if (otp.expiresAt < new Date())    return NextResponse.json({ error: 'Verification code expired. Please request a new one.' }, { status: 400 })
+  const valid = await bcrypt.compare(code.trim(), otp.code)
+  if (!valid)                        return NextResponse.json({ error: 'Invalid verification code.' }, { status: 400 })
+
+  // Check duplicates
   const existing = await db.user.findFirst({
     where:  { OR: [{ email }, { username }] },
     select: { email: true, username: true },
@@ -29,10 +40,14 @@ export async function POST(req: NextRequest) {
       email,
       passwordHash,
       username,
-      name:        name || username,
-      displayName: name || username,
+      name:          name || username,
+      displayName:   name || username,
+      emailVerified: new Date(),
     },
   })
+
+  // Clean up used OTP
+  await db.emailOtp.deleteMany({ where: { email } })
 
   return NextResponse.json({ success: true })
 }
