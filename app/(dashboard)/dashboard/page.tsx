@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
-import { Copy, CheckCheck, RefreshCw, ArrowDownCircle, TrendingUp, Layers, Wallet, CreditCard } from 'lucide-react'
+import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CreditCard } from 'lucide-react'
 import DepositModal from '@/components/deposit-modal'
 import OnrampModal from '@/components/onramp-modal'
 import { useTheme } from '@/context/theme-context'
@@ -39,7 +39,6 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
   const [wallet, setWallet]            = useState<WalletData | null>(null)
   const [loading, setLoading]          = useState(true)
-  const [copied, setCopied]            = useState(false)
   const [refreshing, setRefreshing]    = useState(false)
   const [depositOpen,   setDepositOpen]   = useState(false)
   const [onrampOpen,    setOnrampOpen]    = useState(false)
@@ -63,13 +62,6 @@ export default function DashboardPage() {
     const data = await r.json()
     if (r.ok) setWallet(data)
     setRefreshing(false)
-  }
-
-  function copyAddress() {
-    if (!wallet) return
-    navigator.clipboard.writeText(wallet.address)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   if (loading && !wallet) {
@@ -125,6 +117,14 @@ export default function DashboardPage() {
           >
             <ArrowDownCircle className="h-4 w-4" />
             Deposit
+          </button>
+          <button
+            onClick={() => router.push('/payments')}
+            className="flex items-center gap-2 rounded-xl border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 transition"
+            style={{ background: 'rgba(18,32,49,0.6)' }}
+          >
+            <ArrowUpCircle className="h-4 w-4" />
+            Withdraw
           </button>
         </div>
       </div>
@@ -249,25 +249,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Wallet address */}
-      <div className="rounded-2xl border p-4" style={{ background: theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.4)', borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)' }}>
-        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
-          <Wallet className="h-3.5 w-3.5" />
-          Wallet Address
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ background: theme === 'light' ? '#f0f4f8' : 'rgba(18,32,49,0.6)' }}>
-          <span className="truncate font-mono text-sm" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>{wallet?.address ?? '—'}</span>
-          <button
-            onClick={copyAddress}
-            className="shrink-0 rounded-lg p-1.5 text-gray-500 hover:text-brand-400 transition"
-          >
-            {copied ? <CheckCheck className="h-4 w-4 text-brand-400" /> : <Copy className="h-4 w-4" />}
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-gray-600">
-          Same address on Arc Testnet, Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, and Polygon Amoy.
-        </p>
-      </div>
 
       {depositOpen && (
         <DepositModal onClose={() => setDepositOpen(false)} onSuccess={refresh} />

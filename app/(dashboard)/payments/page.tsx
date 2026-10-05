@@ -100,6 +100,13 @@ export default function PaymentsPage() {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
 
+  // Auto-dismiss success banner 5s after transfer fully completes (not while cross-chain pending)
+  useEffect(() => {
+    if (!success || pendingPaymentId) return
+    const t = setTimeout(() => setSuccess(''), 5000)
+    return () => clearTimeout(t)
+  }, [success, pendingPaymentId])
+
   useEffect(() => {
     if (!user?.id) return
     fetch('/api/wallet/balance')
