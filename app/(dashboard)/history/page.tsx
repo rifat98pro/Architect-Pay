@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
 import {
   CheckCircle2, XCircle, Clock, RefreshCw,
-  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight,
+  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight, ArrowUpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TokenLogo from '@/components/token-logo'
@@ -136,12 +136,12 @@ export default function HistoryPage() {
   const { user, loading: authLoading } = useAuth()
 
   const [historyUI, setHistoryUI] = useFeatureState('history-ui', {
-    tab:      'payments' as 'payments' | 'payroll' | 'swaps',
+    tab:      'payments' as 'payments' | 'payroll' | 'swaps' | 'withdrawals',
     expanded: null as string | null,
   })
   const tab      = historyUI.tab
   const expanded = historyUI.expanded
-  const setTab      = (v: 'payments' | 'payroll' | 'swaps') => setHistoryUI({ tab: v })
+  const setTab      = (v: 'payments' | 'payroll' | 'swaps' | 'withdrawals') => setHistoryUI({ tab: v })
   const setExpanded = (v: string | null)                     => setHistoryUI({ expanded: v })
 
   const [payments, setPayments] = useState<Payment[]>([])
@@ -211,9 +211,10 @@ export default function HistoryPage() {
       {/* Tabs */}
       <div className="mb-5 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-900/60 p-1">
         {([
-          { id: 'payments', label: 'Payments' },
-          { id: 'payroll',  label: 'Payroll Runs' },
-          { id: 'swaps',    label: 'Swaps' },
+          { id: 'payments',    label: 'Payments' },
+          { id: 'withdrawals', label: 'Withdrawals' },
+          { id: 'payroll',     label: 'Payroll Runs' },
+          { id: 'swaps',       label: 'Swaps' },
         ] as const).map((t) => (
           <button
             key={t.id}
@@ -250,8 +251,15 @@ export default function HistoryPage() {
               {payments.map((p) => (
                 <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-white">
-                      {p.recipientLabel ?? truncateAddress(p.recipientAddress, 6)}
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-medium text-white">
+                        {p.recipientLabel ?? truncateAddress(p.recipientAddress, 6)}
+                      </span>
+                      {p.recipientLabel?.toLowerCase().includes('withdrawal') && (
+                        <span className="shrink-0 rounded-md bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-400">
+                          Withdrawal
+                        </span>
+                      )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
                       <ChainLogo chain={p.sourceChain} size={12} />
@@ -291,6 +299,63 @@ export default function HistoryPage() {
             </div>
           </div>
         )
+      ) : tab === 'withdrawals' ? (
+        (() => {
+          const withdrawals = payments.filter((p) => p.recipientLabel?.toLowerCase().includes('withdrawal'))
+          return withdrawals.length === 0 ? (
+            <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-700 text-sm text-gray-500">
+              <ArrowUpCircle className="h-8 w-8 text-gray-700" />
+              No withdrawals yet
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-gray-700/50 bg-gray-900/60">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-gray-800 px-5 py-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Destination</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</span>
+              </div>
+              <div className="divide-y divide-gray-800/60">
+                {withdrawals.map((p) => (
+                  <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-mono text-sm font-medium text-white">
+                          {truncateAddress(p.recipientAddress, 6)}
+                        </span>
+                        <span className="shrink-0 rounded-md bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-400">
+                          Withdrawal
+                        </span>
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <ChainLogo chain={p.destChain} size={12} />
+                        <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                        <span className="text-gray-700">·</span>
+                        <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <TxTimer createdAt={p.createdAt} updatedAt={p.updatedAt} status={p.status} />
+                      {p.txHash && (
+                        <a
+                          href={`${ARC_EXPLORER}/tx/${p.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
+                        >
+                          {p.txHash.slice(0, 6)}…{p.txHash.slice(-4)}
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-white">{p.token === 'EURC' ? '' : '$'}{formatUSDC(p.amount)}</div>
+                      <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
+                    </div>
+                    <StatusBadge status={p.status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()
       ) : tab === 'swaps' ? (
         swaps.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-700 text-sm text-gray-500">
