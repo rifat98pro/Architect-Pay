@@ -221,7 +221,7 @@ export default function WithdrawPage() {
               <ChainSelect
                 value={sourceChain}
                 onChange={setSourceChain}
-                chains={filteredChains}
+                options={filteredChains}
               />
             </div>
             <div>
@@ -229,7 +229,7 @@ export default function WithdrawPage() {
               <ChainSelect
                 value={destChain}
                 onChange={setDestChain}
-                chains={filteredChains}
+                options={filteredChains}
               />
             </div>
           </div>
