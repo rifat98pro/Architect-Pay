@@ -119,7 +119,7 @@ export default function DashboardPage() {
             Deposit
           </button>
           <button
-            onClick={() => router.push('/payments')}
+            onClick={() => router.push('/withdraw')}
             className="flex items-center gap-2 rounded-xl border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 transition"
             style={{ background: 'rgba(18,32,49,0.6)' }}
           >
