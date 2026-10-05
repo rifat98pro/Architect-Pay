@@ -44,8 +44,8 @@ export default function DepositModal({
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">Deposit</h2>
-            <p className="text-xs text-gray-500">Send tokens to your wallet address</p>
+            <h2 className="text-lg font-bold" style={{ color: '#ffffff' }}>Deposit</h2>
+            <p className="text-xs" style={{ color: '#8faab8' }}>Send tokens to your wallet address</p>
           </div>
           <button
             onClick={onClose}
