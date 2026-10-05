@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Suspense } from 'react'
 import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
@@ -131,7 +131,7 @@ function TxTimer({ createdAt, updatedAt, status }: {
   )
 }
 
-export default function HistoryPage() {
+function HistoryPage() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
@@ -587,5 +587,13 @@ export default function HistoryPage() {
         )
       )}
     </div>
+  )
+}
+
+export default function HistoryPageWrapper() {
+  return (
+    <Suspense>
+      <HistoryPage />
+    </Suspense>
   )
 }
