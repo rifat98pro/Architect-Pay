@@ -147,8 +147,9 @@ export default function PaymentsPage() {
   const EURC_CHAINS       = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
   const eurcSrcBlocked    = token === 'EURC' && isCrossChain && !EURC_CHAINS.includes(sourceChain)
   const totalBalance      = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
+  const totalEurcBalance  = Object.values(eurcChainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const availableBalance  = isAggregate
-    ? totalBalance.toFixed(2)
+    ? token === 'EURC' ? totalEurcBalance.toFixed(2) : totalBalance.toFixed(2)
     : token === 'EURC'
       ? parseFloat(eurcChainBalances[sourceChain] ?? '0').toFixed(2)
       : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
@@ -157,12 +158,15 @@ export default function PaymentsPage() {
   const availableNum        = parseFloat(availableBalance)
   const insufficientFunds   = amountNum > 0 && amountNum > availableNum
 
-  const fetchPlan = useCallback(async (amt: string) => {
+  const fetchPlan = useCallback(async (amt: string, tkn: 'USDC' | 'EURC', dest: string) => {
     const n = parseFloat(amt)
     if (!n || n <= 0) { setPlan(null); return }
     setPlanLoading(true)
     try {
-      const res  = await fetch(`/api/payments/aggregate-plan?amount=${n}`)
+      const url = tkn === 'EURC'
+        ? `/api/payments/aggregate-plan-eurc?amount=${n}&dest=${dest}`
+        : `/api/payments/aggregate-plan?amount=${n}`
+      const res  = await fetch(url)
       const data = await res.json()
       setPlan(data.plan ?? null)
       setPlanFeasible(data.feasible ?? false)
@@ -171,16 +175,16 @@ export default function PaymentsPage() {
   }, [])
 
   useEffect(() => {
-    if (!isAggregate || !user) { setPlan(null); return }
-    const t = setTimeout(() => fetchPlan(amount), 500)
+    if (!isAggregate || !user?.id) { setPlan(null); return }
+    const t = setTimeout(() => fetchPlan(amount, token, destChain), 500)
     return () => clearTimeout(t)
-  }, [isAggregate, amount, user, fetchPlan])
+  }, [isAggregate, amount, token, destChain, user?.id, fetchPlan])
 
 
   useEffect(() => {
     if (token === 'EURC') {
-      if (!EURC_CHAINS.includes(destChain))   setDestChain('ARC-TESTNET')
-      if (!EURC_CHAINS.includes(sourceChain)) setSourceChain('ARC-TESTNET')
+      if (!EURC_CHAINS.includes(destChain)) setDestChain('ARC-TESTNET')
+      if (sourceChain !== 'ALL_CHAINS' && !EURC_CHAINS.includes(sourceChain)) setSourceChain('ARC-TESTNET')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
@@ -245,8 +249,10 @@ export default function PaymentsPage() {
     setConfirming(false)
     setLoading(true)
     try {
-      const endpoint = isAggregate ? '/api/payments/aggregate-send' : '/api/payments/send'
-      const body     = isAggregate
+      const endpoint = isAggregate
+        ? token === 'EURC' ? '/api/payments/aggregate-send-eurc' : '/api/payments/aggregate-send'
+        : '/api/payments/send'
+      const body = isAggregate
         ? { recipientAddress, amount, label, destChain }
         : { recipientAddress, amount, label, sourceChain, destChain, token }
       const res  = await fetch(endpoint, {
@@ -368,12 +374,14 @@ export default function PaymentsPage() {
                 onChange={(v) => { setSourceChain(v); setPlan(null) }}
                 disabled={loading}
                 options={SOURCE_CHAINS
-                  .filter((c) => token === 'EURC' ? c.id !== 'ALL_CHAINS' && EURC_CHAINS.includes(c.id) : true)
+                  .filter((c) => token === 'EURC' ? c.id === 'ALL_CHAINS' || EURC_CHAINS.includes(c.id) : true)
                   .map((c) => ({
                     id:       c.id,
                     label:    c.id === 'ALL_CHAINS' ? 'All Chains (Aggregate)' : c.label,
                     sublabel: c.id === 'ALL_CHAINS'
-                      ? `$${totalBalance.toFixed(2)} across all`
+                      ? token === 'EURC'
+                        ? `${totalEurcBalance.toFixed(2)} EURC across all`
+                        : `$${totalBalance.toFixed(2)} across all`
                       : token === 'EURC'
                         ? `${parseFloat(eurcChainBalances[c.id] ?? '0').toFixed(2)} EURC`
                         : `$${parseFloat(chainBalances[c.id] ?? '0').toFixed(2)} USDC`,

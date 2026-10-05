@@ -116,10 +116,10 @@ export default function WithdrawPage() {
   }, [])
 
   useEffect(() => {
-    if (!user) return
+    if (!user?.id) return
     const t = setTimeout(() => fetchPlan(amount, token, destChain), 500)
     return () => clearTimeout(t)
-  }, [amount, token, destChain, user, fetchPlan])
+  }, [amount, token, destChain, user?.id, fetchPlan])
 
   function startPolling(paymentId: string) {
     if (pollRef.current) clearInterval(pollRef.current)
