@@ -2,40 +2,39 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { NextRequest, NextResponse } from 'next/server'
 
-const redis = new Redis({
-  url:   process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
+function getRedis(): Redis | null {
+  const url   = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token || !url.startsWith('https')) return null
+  try {
+    return new Redis({ url, token })
+  } catch {
+    return null
+  }
+}
+
+function makeLimiter(prefix: string, window: string, limit: number): Ratelimit | null {
+  const redis = getRedis()
+  if (!redis) return null
+  return new Ratelimit({
+    redis,
+    limiter:   Ratelimit.slidingWindow(limit, window as Parameters<typeof Ratelimit.slidingWindow>[1]),
+    analytics: false,
+    prefix,
+  })
+}
 
 // Auth routes — strict limits to block brute force / OTP spam
-export const authLimiter = new Ratelimit({
-  redis,
-  limiter:   Ratelimit.slidingWindow(5, '1 m'),  // 5 per minute per IP
-  analytics: false,
-  prefix:    'rl:auth',
-})
-
-// OTP email — prevent email spam
-export const otpLimiter = new Ratelimit({
-  redis,
-  limiter:   Ratelimit.slidingWindow(3, '1 h'),  // 3 per hour per email
-  analytics: false,
-  prefix:    'rl:otp',
-})
-
-// Payment routes — per user
-export const paymentLimiter = new Ratelimit({
-  redis,
-  limiter:   Ratelimit.slidingWindow(10, '1 m'), // 10 per minute per user
-  analytics: false,
-  prefix:    'rl:payment',
-})
+export const authLimiter    = makeLimiter('rl:auth',    '1 m', 5)   // 5 per minute per IP
+export const otpLimiter     = makeLimiter('rl:otp',     '1 h', 3)   // 3 per hour per email
+export const paymentLimiter = makeLimiter('rl:payment', '1 m', 10)  // 10 per minute per user
 
 /** Returns a 429 response if rate limited, otherwise null. */
 export async function checkRateLimit(
-  limiter:    Ratelimit,
+  limiter:    Ratelimit | null,
   identifier: string,
 ): Promise<NextResponse | null> {
+  if (!limiter) return null // fail open if Redis not configured
   try {
     const { success, limit, remaining, reset } = await limiter.limit(identifier)
     if (!success) {
@@ -54,7 +53,6 @@ export async function checkRateLimit(
     }
     return null
   } catch {
-    // If Redis is unavailable, fail open — don't block legitimate requests
     return null
   }
 }
