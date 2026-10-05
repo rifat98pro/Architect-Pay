@@ -17,7 +17,7 @@ function readFileAsBase64(file: File): Promise<string> {
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, refresh: refreshSession } = useAuth()
   const { theme } = useTheme()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -112,6 +112,7 @@ export default function SettingsPage() {
       setUsername(data.user.username ?? '')
       setDisplayName(data.user.displayName ?? '')
       setSuccess('Settings saved.')
+      refreshSession() // background sync — no need to await
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
     } finally {

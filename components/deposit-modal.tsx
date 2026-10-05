@@ -7,20 +7,22 @@ import { QRCodeSVG } from 'qrcode.react'
 export default function DepositModal({
   onClose,
   onSuccess: _onSuccess,
-  username,
 }: {
   onClose:   () => void
   onSuccess: () => void
-  username?: string
 }) {
-  const [address,       setAddress]       = useState<string | null>(null)
-  const [copied,        setCopied]        = useState(false)
+  const [address,        setAddress]        = useState<string | null>(null)
+  const [username,       setUsername]       = useState<string | null>(null)
+  const [copied,         setCopied]         = useState(false)
   const [copiedUsername, setCopiedUsername] = useState(false)
 
   useEffect(() => {
     fetch('/api/wallet/balance')
       .then((r) => r.json())
       .then((d) => { if (d.address) setAddress(d.address) })
+    fetch('/api/account/settings')
+      .then((r) => r.json())
+      .then((d) => { if (d.user?.username) setUsername(d.user.username) })
   }, [])
 
   function copy() {
