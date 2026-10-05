@@ -270,7 +270,7 @@ export default function DashboardPage() {
       </div>
 
       {depositOpen && (
-        <DepositModal onClose={() => setDepositOpen(false)} onSuccess={refresh} />
+        <DepositModal onClose={() => setDepositOpen(false)} onSuccess={refresh} username={user?.username ?? ''} />
       )}
       {onrampOpen && (
         <OnrampModal onClose={() => setOnrampOpen(false)} onSuccess={refresh} />

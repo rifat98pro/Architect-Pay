@@ -1,18 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Copy, CheckCheck, Info } from 'lucide-react'
+import { X, Copy, CheckCheck, Info, AtSign } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 
 export default function DepositModal({
   onClose,
   onSuccess: _onSuccess,
+  username,
 }: {
   onClose:   () => void
   onSuccess: () => void
+  username?: string
 }) {
-  const [address, setAddress] = useState<string | null>(null)
-  const [copied,  setCopied]  = useState(false)
+  const [address,       setAddress]       = useState<string | null>(null)
+  const [copied,        setCopied]        = useState(false)
+  const [copiedUsername, setCopiedUsername] = useState(false)
 
   useEffect(() => {
     fetch('/api/wallet/balance')
@@ -25,6 +28,13 @@ export default function DepositModal({
     navigator.clipboard.writeText(address)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  function copyUsername() {
+    if (!username) return
+    navigator.clipboard.writeText(username)
+    setCopiedUsername(true)
+    setTimeout(() => setCopiedUsername(false), 2000)
   }
 
   return (
@@ -98,6 +108,28 @@ export default function DepositModal({
             Send USDC or EURC from any exchange or wallet.
           </p>
         </div>
+
+        {/* Username section */}
+        {username && (
+          <div className="mt-4">
+            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <AtSign className="h-3 w-3" />
+              Add Funds from Architect Pay Account
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800/60 px-3 py-2.5">
+              <span className="text-xs text-gray-400">Share your username so another Architect Pay user can send you funds directly:</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2 rounded-xl border border-brand-500/20 bg-brand-500/5 px-3 py-2.5">
+              <span className="flex-1 font-mono text-sm font-semibold text-brand-400">@{username}</span>
+              <button
+                onClick={copyUsername}
+                className="shrink-0 rounded-lg p-1 text-gray-500 hover:bg-gray-700 hover:text-brand-400 transition"
+              >
+                {copiedUsername ? <CheckCheck className="h-4 w-4 text-brand-400" /> : <Copy className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
