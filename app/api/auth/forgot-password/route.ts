@@ -1,38 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import { db } from '@/lib/db'
-import { generateOtp, sendVerificationEmail } from '@/lib/email'
+import { sendPasswordResetEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { email } = body as Record<string, string>
+  const { email } = body as { email: string }
 
   if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 })
 
-  // Always respond with sent:true even if email not found (prevents user enumeration)
-  const user = await db.user.findUnique({ where: { email }, select: { id: true, passwordHash: true } })
-  if (!user || !user.passwordHash) {
-    // Google-only account or non-existent — silently succeed
-    return NextResponse.json({ sent: true })
-  }
+  const user = await db.user.findUnique({ where: { email } })
+  // Always return success so we don't reveal if an email is registered
+  if (!user || !user.passwordHash) return NextResponse.json({ sent: true })
 
-  // Rate-limit: block resend if a fresh OTP was created in the last 60 seconds
-  const recent = await db.emailOtp.findFirst({
+  // Rate-limit: one reset per 60s
+  const recent = await db.passwordResetToken.findFirst({
     where:   { email },
     orderBy: { createdAt: 'desc' },
   })
   if (recent && recent.createdAt > new Date(Date.now() - 60_000)) {
-    return NextResponse.json({ error: 'Please wait 60 seconds before requesting a new code' }, { status: 429 })
+    return NextResponse.json({ sent: true }) // silent rate limit
   }
 
-  await db.emailOtp.deleteMany({ where: { email } })
+  await db.passwordResetToken.deleteMany({ where: { email } })
 
-  const code      = generateOtp()
-  const hashed    = await bcrypt.hash(code, 10)
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
+  const rawToken  = crypto.randomBytes(32).toString('hex')
+  const hashed    = await bcrypt.hash(rawToken, 10)
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
-  await db.emailOtp.create({ data: { email, code: hashed, expiresAt } })
-  await sendVerificationEmail(email, code)
+  await db.passwordResetToken.create({ data: { email, token: hashed, expiresAt } })
+
+  const appUrl   = process.env.NEXTAUTH_URL ?? 'https://architectpay.website'
+  const resetUrl = `${appUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`
+
+  await sendPasswordResetEmail(email, resetUrl)
 
   return NextResponse.json({ sent: true })
 }

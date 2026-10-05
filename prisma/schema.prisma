@@ -55,6 +55,16 @@ model EmailOtp {
   @@index([email])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   // hashed
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 // ── App models ───────────────────────────────────────────────────────────────
 
 model User {

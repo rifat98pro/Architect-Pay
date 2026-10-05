@@ -4,38 +4,29 @@ import { db } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { email, code, newPassword } = body as Record<string, string>
+  const { email, token, password } = body as Record<string, string>
 
-  if (!email || !code || !newPassword) {
+  if (!email || !token || !password) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
   }
-  if (newPassword.length < 8) {
+  if (password.length < 8) {
     return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
   }
 
-  const otp = await db.emailOtp.findFirst({
+  const record = await db.passwordResetToken.findFirst({
     where:   { email },
     orderBy: { createdAt: 'desc' },
   })
-  if (!otp) {
-    return NextResponse.json({ error: 'No verification code found. Please request a new one.' }, { status: 400 })
-  }
-  if (otp.expiresAt < new Date()) {
-    await db.emailOtp.delete({ where: { id: otp.id } })
-    return NextResponse.json({ error: 'Verification code expired. Please request a new one.' }, { status: 400 })
-  }
-  const validCode = await bcrypt.compare(code, otp.code)
-  if (!validCode) {
-    return NextResponse.json({ error: 'Incorrect verification code' }, { status: 400 })
-  }
 
-  await db.emailOtp.delete({ where: { id: otp.id } })
+  if (!record)                       return NextResponse.json({ error: 'Reset link is invalid or expired.' }, { status: 400 })
+  if (record.expiresAt < new Date()) return NextResponse.json({ error: 'Reset link has expired. Please request a new one.' }, { status: 400 })
 
-  const passwordHash = await bcrypt.hash(newPassword, 10)
-  await db.user.update({
-    where: { email },
-    data:  { passwordHash },
-  })
+  const valid = await bcrypt.compare(token, record.token)
+  if (!valid) return NextResponse.json({ error: 'Reset link is invalid or expired.' }, { status: 400 })
+
+  const passwordHash = await bcrypt.hash(password, 10)
+  await db.user.update({ where: { email }, data: { passwordHash } })
+  await db.passwordResetToken.deleteMany({ where: { email } })
 
   return NextResponse.json({ success: true })
 }

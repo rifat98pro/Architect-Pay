@@ -4,6 +4,39 @@ export function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000))
 }
 
+export async function sendPasswordResetEmail(to: string, resetUrl: string) {
+  if (!process.env.SMTP_HOST) {
+    console.log(`\n[PASSWORD RESET] To: ${to} | URL: ${resetUrl}\n`)
+    return
+  }
+
+  const transporter = nodemailer.createTransport({
+    host:   process.env.SMTP_HOST,
+    port:   parseInt(process.env.SMTP_PORT ?? '587'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  })
+
+  await transporter.sendMail({
+    from:    process.env.SMTP_FROM ?? process.env.SMTP_USER,
+    to,
+    subject: 'Reset your Architect Pay password',
+    text:    `Click the link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`,
+    html: `
+      <div style="font-family:sans-serif;max-width:420px;margin:0 auto;padding:40px 24px;background:#0d1926;border-radius:16px;">
+        <div style="margin-bottom:28px;">
+          <span style="font-size:20px;font-weight:700;color:#ffffff;">Architect</span>
+          <span style="font-size:20px;font-weight:700;color:#2aabab;"> Pay</span>
+        </div>
+        <p style="color:#cbd5e1;font-size:15px;margin-bottom:8px;">You requested a password reset.</p>
+        <p style="color:#64748b;font-size:13px;margin-bottom:24px;">Click the button below to choose a new password. This link expires in <strong style="color:#94a3b8;">1 hour</strong>.</p>
+        <a href="${resetUrl}" style="display:inline-block;background:#2aabab;color:#0a1520;font-weight:700;font-size:14px;padding:14px 28px;border-radius:12px;text-decoration:none;">Reset Password</a>
+        <p style="margin-top:24px;color:#64748b;font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
+      </div>
+    `,
+  })
+}
+
 export async function sendVerificationEmail(to: string, code: string) {
   if (!process.env.SMTP_HOST) {
     // Dev fallback: log to console when SMTP is not configured
