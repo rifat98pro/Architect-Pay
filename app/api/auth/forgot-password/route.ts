@@ -3,8 +3,12 @@ import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import { db } from '@/lib/db'
 import { sendPasswordResetEmail } from '@/lib/email'
+import { otpLimiter, checkRateLimit, getIP } from '@/lib/ratelimit'
 
 export async function POST(req: NextRequest) {
+  const limited = await checkRateLimit(otpLimiter, `forgot-pwd:${getIP(req)}`)
+  if (limited) return limited
+
   const body = await req.json().catch(() => ({}))
   const { email } = body as { email: string }
 

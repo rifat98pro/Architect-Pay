@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId } from '@/lib/circle'
+import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
@@ -19,6 +20,9 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rateLimited = await checkRateLimit(paymentLimiter, `payment:${user.id}`)
+  if (rateLimited) return rateLimited
 
   const body   = await req.json()
   const parsed = schema.safeParse(body)

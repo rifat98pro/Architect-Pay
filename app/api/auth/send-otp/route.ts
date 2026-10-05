@@ -2,10 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { db } from '@/lib/db'
 import { generateOtp, sendVerificationEmail } from '@/lib/email'
+import { otpLimiter, authLimiter, checkRateLimit, getIP } from '@/lib/ratelimit'
 
 export async function POST(req: NextRequest) {
+  const ip   = getIP(req)
   const body = await req.json().catch(() => ({}))
   const { email, username, password } = body as Record<string, string>
+
+  // IP-based limit first, then per-email OTP limit
+  const ipBlock  = await checkRateLimit(authLimiter, `send-otp:${ip}`)
+  if (ipBlock) return ipBlock
+  if (email) {
+    const emailBlock = await checkRateLimit(otpLimiter, `otp:${email}`)
+    if (emailBlock) return emailBlock
+  }
 
   if (!email || !password || !username) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })

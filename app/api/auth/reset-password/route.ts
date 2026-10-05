@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { db } from '@/lib/db'
+import { authLimiter, checkRateLimit, getIP } from '@/lib/ratelimit'
 
 export async function POST(req: NextRequest) {
+  const limited = await checkRateLimit(authLimiter, `reset-pwd:${getIP(req)}`)
+  if (limited) return limited
+
   const body = await req.json().catch(() => ({}))
   const { email, token, password } = body as Record<string, string>
 

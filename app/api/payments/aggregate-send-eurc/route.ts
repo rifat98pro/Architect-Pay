@@ -3,6 +3,7 @@ import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { getWalletBalances, sendUsdcPayment, getOrCreateChainWalletId } from '@/lib/circle'
 import { cctpTransfer } from '@/lib/cctp'
+import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { EURC_CCTP_CHAINS, type EurcCctpChain } from '@/lib/cctp-chains'
 import { computeEurcAggregatePlan } from '@/lib/aggregate'
 import { z } from 'zod'
@@ -19,6 +20,9 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rateLimited = await checkRateLimit(paymentLimiter, `payment:${user.id}`)
+  if (rateLimited) return rateLimited
 
   const body   = await req.json()
   const parsed = schema.safeParse(body)

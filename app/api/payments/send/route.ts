@@ -6,6 +6,7 @@ import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpBurnFast } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, SOURCE_CHAIN_META, type CctpSourceChain } from '@/lib/cctp-chains'
 import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
+import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { z } from 'zod'
 
 export const maxDuration = 300 // 5-minute timeout for CCTP cross-chain flow
@@ -25,6 +26,9 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rateLimited = await checkRateLimit(paymentLimiter, `payment:${user.id}`)
+  if (rateLimited) return rateLimited
 
   const body = await req.json()
   const parsed = schema.safeParse(body)
