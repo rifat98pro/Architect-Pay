@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import {
-  LifeBuoy, Search, ChevronDown, ChevronRight,
-  Wallet, Globe, Banknote, Shield, Zap, MessageSquare,
-  CheckCircle2, ExternalLink, AlertCircle, Clock,
+  LifeBuoy, Search, ChevronDown,
+  Wallet, Globe, Banknote, Shield,
+  ExternalLink, AlertCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -98,14 +98,6 @@ export default function SupportPage() {
   const [openFaq,      setOpenFaq]      = useState<number | null>(null)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
-  // ticket form
-  const [subject,      setSubject]      = useState('')
-  const [category,     setCategory]     = useState('general')
-  const [message,      setMessage]      = useState('')
-  const [submitting,   setSubmitting]   = useState(false)
-  const [submitted,    setSubmitted]    = useState(false)
-  const [error,        setError]        = useState('')
-
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
@@ -115,29 +107,6 @@ export default function SupportPage() {
     const matchCategory = !activeCategory || f.id === activeCategory
     return matchSearch && matchCategory
   })
-
-  async function submitTicket(e: React.FormEvent) {
-    e.preventDefault()
-    if (!message.trim() || !subject.trim()) return
-    setSubmitting(true)
-    setError('')
-    try {
-      const res = await fetch('/api/feedback', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ category: `support:${category}`, message: `[${subject}]\n\n${message}` }),
-      })
-      if (!res.ok) throw new Error('Failed')
-      setSubmitted(true)
-      setSubject('')
-      setCategory('general')
-      setMessage('')
-    } catch {
-      setError('Failed to submit. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -236,108 +205,26 @@ export default function SupportPage() {
         )}
       </div>
 
-      {/* Submit ticket */}
-      <div className="overflow-hidden rounded-2xl border border-gray-700/50 bg-gray-900/60">
-        <div className="flex items-center gap-2 border-b border-gray-800 px-5 py-4">
-          <MessageSquare className="h-4 w-4 text-brand-400" />
-          <span className="text-sm font-semibold text-white">Still need help? Contact us</span>
-        </div>
-
-        {submitted ? (
-          <div className="flex flex-col items-center gap-3 py-14 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: 'rgba(34,197,94,0.12)' }}>
-              <CheckCircle2 className="h-6 w-6 text-green-400" />
-            </div>
-            <p className="font-semibold text-white">Ticket submitted!</p>
-            <p className="text-sm text-gray-500">We&apos;ll get back to you as soon as possible.</p>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="mt-2 text-sm text-brand-400 hover:underline"
-            >
-              Submit another
-            </button>
+      {/* Still need help */}
+      <a
+        href="https://discord.gg/e3uZqjpRCp"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between rounded-2xl border border-gray-700/50 bg-gray-900/60 px-6 py-5 transition hover:border-[#5865F2]/40 hover:bg-[#5865F2]/5 group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: 'rgba(88,101,242,0.15)' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#5865F2">
+              <path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026c.462-.62.874-1.275 1.226-1.963.021-.04.001-.088-.041-.104a13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.245.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z"/>
+            </svg>
           </div>
-        ) : (
-          <form onSubmit={submitTicket} className="space-y-4 p-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Category */}
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-400">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full rounded-xl border bg-gray-800/60 px-4 py-2.5 text-sm text-white outline-none transition focus:border-brand-500/50"
-                  style={{ borderColor: 'rgba(255,255,255,0.08)' }}
-                >
-                  <option value="general">General</option>
-                  <option value="payments">Payments & Transfers</option>
-                  <option value="payroll">Payroll</option>
-                  <option value="account">Account & Security</option>
-                  <option value="bug">Bug Report</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              {/* Subject */}
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-400">Subject</label>
-                <input
-                  type="text"
-                  placeholder="Brief description of your issue"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  required
-                  className="w-full rounded-xl border bg-gray-800/60 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:border-brand-500/50"
-                  style={{ borderColor: 'rgba(255,255,255,0.08)' }}
-                />
-              </div>
-            </div>
-
-            {/* Message */}
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">Message</label>
-              <textarea
-                placeholder="Describe your issue in detail…"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                required
-                rows={5}
-                className="w-full resize-none rounded-xl border bg-gray-800/60 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition focus:border-brand-500/50"
-                style={{ borderColor: 'rgba(255,255,255,0.08)' }}
-              />
-            </div>
-
-            {error && (
-              <p className="flex items-center gap-1.5 text-xs text-red-400">
-                <AlertCircle className="h-3.5 w-3.5" /> {error}
-              </p>
-            )}
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                <Clock className="h-3.5 w-3.5" />
-                Typical response time: a few hours
-              </div>
-              <button
-                type="submit"
-                disabled={submitting || !subject.trim() || !message.trim()}
-                className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(135deg, #2aabab, #1a7070)' }}
-              >
-                {submitting ? (
-                  <span className="flex items-center gap-2">
-                    <Zap className="h-3.5 w-3.5 animate-pulse" /> Sending…
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <ChevronRight className="h-3.5 w-3.5" /> Submit Ticket
-                  </span>
-                )}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+          <div>
+            <p className="text-sm font-semibold text-white">Still need help? Join our Discord</p>
+            <p className="text-xs text-gray-500 mt-0.5">Get support from the Architect Pay community and team.</p>
+          </div>
+        </div>
+        <ExternalLink className="h-4 w-4 text-gray-600 group-hover:text-[#5865F2] transition-colors shrink-0" />
+      </a>
 
       {/* Quick links */}
       <div className="grid grid-cols-3 gap-3">
