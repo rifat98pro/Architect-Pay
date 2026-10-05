@@ -14,6 +14,7 @@ export const maxDuration = 300
 const schema = z.object({
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   amount: z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
+  destChain: z.enum(CCTP_SOURCE_CHAINS).default('ARC-TESTNET'),
   label: z.string().max(100).optional(),
 })
 
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const { recipientAddress, amount, label } = parsed.data
+  const { recipientAddress, amount, destChain, label } = parsed.data
   const targetAmount = parseFloat(amount)
 
   const wallet = await db.wallet.findUnique({
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
       recipientLabel:   label,
       amount,
       status:           'PROCESSING',
-      destChain:        'ARC-TESTNET',
+      destChain,
     },
   })
 
@@ -80,7 +81,6 @@ export async function POST(req: NextRequest) {
         cctpEntries.map(async (entry) => {
           const chain = entry.chain as CctpSourceChain
 
-          // Get or create chain wallet ID
           let sourceWalletId = chainWalletIds[chain]
           if (!sourceWalletId) {
             if (!wallet.walletSetId) throw new Error(`No wallet set ID for chain ${chain}`)
@@ -91,16 +91,32 @@ export async function POST(req: NextRequest) {
             sourceChain:      chain,
             sourceWalletId,
             arcWalletId:      wallet.circleWalletId,
-            recipientAddress: wallet.walletAddress, // CCTP mints to user's own Arc wallet
+            recipientAddress: wallet.walletAddress,
             amount:           entry.amount,
           })
         }),
       )
     }
 
-    // Step 2: Send from user's Arc wallet to the recipient
+    // Step 2a: If destination is non-Arc, CCTP from Arc → destChain first
+    let sendFromWalletId = wallet.circleWalletId
+    if (destChain !== 'ARC-TESTNET') {
+      const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain)
+      await cctpTransfer({
+        sourceChain:      'ARC-TESTNET',
+        sourceWalletId:   wallet.circleWalletId,
+        destChain,
+        destWalletId,
+        arcWalletId:      wallet.circleWalletId,
+        recipientAddress: wallet.walletAddress,
+        amount,
+      })
+      sendFromWalletId = destWalletId
+    }
+
+    // Step 2b: Send from destination wallet to recipient
     const result = await sendUsdcPayment({
-      fromWalletId: wallet.circleWalletId,
+      fromWalletId: sendFromWalletId,
       toAddress:    recipientAddress,
       amount,
     })

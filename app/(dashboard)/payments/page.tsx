@@ -176,9 +176,6 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [isAggregate, amount, user, fetchPlan])
 
-  useEffect(() => {
-    if (sourceChain === 'ALL_CHAINS') setDestChain('ARC-TESTNET')
-  }, [sourceChain])
 
   useEffect(() => {
     if (token === 'EURC') {
@@ -250,7 +247,7 @@ export default function PaymentsPage() {
     try {
       const endpoint = isAggregate ? '/api/payments/aggregate-send' : '/api/payments/send'
       const body     = isAggregate
-        ? { recipientAddress, amount, label }
+        ? { recipientAddress, amount, label, destChain }
         : { recipientAddress, amount, label, sourceChain, destChain, token }
       const res  = await fetch(endpoint, {
         method:  'POST',
@@ -385,17 +382,15 @@ export default function PaymentsPage() {
             </div>
 
             {/* Destination */}
-            {!isAggregate && (
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-500">To</label>
-                <ChainSelect
-                  value={destChain}
-                  onChange={setDestChain}
-                  disabled={loading}
-                  options={filteredDestChains.map((c) => ({ id: c.id, label: c.label }))}
-                />
-              </div>
-            )}
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500">To</label>
+              <ChainSelect
+                value={destChain}
+                onChange={setDestChain}
+                disabled={loading}
+                options={filteredDestChains.map((c) => ({ id: c.id, label: c.label }))}
+              />
+            </div>
           </div>
 
           {/* Route hint */}
