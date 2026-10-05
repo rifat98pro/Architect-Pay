@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
 import {
   CheckCircle2, XCircle, Clock, RefreshCw,
-  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight, ArrowUpCircle,
+  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight, ArrowUpCircle, ArrowDownCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TokenLogo from '@/components/token-logo'
@@ -136,17 +136,18 @@ export default function HistoryPage() {
   const { user, loading: authLoading } = useAuth()
 
   const [historyUI, setHistoryUI] = useFeatureState('history-ui', {
-    tab:      'payments' as 'payments' | 'payroll' | 'swaps' | 'withdrawals',
+    tab:      'payments' as 'payments' | 'withdrawals' | 'received' | 'payroll' | 'swaps',
     expanded: null as string | null,
   })
   const tab      = historyUI.tab
   const expanded = historyUI.expanded
-  const setTab      = (v: 'payments' | 'payroll' | 'swaps' | 'withdrawals') => setHistoryUI({ tab: v })
+  const setTab      = (v: 'payments' | 'withdrawals' | 'received' | 'payroll' | 'swaps') => setHistoryUI({ tab: v })
   const setExpanded = (v: string | null)                     => setHistoryUI({ expanded: v })
 
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [runs,     setRuns]     = useState<PayrollRun[]>([])
-  const [swaps,    setSwaps]    = useState<SwapRecord[]>([])
+  const [payments,  setPayments]  = useState<Payment[]>([])
+  const [received,  setReceived]  = useState<Payment[]>([])
+  const [runs,      setRuns]      = useState<PayrollRun[]>([])
+  const [swaps,     setSwaps]     = useState<SwapRecord[]>([])
   const [loading,  setLoading]  = useState(true)
   const mintPollRef             = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -191,10 +192,12 @@ export default function HistoryPage() {
     if (!user?.id) return
     Promise.all([
       fetch('/api/payments/history').then((r) => r.json()),
+      fetch('/api/payments/received').then((r) => r.json()),
       fetch('/api/payroll/runs').then((r) => r.json()),
       fetch('/api/swap/history').then((r) => r.json()),
-    ]).then(([payData, runData, swapData]) => {
+    ]).then(([payData, recData, runData, swapData]) => {
       setPayments(payData.payments ?? [])
+      setReceived(recData.received ?? [])
       setRuns(runData.runs ?? [])
       setSwaps(swapData.swaps ?? [])
     }).finally(() => setLoading(false))
@@ -213,6 +216,7 @@ export default function HistoryPage() {
         {([
           { id: 'payments',    label: 'Payments' },
           { id: 'withdrawals', label: 'Withdrawals' },
+          { id: 'received',    label: 'Received' },
           { id: 'payroll',     label: 'Payroll Runs' },
           { id: 'swaps',       label: 'Swaps' },
         ] as const).map((t) => (
@@ -356,6 +360,54 @@ export default function HistoryPage() {
             </div>
           )
         })()
+      ) : tab === 'received' ? (
+        received.length === 0 ? (
+          <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-700 text-sm text-gray-500">
+            <ArrowDownCircle className="h-8 w-8 text-gray-700" />
+            No received payments yet
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-gray-700/50 bg-gray-900/60">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-gray-800 px-5 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Sender</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</span>
+            </div>
+            <div className="divide-y divide-gray-800/60">
+              {received.map((p) => (
+                <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
+                  <div className="min-w-0">
+                    <div className="truncate font-mono text-sm font-medium text-white">
+                      {p.recipientLabel ? `${p.recipientLabel} · ` : ''}{truncateAddress(p.recipientAddress, 6)}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      <ChainLogo chain={p.destChain} size={12} />
+                      <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                      <span className="text-gray-700">·</span>
+                      <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {p.txHash && (
+                      <a
+                        href={`${ARC_EXPLORER}/tx/${p.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
+                      >
+                        {p.txHash.slice(0, 6)}…{p.txHash.slice(-4)}
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-green-400">+{p.token === 'EURC' ? '' : '$'}{formatUSDC(p.amount)}</div>
+                    <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
       ) : tab === 'swaps' ? (
         swaps.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-700 text-sm text-gray-500">
