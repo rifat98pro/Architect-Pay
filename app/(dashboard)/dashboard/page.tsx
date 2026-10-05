@@ -110,10 +110,13 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setMainnetNotice(true)}
-            className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition"
+            className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 hover:bg-brand-400 transition"
           >
-            <CreditCard className="h-4 w-4" />
-            Deposit Funds
+            <CreditCard className="h-4 w-4 shrink-0 text-navy-950" />
+            <div className="text-left">
+              <div className="text-xs font-bold text-navy-950 leading-tight">Deposit Funds</div>
+              <div className="text-[10px] font-medium text-navy-950/70 leading-tight">Debit Card · Apple Pay · Google Pay</div>
+            </div>
           </button>
           <button
             onClick={() => setDepositOpen(true)}
