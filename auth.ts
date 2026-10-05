@@ -48,9 +48,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (token.id) {
         session.user.id = token.id as string
-        const u = await db.user.findUnique({ where: { id: token.id as string }, select: { displayName: true, image: true } })
+        const u = await db.user.findUnique({ where: { id: token.id as string }, select: { displayName: true, image: true, username: true } })
         if (u?.displayName) session.user.name  = u.displayName
         if (u?.image)       session.user.image = u.image
+        ;(session.user as any).username = u?.username ?? null
       }
       return session
     },
