@@ -1,4 +1,4 @@
-import { CCTP_SOURCE_CHAINS } from '@/lib/cctp-chains'
+import { CCTP_SOURCE_CHAINS, EURC_CCTP_CHAINS } from '@/lib/cctp-chains'
 
 export interface AggregatePlanEntry {
   chain:   string
@@ -64,5 +64,50 @@ export function computeAggregatePlan(
     totalTarget: targetAmount.toFixed(6),
     totalFee:    totalFee.toFixed(6),
     reason: feasible ? undefined : 'Insufficient total balance across all chains',
+  }
+}
+
+// EURC aggregate plan: consolidate from all 3 EURC chains to `destChain`
+export function computeEurcAggregatePlan(
+  eurcBalances: Record<string, number>,
+  targetAmount: number,
+  destChain: string,
+): AggregatePlan {
+  const plan: AggregatePlanEntry[] = []
+  let remaining = targetAmount
+  let totalFee  = 0
+
+  // Use dest chain balance first (no CCTPx fee)
+  const destBal = eurcBalances[destChain] ?? 0
+  if (destBal > 0 && remaining > 0) {
+    const use = parseFloat(Math.min(destBal, remaining).toFixed(6))
+    plan.push({ chain: destChain, label: CHAIN_LABEL[destChain] ?? destChain, amount: use.toFixed(6), fee: '0', isCctp: false })
+    remaining -= use
+  }
+
+  // Pull from other EURC chains via CCTPx (protocol fee is 0; platform fee 0.01%)
+  if (remaining > 0.001) {
+    const others = [...EURC_CCTP_CHAINS]
+      .filter((c) => c !== destChain)
+      .map((c) => ({ chain: c as string, bal: eurcBalances[c] ?? 0 }))
+      .filter((x) => x.bal > 0)
+      .sort((a, b) => b.bal - a.bal)
+
+    for (const { chain, bal } of others) {
+      if (remaining <= 0.001) break
+      const burnAmount = parseFloat(Math.min(bal, remaining).toFixed(6))
+      // CCTPx EURC protocol fee is 0; no platform fee on aggregate withdraw
+      plan.push({ chain, label: CHAIN_LABEL[chain] ?? chain, amount: burnAmount.toFixed(6), fee: '0', isCctp: true })
+      remaining -= burnAmount
+    }
+  }
+
+  const feasible = remaining <= 0.01
+  return {
+    feasible,
+    plan,
+    totalTarget: targetAmount.toFixed(6),
+    totalFee:    totalFee.toFixed(6),
+    reason: feasible ? undefined : 'Insufficient total EURC balance across all chains',
   }
 }
