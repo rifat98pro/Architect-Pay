@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useFeatureState } from '@/lib/hooks/use-feature-state'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
 import {
@@ -132,7 +132,8 @@ function TxTimer({ createdAt, updatedAt, status }: {
 }
 
 export default function HistoryPage() {
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
 
   const [historyUI, setHistoryUI] = useFeatureState('history-ui', {
@@ -143,6 +144,15 @@ export default function HistoryPage() {
   const expanded = historyUI.expanded
   const setTab      = (v: 'payments' | 'withdrawals' | 'received' | 'payroll' | 'swaps') => setHistoryUI({ tab: v })
   const setExpanded = (v: string | null)                     => setHistoryUI({ expanded: v })
+
+  // Auto-switch tab from URL query param (e.g. ?tab=withdrawals)
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t === 'withdrawals' || t === 'received' || t === 'payroll' || t === 'swaps' || t === 'payments') {
+      setTab(t)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [payments,  setPayments]  = useState<Payment[]>([])
   const [received,  setReceived]  = useState<Payment[]>([])

@@ -173,12 +173,12 @@ export default function WithdrawPage() {
       if (!res.ok) throw new Error(data.error ?? 'Withdrawal failed')
 
       if (data.pending && data.paymentId) {
-        setSuccess(`${amount} ${token} withdrawal initiated! Arriving on destination chain…`)
+        setSuccess('processing')
         setPendingId(data.paymentId)
         addPending(data.paymentId)
         startPolling(data.paymentId)
       } else {
-        setSuccess(`${amount} ${token} withdrawn successfully!`)
+        setSuccess('processing')
       }
 
       setAmount(''); setAddress(''); setNote(''); setPlan(null)
@@ -210,11 +210,20 @@ export default function WithdrawPage() {
         </div>
       )}
       {success && (
-        <div className="flex items-start gap-3 rounded-xl border border-green-900/50 bg-green-900/20 px-4 py-3 text-sm text-green-400">
-          {pendingId
-            ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
-            : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
-          {success}
+        <div className="flex flex-col gap-2 rounded-xl border border-green-900/50 bg-green-900/20 px-4 py-3 text-sm text-green-400">
+          <div className="flex items-start gap-3">
+            {pendingId
+              ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+              : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
+            <span>Your withdrawal is processing. Track your withdrawal status here:</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push('/history?tab=withdrawals')}
+            className="self-start rounded-lg border border-green-700/50 bg-green-900/40 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-800/40"
+          >
+            Withdrawal History →
+          </button>
         </div>
       )}
 
