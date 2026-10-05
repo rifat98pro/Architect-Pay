@@ -248,7 +248,7 @@ export default function HistoryPage() {
           <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
         </div>
       ) : tab === 'payments' ? (
-        payments.length === 0 ? (
+        payments.filter((p) => !p.recipientLabel?.toLowerCase().includes('withdrawal')).length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-700 text-sm text-gray-500">
             <Clock className="h-8 w-8 text-gray-700" />
             No payments yet
@@ -262,7 +262,7 @@ export default function HistoryPage() {
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</span>
             </div>
             <div className="divide-y divide-gray-800/60">
-              {payments.map((p) => (
+              {payments.filter((p) => !p.recipientLabel?.toLowerCase().includes('withdrawal')).map((p) => (
                 <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
