@@ -390,15 +390,25 @@ export default function PaymentsPage() {
                 </div>
               )}
               {lookupState === 'found' && (
-                <div className="mt-2 flex items-center gap-2.5 rounded-xl border border-green-900/40 bg-green-900/15 px-3 py-2 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-400" />
-                  <span className="font-semibold text-green-300">{resolvedName}</span>
-                  <span className="font-mono text-gray-500">{resolvedAddress.slice(0, 8)}…{resolvedAddress.slice(-6)}</span>
+                <div className="mt-2 flex items-center gap-3 rounded-xl border border-brand-500/30 bg-brand-500/8 px-3 py-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-sm font-bold text-brand-400">
+                    {resolvedName?.[0]?.toUpperCase() ?? '?'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white">{resolvedName}</span>
+                      <span className="rounded-full bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand-400">Architect Pay</span>
+                    </div>
+                    <div className="mt-0.5 font-mono text-xs text-gray-500">
+                      @{usernameInput} · {resolvedAddress.slice(0, 8)}…{resolvedAddress.slice(-6)}
+                    </div>
+                  </div>
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-green-400" />
                 </div>
               )}
               {lookupState === 'notfound' && usernameInput.length >= 3 && (
                 <div className="mt-2 flex items-center gap-2 rounded-xl border border-red-900/40 bg-red-900/15 px-3 py-2 text-xs text-red-400">
-                  <XCircle className="h-3.5 w-3.5 shrink-0" /> User not found or has no wallet yet
+                  <XCircle className="h-3.5 w-3.5 shrink-0" /> No Architect Pay user found with this username
                 </div>
               )}
             </div>
