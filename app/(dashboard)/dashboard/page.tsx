@@ -153,7 +153,7 @@ export default function DashboardPage() {
             ${formatUSDC(totalUsdc)}
             <span className="ml-2 text-base font-normal text-brand-400">USDC</span>
           </div>
-          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Across all chains</div>
+          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Unified USDC balance</div>
         </div>
 
         {/* EURC total */}
@@ -178,7 +178,7 @@ export default function DashboardPage() {
             {parseFloat(totalEurc).toFixed(2)}
             <span className="ml-2 text-base font-normal text-blue-400">EURC</span>
           </div>
-          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Unified Euro stablecoin</div>
+          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Unified EURC balance</div>
         </div>
       </div>
 
