@@ -346,7 +346,7 @@ export default function PaymentsPage() {
           <div className="mb-4 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
             {([
               { id: 'wallet',   label: 'Wallet address', icon: Wallet },
-              { id: 'username', label: '@username',       icon: AtSign },
+              { id: 'username', label: 'Architect Pay Username', icon: AtSign },
             ] as const).map(({ id, label: lbl, icon: Icon }) => (
               <button
                 key={id} type="button" onClick={() => setRecipientMode(id)}
