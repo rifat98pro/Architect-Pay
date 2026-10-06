@@ -308,22 +308,31 @@ export default function PaymentsPage() {
           </div>
         )}
         {success && (
-          <div className="flex items-start gap-3 rounded-xl border border-green-900/50 bg-green-900/20 px-4 py-3 text-sm text-green-400">
-            {pendingPaymentId
-              ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
-              : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
-            <div>
-              <div>{success}</div>
-              {lastRoute && (
-                <div className="mt-1 flex items-center gap-1 text-xs text-green-500/70">
-                  <ChainLogo chain={lastRoute.src} size={12} />
-                  <span>{lastRoute.src.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
-                  <ArrowRight className="h-3 w-3 shrink-0" />
-                  <ChainLogo chain={lastRoute.dest} size={12} />
-                  <span>{lastRoute.dest.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
-                </div>
-              )}
+          <div className="flex flex-col gap-2 rounded-xl border border-green-900/50 bg-green-900/20 px-4 py-3 text-sm text-green-400">
+            <div className="flex items-start gap-3">
+              {pendingPaymentId
+                ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+                : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
+              <div>
+                <div>{success}</div>
+                {lastRoute && (
+                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500/70">
+                    <ChainLogo chain={lastRoute.src} size={12} />
+                    <span>{lastRoute.src.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                    <ArrowRight className="h-3 w-3 shrink-0" />
+                    <ChainLogo chain={lastRoute.dest} size={12} />
+                    <span>{lastRoute.dest.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                  </div>
+                )}
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => router.push('/history?tab=payments')}
+              className="self-start rounded-lg border border-green-700/50 bg-green-900/40 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-800/40"
+            >
+              Payment History →
+            </button>
           </div>
         )}
         {crossChainNotice && (
