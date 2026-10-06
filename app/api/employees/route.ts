@@ -11,6 +11,7 @@ const schema = z.object({
   salary:        z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
   role:          z.string().max(100).optional(),
   businessId:    z.string().optional(),
+  preferredChain: z.string().max(50).optional(),
 })
 
 export async function GET(req: NextRequest) {

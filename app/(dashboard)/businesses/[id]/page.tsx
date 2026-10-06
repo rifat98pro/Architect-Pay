@@ -8,15 +8,25 @@ import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck, ArrowLef
 import { truncateAddress } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/context/theme-context'
+import ChainLogo from '@/components/chain-logo'
+
+const CHAIN_OPTIONS = [
+  { value: 'ARC-TESTNET',  label: 'Arc Testnet' },
+  { value: 'ETH-SEPOLIA',  label: 'Ethereum' },
+  { value: 'BASE-SEPOLIA', label: 'Base' },
+  { value: 'ARB-SEPOLIA',  label: 'Arbitrum' },
+  { value: 'MATIC-AMOY',   label: 'Polygon' },
+]
 
 interface Employee {
-  id:            string
-  name:          string
-  walletAddress: string
-  salary:        string
-  role:          string | null
+  id:             string
+  name:           string
+  walletAddress:  string
+  salary:         string
+  role:           string | null
+  preferredChain: string
 }
-interface EditState { name: string; walletAddress: string; salary: string; role: string }
+interface EditState { name: string; walletAddress: string; salary: string; role: string; preferredChain: string }
 interface Business  { id: string; name: string; logoUrl?: string | null }
 
 export default function BusinessEmployeesPage() {
@@ -34,17 +44,18 @@ export default function BusinessEmployeesPage() {
   type LookupState = 'idle' | 'loading' | 'found' | 'notfound'
 
   const [addForm, setAddForm, clearAddForm] = useFeatureState(`biz-${bizId}-add-emp`, {
-    showForm: false, name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '',
+    showForm: false, name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '', preferredChain: 'ARC-TESTNET',
   })
   const showForm    = addForm.showForm
   const setShowForm = (v: boolean) => setAddForm({ showForm: v })
-  const { name, address, salary, role, walletMode, usernameInput } = addForm
-  const setName          = (v: string)     => setAddForm({ name: v })
-  const setAddress       = (v: string)     => setAddForm({ address: v })
-  const setSalary        = (v: string)     => setAddForm({ salary: v })
-  const setRole          = (v: string)     => setAddForm({ role: v })
-  const setWalletMode    = (v: WalletMode) => setAddForm({ walletMode: v, usernameInput: '', address: '' })
-  const setUsernameInput = (v: string)     => setAddForm({ usernameInput: v })
+  const { name, address, salary, role, walletMode, usernameInput, preferredChain } = addForm
+  const setName           = (v: string)     => setAddForm({ name: v })
+  const setAddress        = (v: string)     => setAddForm({ address: v })
+  const setSalary         = (v: string)     => setAddForm({ salary: v })
+  const setRole           = (v: string)     => setAddForm({ role: v })
+  const setWalletMode     = (v: WalletMode) => setAddForm({ walletMode: v, usernameInput: '', address: '' })
+  const setUsernameInput  = (v: string)     => setAddForm({ usernameInput: v })
+  const setPreferredChain = (v: string)     => setAddForm({ preferredChain: v })
 
   const [lookupState,      setLookupState]      = useState<LookupState>('idle')
   const [resolvedAddress,  setResolvedAddress]  = useState('')
@@ -109,7 +120,7 @@ export default function BusinessEmployeesPage() {
       const res = await fetch('/api/employees', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, walletAddress: finalAddress, salary, role: role || undefined, businessId: bizId }),
+        body:    JSON.stringify({ name, walletAddress: finalAddress, salary, role: role || undefined, businessId: bizId, preferredChain }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(JSON.stringify(data.error))
@@ -133,7 +144,7 @@ export default function BusinessEmployeesPage() {
   function startEdit(emp: Employee) {
     setEditingId(emp.id)
     setEditError('')
-    setEditState({ name: emp.name, walletAddress: emp.walletAddress, salary: emp.salary, role: emp.role ?? '' })
+    setEditState({ name: emp.name, walletAddress: emp.walletAddress, salary: emp.salary, role: emp.role ?? '', preferredChain: emp.preferredChain ?? 'ARC-TESTNET' })
   }
 
   function cancelEdit() { setEditingId(null); setEditState(null); setEditError('') }
@@ -371,6 +382,12 @@ export default function BusinessEmployeesPage() {
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style={{ color: t3 }}>$</span>
               <input type="number" step="0.01" min="0.01" placeholder="Salary (USDC)" value={salary} onChange={(e) => setSalary(e.target.value)} className="input-base pl-7" required style={input} />
             </div>
+            <div className="relative sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium" style={{ color: t3 }}>Preferred payment chain</label>
+              <select value={preferredChain} onChange={(e) => setPreferredChain(e.target.value)} className="input-base w-full" style={input}>
+                {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
             <button type="submit"
               disabled={saving || (walletMode === 'username' && lookupState !== 'found')}
               className="flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 transition disabled:opacity-50">
@@ -414,9 +431,12 @@ export default function BusinessEmployeesPage() {
                       <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} placeholder="Full name" className="input-base text-sm" maxLength={100} style={input} />
                       <input type="text" value={editState.role} onChange={(e) => setEditState({ ...editState, role: e.target.value })} placeholder="Role" className="input-base text-xs" maxLength={100} style={input} />
                     </div>
-                    {/* Wallet — matches 1fr wallet column, shows full address */}
-                    <div className="min-w-0">
+                    {/* Wallet + chain — matches 1fr wallet column */}
+                    <div className="min-w-0 flex flex-col gap-1.5">
                       <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="0x..." className="input-base font-mono text-xs w-full" style={input} />
+                      <select value={editState.preferredChain} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="input-base text-xs w-full" style={input}>
+                        {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                      </select>
                     </div>
                     {/* Salary — matches 100px salary column */}
                     <div className="relative">
@@ -447,12 +467,18 @@ export default function BusinessEmployeesPage() {
                     </div>
                   </div>
 
-                  {/* Wallet */}
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-mono text-xs truncate" style={{ color: t3 }}>{emp.walletAddress}</span>
-                    <button onClick={() => copyAddress(emp.id, emp.walletAddress)} className="shrink-0 rounded p-0.5 hover:text-brand-400 transition" style={{ color: t3 }}>
-                      {copiedId === emp.id ? <CheckCheck className="h-3 w-3 text-brand-400" /> : <Copy className="h-3 w-3" />}
-                    </button>
+                  {/* Wallet + preferred chain */}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-xs truncate" style={{ color: t3 }}>{emp.walletAddress}</span>
+                      <button onClick={() => copyAddress(emp.id, emp.walletAddress)} className="shrink-0 rounded p-0.5 hover:text-brand-400 transition" style={{ color: t3 }}>
+                        {copiedId === emp.id ? <CheckCheck className="h-3 w-3 text-brand-400" /> : <Copy className="h-3 w-3" />}
+                      </button>
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1">
+                      <ChainLogo chain={emp.preferredChain ?? 'ARC-TESTNET'} size={10} />
+                      <span className="text-[10px]" style={{ color: t3 }}>{CHAIN_OPTIONS.find((c) => c.value === emp.preferredChain)?.label ?? 'Arc Testnet'}</span>
+                    </div>
                   </div>
 
                   {/* Salary */}

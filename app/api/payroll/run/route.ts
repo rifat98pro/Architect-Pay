@@ -103,14 +103,31 @@ export async function POST(req: Request) {
       )
     }
 
-    // Step 2: Pay all employees in parallel from Arc wallet
+    // Step 2: Pay each employee — CCTP to their preferred chain if not Arc
     const results = await Promise.allSettled(
       run.entries.map(async (entry) => {
-        const emp = employees.find((e) => e.id === entry.employeeId)!
+        const emp       = employees.find((e) => e.id === entry.employeeId)!
+        const empChain  = (emp.preferredChain ?? 'ARC-TESTNET') as CctpSourceChain
+        let fromWalletId = wallet.circleWalletId
+
+        if (empChain !== 'ARC-TESTNET') {
+          const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, empChain)
+          await cctpTransfer({
+            sourceChain:      'ARC-TESTNET',
+            sourceWalletId:   wallet.circleWalletId,
+            destChain:        empChain,
+            destWalletId,
+            arcWalletId:      wallet.circleWalletId,
+            recipientAddress: wallet.walletAddress,
+            amount:           entry.amount,
+          })
+          fromWalletId = destWalletId
+        }
+
         const result = await sendUsdcPayment({
-          fromWalletId: wallet.circleWalletId,
-          toAddress:    emp.walletAddress,
-          amount:       entry.amount,
+          fromWalletId,
+          toAddress: emp.walletAddress,
+          amount:    entry.amount,
         })
         return { entryId: entry.id, txHash: result.txHash }
       }),

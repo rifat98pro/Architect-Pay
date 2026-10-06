@@ -5,21 +5,12 @@ import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { usePendingPayments } from '@/context/pending-payments-context'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Send, Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ArrowRight, ShieldCheck, AlertTriangle, Clock } from 'lucide-react'
+import { Loader2, Layers, AtSign, Wallet, CheckCircle2, XCircle, ShieldCheck, AlertTriangle, Clock } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
 import ChainLogo from '@/components/chain-logo'
 import ChainSelect from '@/components/chain-select'
 import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
-
-const SOURCE_CHAINS = [
-  { id: 'ALL_CHAINS',   label: 'All Chains (Aggregate)', instant: false },
-  { id: 'ARC-TESTNET',  label: 'Arc Testnet',            instant: true  },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum Sepolia',       instant: false },
-  { id: 'BASE-SEPOLIA', label: 'Base Sepolia',            instant: false },
-  { id: 'ARB-SEPOLIA',  label: 'Arbitrum Sepolia',        instant: false },
-  { id: 'MATIC-AMOY',   label: 'Polygon Amoy',            instant: false },
-]
 
 const DEST_CHAINS = [
   { id: 'ARC-TESTNET',  label: 'Arc Testnet'      },
@@ -54,7 +45,7 @@ export default function PaymentsPage() {
   const [chainBalances, setChainBalances]         = useState<Record<string, string>>({})
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
   const [payForm, setPayForm, clearPayForm] = useFeatureState('payment-form', {
-    sourceChain:        'ARC-TESTNET',
+    sourceChain:        'ALL_CHAINS',
     destChain:          'ARC-TESTNET',
     token:              'USDC' as 'USDC' | 'EURC',
     amount:             '',
@@ -68,8 +59,7 @@ export default function PaymentsPage() {
     loading:            false,
     crossChainNotice:   false,
   })
-  const { sourceChain, destChain, token, amount, label, recipientMode, walletAddress, usernameInput, success, confirming, pendingPaymentId, loading, crossChainNotice } = payForm
-  const setSourceChain      = (v: string)            => setPayForm({ sourceChain: v })
+  const { destChain, token, amount, label, recipientMode, walletAddress, usernameInput, success, confirming, pendingPaymentId, loading, crossChainNotice } = payForm
   const setDestChain        = (v: string)            => setPayForm({ destChain: v })
   const setToken            = (v: 'USDC' | 'EURC')  => setPayForm({ token: v })
   const setAmount           = (v: string)            => setPayForm({ amount: v })
@@ -83,9 +73,8 @@ export default function PaymentsPage() {
   const setLoading          = (v: boolean)           => setPayForm({ loading: v })
   const setCrossChainNotice = (v: boolean)           => setPayForm({ crossChainNotice: v })
 
-  const [error, setError]                         = useState('')
-  const [lastRoute, setLastRoute]                 = useState<{ src: string; dest: string } | null>(null)
-  const pollRef                                   = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [error, setError]   = useState('')
+  const pollRef             = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [planLoading, setPlanLoading]   = useState(false)
   const [plan, setPlan]                 = useState<AggregatePlanEntry[] | null>(null)
@@ -139,24 +128,16 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [usernameInput])
 
-  const recipientAddress = recipientMode === 'wallet' ? walletAddress : resolvedAddress
-  const isAggregate       = sourceChain === 'ALL_CHAINS'
-  const isCrossChain      = !isAggregate && (sourceChain !== destChain)
-  const selectedSrcChain  = SOURCE_CHAINS.find((c) => c.id === sourceChain)!
+  const recipientAddress  = recipientMode === 'wallet' ? walletAddress : resolvedAddress
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
   const EURC_CHAINS       = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
-  const eurcSrcBlocked    = token === 'EURC' && isCrossChain && !EURC_CHAINS.includes(sourceChain)
   const totalBalance      = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const totalEurcBalance  = Object.values(eurcChainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  const availableBalance  = isAggregate
-    ? token === 'EURC' ? totalEurcBalance.toFixed(2) : totalBalance.toFixed(2)
-    : token === 'EURC'
-      ? parseFloat(eurcChainBalances[sourceChain] ?? '0').toFixed(2)
-      : parseFloat(chainBalances[sourceChain] ?? '0').toFixed(2)
-  const filteredDestChains  = token === 'EURC' ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id)) : DEST_CHAINS
-  const amountNum           = parseFloat(amount || '0')
-  const availableNum        = parseFloat(availableBalance)
-  const insufficientFunds   = amountNum > 0 && amountNum > availableNum
+  const availableBalance  = token === 'EURC' ? totalEurcBalance.toFixed(2) : totalBalance.toFixed(2)
+  const filteredDestChains = token === 'EURC' ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id)) : DEST_CHAINS
+  const amountNum          = parseFloat(amount || '0')
+  const availableNum       = parseFloat(availableBalance)
+  const insufficientFunds  = amountNum > 0 && amountNum > availableNum
 
   const fetchPlan = useCallback(async (amt: string, tkn: 'USDC' | 'EURC', dest: string) => {
     const n = parseFloat(amt)
@@ -175,17 +156,14 @@ export default function PaymentsPage() {
   }, [])
 
   useEffect(() => {
-    if (!isAggregate || !user?.id) { setPlan(null); return }
+    if (!user?.id) { setPlan(null); return }
     const t = setTimeout(() => fetchPlan(amount, token, destChain), 500)
     return () => clearTimeout(t)
-  }, [isAggregate, amount, token, destChain, user?.id, fetchPlan])
+  }, [amount, token, destChain, user?.id, fetchPlan])
 
 
   useEffect(() => {
-    if (token === 'EURC') {
-      if (!EURC_CHAINS.includes(destChain)) setDestChain('ARC-TESTNET')
-      if (sourceChain !== 'ALL_CHAINS' && !EURC_CHAINS.includes(sourceChain)) setSourceChain('ARC-TESTNET')
-    }
+    if (token === 'EURC' && !EURC_CHAINS.includes(destChain)) setDestChain('ARC-TESTNET')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
@@ -199,7 +177,6 @@ export default function PaymentsPage() {
     if (!canSend) return
     setError('')
     setSuccess('')
-    setLastRoute(null)
     setCrossChainNotice(false)
     setConfirming(true)
   }
@@ -249,31 +226,20 @@ export default function PaymentsPage() {
     setConfirming(false)
     setLoading(true)
     try {
-      const endpoint = isAggregate
-        ? token === 'EURC' ? '/api/payments/aggregate-send-eurc' : '/api/payments/aggregate-send'
-        : '/api/payments/send'
-      const body = isAggregate
-        ? { recipientAddress, amount, label, destChain }
-        : { recipientAddress, amount, label, sourceChain, destChain, token }
+      const endpoint = token === 'EURC' ? '/api/payments/aggregate-send-eurc' : '/api/payments/aggregate-send'
       const res  = await fetch(endpoint, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
+        body:    JSON.stringify({ recipientAddress, amount, label, destChain }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Payment failed')
 
-      const isEurcCrossChain = token === 'EURC' && (isCrossChain || isAggregate)
-
-      // Capture route before clearing form
-      const routeSrc   = sourceChain
-      const routeDest  = destChain
-      const routeCross = isCrossChain || isAggregate
+      const isEurcCrossChain = token === 'EURC'
 
       // Clear form fields first — success state is set after so it survives the clear
       clearPayForm(); setResolvedAddress(''); setResolvedName('')
       setLookupState('idle'); setPlan(null)
-      if (routeCross) setLastRoute({ src: routeSrc, dest: routeDest })
 
       if (data.pending && data.paymentId) {
         // Cross-chain: burn done, minting in progress — poll until complete (globally, survives navigation)
@@ -313,18 +279,7 @@ export default function PaymentsPage() {
               {pendingPaymentId
                 ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
                 : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
-              <div>
-                <div>{success}</div>
-                {lastRoute && (
-                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500/70">
-                    <ChainLogo chain={lastRoute.src} size={12} />
-                    <span>{lastRoute.src.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
-                    <ArrowRight className="h-3 w-3 shrink-0" />
-                    <ChainLogo chain={lastRoute.dest} size={12} />
-                    <span>{lastRoute.dest.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
-                  </div>
-                )}
-              </div>
+              <span>{success}</span>
             </div>
             <button
               type="button"
@@ -353,88 +308,35 @@ export default function PaymentsPage() {
           </div>
         )}
 
-        {/* Section 1 — Chain + Token */}
+        {/* Section 1 — Token + Destination */}
         <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
-          <SectionLabel step={1} title="Route & Token" subtitle="Choose source chain, destination, and token type" />
+          <SectionLabel step={1} title="Token & Destination" subtitle="Choose token type and which chain recipient gets funds on" />
 
           {/* Token tabs */}
-          {!isAggregate && (
-            <div className="mb-4 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
-              {(['USDC', 'EURC'] as const).map((t) => (
-                <button
-                  key={t} type="button" onClick={() => setToken(t)}
-                  className={cn(
-                    'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all',
-                    token === t ? 'bg-brand-500/15 text-brand-400 shadow-sm' : 'text-gray-500 hover:text-gray-300',
-                  )}
-                >
-                  <TokenLogo token={t} size={16} />{t}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            {/* Source */}
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-500">From</label>
-              <ChainSelect
-                value={sourceChain}
-                onChange={(v) => { setSourceChain(v); setPlan(null) }}
-                disabled={loading}
-                options={SOURCE_CHAINS
-                  .filter((c) => token === 'EURC' ? c.id === 'ALL_CHAINS' || EURC_CHAINS.includes(c.id) : true)
-                  .map((c) => ({
-                    id:       c.id,
-                    label:    c.id === 'ALL_CHAINS' ? 'All Chains (Aggregate)' : c.label,
-                    sublabel: c.id === 'ALL_CHAINS'
-                      ? token === 'EURC'
-                        ? `${totalEurcBalance.toFixed(2)} EURC across all`
-                        : `$${totalBalance.toFixed(2)} across all`
-                      : token === 'EURC'
-                        ? `${parseFloat(eurcChainBalances[c.id] ?? '0').toFixed(2)} EURC`
-                        : `$${parseFloat(chainBalances[c.id] ?? '0').toFixed(2)} USDC`,
-                  }))}
-              />
-            </div>
-
-            {/* Destination */}
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-500">To</label>
-              <ChainSelect
-                value={destChain}
-                onChange={setDestChain}
-                disabled={loading}
-                options={filteredDestChains.map((c) => ({ id: c.id, label: c.label }))}
-              />
-            </div>
+          <div className="mb-4 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
+            {(['USDC', 'EURC'] as const).map((t) => (
+              <button
+                key={t} type="button" onClick={() => setToken(t)}
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all',
+                  token === t ? 'bg-brand-500/15 text-brand-400 shadow-sm' : 'text-gray-500 hover:text-gray-300',
+                )}
+              >
+                <TokenLogo token={t} size={16} />{t}
+              </button>
+            ))}
           </div>
 
-          {/* Route hint */}
-          {!isAggregate && (
-            <div className={cn(
-              'mt-3 flex items-center gap-2 rounded-xl px-3 py-2 text-xs',
-              eurcSrcBlocked
-                ? 'border border-red-900/40 bg-red-900/20 text-red-400'
-                : isCrossChain
-                  ? 'border border-amber-900/40 bg-amber-900/20 text-amber-400'
-                  : 'border border-green-900/30 bg-green-900/15 text-green-400',
-            )}>
-              {eurcSrcBlocked ? (
-                <><XCircle className="h-3.5 w-3.5 shrink-0" /> EURC cross-chain not supported from this chain</>
-              ) : isCrossChain ? (
-                <><ArrowRight className="h-3.5 w-3.5 shrink-0" /><ChainLogo chain={sourceChain} size={14} />{selectedSrcChain.label} → <ChainLogo chain={destChain} size={14} />{selectedDestChain.label} · ~2–3 min · ~0.01% fee</>
-              ) : (
-                <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Same-chain — instant, no platform fee</>
-              )}
-            </div>
-          )}
-
-          {isAggregate && (
-            <p className="mt-3 text-xs text-blue-400">
-              Combines balances across all chains via CCTP, then transfers in one shot.
-            </p>
-          )}
+          {/* Destination */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-500">Recipient receives on</label>
+            <ChainSelect
+              value={destChain}
+              onChange={setDestChain}
+              disabled={loading}
+              options={filteredDestChains.map((c) => ({ id: c.id, label: c.label }))}
+            />
+          </div>
         </div>
 
         {/* Section 2 — Recipient */}
@@ -546,8 +448,8 @@ export default function PaymentsPage() {
             </button>
           )}
 
-          {/* Aggregate plan */}
-          {isAggregate && amount && parseFloat(amount) > 0 && (
+          {/* Funding plan */}
+          {amount && parseFloat(amount) > 0 && (
             <div className="mt-4 rounded-xl border border-blue-800/50 bg-blue-900/15 p-4">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-300">
                 <Layers className="h-4 w-4" /> Funding plan
@@ -564,8 +466,8 @@ export default function PaymentsPage() {
                     <div key={entry.chain} className="flex items-center justify-between text-xs">
                       <span className="text-blue-400">{entry.label}</span>
                       <span className="font-medium text-blue-200">
-                        ${parseFloat(entry.amount).toFixed(2)} USDC
-                        {entry.isCctp && <span className="ml-1 text-blue-500">(~${parseFloat(entry.fee).toFixed(2)} fee)</span>}
+                        {token === 'EURC' ? '' : '$'}{parseFloat(entry.amount).toFixed(2)} {token}
+                        {entry.isCctp && <span className="ml-1 text-blue-500">(~{token === 'EURC' ? '' : '$'}{parseFloat(entry.fee).toFixed(2)} fee)</span>}
                         {!entry.isCctp && <span className="ml-1 text-green-400">(instant)</span>}
                       </span>
                     </div>
@@ -597,7 +499,7 @@ export default function PaymentsPage() {
         </div>
 
         {/* Cross-chain progress */}
-        {loading && (isCrossChain || isAggregate) && (
+        {loading && (
           <div className="flex items-start gap-3 rounded-xl border border-blue-800/40 bg-blue-900/15 px-4 py-3 text-sm text-blue-300">
             <Loader2 className="mt-0.5 h-4 w-4 animate-spin shrink-0" />
             Initiating cross-chain transfer…
@@ -606,7 +508,7 @@ export default function PaymentsPage() {
 
         <button
           type="submit"
-          disabled={loading || !canSend || !amount || eurcSrcBlocked || insufficientFunds || (isAggregate && (!planFeasible || planLoading))}
+          disabled={loading || !canSend || !amount || insufficientFunds || !planFeasible || planLoading}
           className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-brand-500 py-3.5 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading
@@ -616,9 +518,7 @@ export default function PaymentsPage() {
             ? 'Sending…'
             : insufficientFunds
               ? 'Insufficient funds'
-              : isAggregate
-                ? `Review & Send${amount ? ` $${amount}` : ''} USDC`
-                : `Review & Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
+              : `Review & Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
         </button>
       </form>
 
@@ -657,36 +557,20 @@ export default function PaymentsPage() {
               </div>
 
               {/* Route */}
-              {!isAggregate && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-gray-500 shrink-0">Route</span>
-                  <span className="flex items-center justify-end gap-1 text-xs text-gray-300 flex-wrap">
-                    <ChainLogo chain={sourceChain} size={13} />{selectedSrcChain.label}
-                    {isCrossChain && <><ArrowRight className="h-3 w-3 shrink-0" /><ChainLogo chain={destChain} size={13} />{selectedDestChain.label}</>}
-                  </span>
-                </div>
-              )}
-              {isAggregate && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Route</span>
-                  <span className="text-xs text-gray-300">All Chains (Aggregate)</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-gray-500 shrink-0">Route</span>
+                <span className="flex items-center justify-end gap-1 text-xs text-gray-300 flex-wrap">
+                  All Chains → <ChainLogo chain={destChain} size={13} />{selectedDestChain.label}
+                </span>
+              </div>
 
               {/* Fee */}
-              {isCrossChain || isAggregate ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Platform fee (0.01%)</span>
-                  <span className="text-xs text-amber-400">
-                    ~{token === 'EURC' ? '' : '$'}{(parseFloat(amount || '0') * 0.0001).toFixed(4)} {token}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Platform fee</span>
-                  <span className="text-xs text-green-400">Free — same chain</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Platform fee (0.01%)</span>
+                <span className="text-xs text-amber-400">
+                  ~{token === 'EURC' ? '' : '$'}{(parseFloat(amount || '0') * 0.0001).toFixed(4)} {token}
+                </span>
+              </div>
 
               {/* Label */}
               {label && (

@@ -10,6 +10,7 @@ const editSchema = z.object({
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address').optional(),
   salary:        z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0).optional(),
   role:          z.string().max(100).optional(),
+  preferredChain: z.string().max(50).optional(),
 })
 
 export async function PATCH(
