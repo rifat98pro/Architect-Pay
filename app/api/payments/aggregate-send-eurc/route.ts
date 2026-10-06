@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
       recipientLabel:   label,
       amount,
       token:            'EURC',
+      sourceChain:      'ALL_CHAINS',
       status:           'PROCESSING',
       destChain,
     },

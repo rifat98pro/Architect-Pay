@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
       recipientAddress,
       recipientLabel:   label,
       amount,
+      sourceChain:      'ALL_CHAINS',
       status:           'PROCESSING',
       destChain,
     },

@@ -276,9 +276,15 @@ function HistoryPage() {
                       )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
-                      <ChainLogo chain={p.sourceChain} size={12} />
-                      <span className="text-xs text-gray-500">{p.sourceChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
-                      {p.sourceChain !== p.destChain && (
+                      {p.sourceChain === 'ALL_CHAINS' ? (
+                        <span className="text-xs font-medium text-brand-400">All Chains</span>
+                      ) : (
+                        <>
+                          <ChainLogo chain={p.sourceChain} size={12} />
+                          <span className="text-xs text-gray-500">{p.sourceChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                        </>
+                      )}
+                      {(p.sourceChain !== p.destChain) && (
                         <>
                           <ArrowRight className="h-3 w-3 text-gray-700 shrink-0" />
                           <ChainLogo chain={p.destChain} size={12} />
