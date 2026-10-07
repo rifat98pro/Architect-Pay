@@ -70,13 +70,28 @@ export async function POST(req: Request) {
     }
   }
 
-  // Check EURC balance (only if there are EURC employees)
+  // Check EURC balance across Arc + ETH-SEPOLIA + BASE-SEPOLIA
+  const EURC_PULL_CHAINS = ['ETH-SEPOLIA', 'BASE-SEPOLIA'] as const
+  const eurcChainBals: Record<string, number> = {}
+
   if (eurcEmps.length > 0) {
-    const arcBals  = await getWalletBalances(wallet.circleWalletId)
-    const eurcBal  = parseFloat(arcBals.eurc)
-    if (eurcBal < totalEurcAmount) {
+    const arcEurc = parseFloat((await getWalletBalances(wallet.circleWalletId)).eurc)
+    eurcChainBals['ARC-TESTNET'] = arcEurc
+
+    await Promise.all(
+      EURC_PULL_CHAINS.map(async (chain) => {
+        const cw = wallet.chainWallets.find((w) => w.chain === chain)
+        if (cw) {
+          const bal = parseFloat((await getWalletBalances(cw.circleWalletId)).eurc)
+          eurcChainBals[chain] = bal
+        }
+      }),
+    )
+
+    const totalEurcAvail = Object.values(eurcChainBals).reduce((s, v) => s + v, 0)
+    if (totalEurcAvail < totalEurcAmount) {
       return NextResponse.json(
-        { error: `Insufficient EURC. Need $${totalEurcAmount.toFixed(2)} EURC, have $${eurcBal.toFixed(2)} EURC on Arc.` },
+        { error: `Insufficient EURC. Need €${totalEurcAmount.toFixed(2)}, have €${totalEurcAvail.toFixed(2)} across all chains.` },
         { status: 400 },
       )
     }
@@ -126,6 +141,31 @@ export async function POST(req: Request) {
     }
 
     const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
+
+    // Step 1.5: Pull EURC from ETH/Base to Arc if Arc alone isn't enough
+    if (eurcEmps.length > 0) {
+      const arcEurc = eurcChainBals['ARC-TESTNET'] ?? 0
+      if (arcEurc < totalEurcAmount) {
+        let remaining = totalEurcAmount - arcEurc
+        for (const chain of EURC_PULL_CHAINS) {
+          if (remaining <= 0) break
+          const chainBal = eurcChainBals[chain] ?? 0
+          if (chainBal <= 0) continue
+          const pullAmt  = Math.min(chainBal, remaining)
+          const cw       = wallet.chainWallets.find((w) => w.chain === chain)
+          if (!cw) continue
+          await cctpTransfer({
+            sourceChain:      chain as CctpSourceChain,
+            sourceWalletId:   cw.circleWalletId,
+            arcWalletId:      wallet.circleWalletId,
+            recipientAddress: wallet.walletAddress,
+            amount:           pullAmt.toFixed(6),
+            token:            'EURC',
+          })
+          remaining -= pullAmt
+        }
+      }
+    }
 
     // Step 2: Pay each employee — route by token + preferred chain
     const results = await Promise.allSettled(
