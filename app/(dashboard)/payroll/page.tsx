@@ -62,8 +62,9 @@ export default function PayrollPage() {
   const [pendingDay,    setPendingDay]    = useState<number | null>(null)
   const [editingSched,  setEditingSched]  = useState(false)
   const [savingSched,   setSavingSched]   = useState(false)
-  const [chainBalances, setChainBalances] = useState<Record<string, string>>({})
-  const [employees,     setEmployees]     = useState<{ id: string; salary: string }[]>([])
+  const [chainBalances,     setChainBalances]     = useState<Record<string, string>>({})
+  const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
+  const [employees,         setEmployees]         = useState<{ id: string; salary: string; preferredToken?: string }[]>([])
   const [runs,          setRuns]          = useState<PayrollRun[]>([])
   const [loading,       setLoading]       = useState(true)
   const [running,       setRunning]       = useState(false)
@@ -76,7 +77,7 @@ export default function PayrollPage() {
 
   async function loadData(bizId?: string) {
     const fetches: Promise<void>[] = [
-      fetch('/api/wallet/balance').then((r) => r.json()).then((d) => setChainBalances(d.chainBalances ?? {})),
+      fetch('/api/wallet/balance').then((r) => r.json()).then((d) => { setChainBalances(d.chainBalances ?? {}); setEurcChainBalances(d.eurcChainBalances ?? {}) }),
       fetch('/api/payroll/runs').then((r) => r.json()).then((d) => setRuns(d.runs ?? [])),
       fetch('/api/businesses').then((r) => r.json()).then((d) => setBusinesses(d.businesses ?? [])),
     ]
@@ -135,12 +136,20 @@ export default function PayrollPage() {
     } finally { setSavingSched(false) }
   }
 
-  const totalSalary  = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
-  const totalBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  const arcBalance   = parseFloat(chainBalances['ARC-TESTNET'] ?? '0')
-  const canRun       = !!businessId && employees.length > 0 && totalBalance >= totalSalary
-  const needsCctp    = canRun && arcBalance < totalSalary
-  const shortfall    = Math.max(0, totalSalary - totalBalance)
+  const usdcEmps       = employees.filter((e) => (e.preferredToken ?? 'USDC') === 'USDC')
+  const eurcEmps       = employees.filter((e) => e.preferredToken === 'EURC')
+  const totalUsdcSalary = usdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
+  const totalEurcSalary = eurcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
+  const totalSalary    = totalUsdcSalary + totalEurcSalary
+  const totalUsdcBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
+  const totalEurcBalance = Object.values(eurcChainBalances).reduce((s, v) => s + parseFloat(v), 0)
+  const arcBalance     = parseFloat(chainBalances['ARC-TESTNET'] ?? '0')
+  const usdcOk         = totalUsdcSalary === 0 || totalUsdcBalance >= totalUsdcSalary
+  const eurcOk         = totalEurcSalary === 0 || totalEurcBalance >= totalEurcSalary
+  const canRun         = !!businessId && employees.length > 0 && usdcOk && eurcOk
+  const needsCctp      = !!businessId && totalUsdcSalary > 0 && arcBalance < totalUsdcSalary && totalUsdcBalance >= totalUsdcSalary
+  const usdcShortfall  = Math.max(0, totalUsdcSalary - totalUsdcBalance)
+  const eurcShortfall  = Math.max(0, totalEurcSalary - totalEurcBalance)
 
   async function handleRun() {
     setError('')
@@ -208,15 +217,20 @@ export default function PayrollPage() {
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
             <DollarSign className="h-3.5 w-3.5" /> Total payout
           </div>
-          <div className="text-2xl font-bold text-white">${totalSalary.toFixed(2)}</div>
+          {totalUsdcSalary > 0 && <div className="text-xl font-bold text-white">${totalUsdcSalary.toFixed(2)} <span className="text-sm font-semibold text-gray-400">USDC</span></div>}
+          {totalEurcSalary > 0 && <div className="text-xl font-bold text-white">€{totalEurcSalary.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span></div>}
+          {totalSalary === 0 && <div className="text-2xl font-bold text-white">$0.00</div>}
           <div className="mt-1 text-xs text-amber-500/70">+0.01% platform fee</div>
         </div>
         <div className="rounded-2xl border border-gray-700/60 bg-gray-900/60 px-5 py-4">
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
             <Wallet className="h-3.5 w-3.5" /> Your balance
           </div>
-          <div className={`text-2xl font-bold ${totalBalance >= totalSalary || totalSalary === 0 ? 'text-white' : 'text-red-400'}`}>
-            ${totalBalance.toFixed(2)}
+          <div className={`text-xl font-bold ${usdcOk ? 'text-white' : 'text-red-400'}`}>
+            ${totalUsdcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">USDC</span>
+          </div>
+          <div className={`text-xl font-bold ${eurcOk ? 'text-white' : 'text-red-400'}`}>
+            €{totalEurcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span>
           </div>
         </div>
       </div>
@@ -264,11 +278,16 @@ export default function PayrollPage() {
           className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-brand-500 py-4 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-current" />}
-          {running ? 'Running payroll...' : canRun ? `Run Payroll — $${totalSalary.toFixed(2)} USDC to ${employees.length} employee${employees.length !== 1 ? 's' : ''}` : 'Run Payroll'}
+          {running ? 'Running payroll...' : canRun
+            ? `Run Payroll — ${[
+                totalUsdcSalary > 0 ? `$${totalUsdcSalary.toFixed(2)} USDC` : '',
+                totalEurcSalary > 0 ? `€${totalEurcSalary.toFixed(2)} EURC` : '',
+              ].filter(Boolean).join(' + ')} to ${employees.length} employee${employees.length !== 1 ? 's' : ''}`
+            : 'Run Payroll'}
         </button>
-        {!canRun && employees.length > 0 && !loading && shortfall > 0 && (
+        {!canRun && employees.length > 0 && !loading && (usdcShortfall > 0 || eurcShortfall > 0) && (
           <p className="mt-2 text-center text-xs text-red-400">
-            Insufficient balance — need ${shortfall.toFixed(2)} more USDC
+            Insufficient balance —{usdcShortfall > 0 ? ` need $${usdcShortfall.toFixed(2)} more USDC` : ''}{usdcShortfall > 0 && eurcShortfall > 0 ? ' &' : ''}{eurcShortfall > 0 ? ` need €${eurcShortfall.toFixed(2)} more EURC` : ''}
           </p>
         )}
       </div>
@@ -432,7 +451,7 @@ export default function PayrollPage() {
                       <StatusBadge status={run.status} />
                       <div className="text-right">
                         <div className="text-sm font-semibold text-white">${parseFloat(run.totalAmount).toFixed(2)}</div>
-                        <div className="text-xs text-gray-600">USDC</div>
+                        <div className="text-xs text-gray-600">mixed</div>
                       </div>
                     </button>
 

@@ -321,7 +321,9 @@ export default function BusinessEmployeesPage() {
           <div className="mt-0.5 text-sm" style={{ color: t2 }}>Total employees</div>
         </div>
         <div className="rounded-2xl px-6 py-4" style={card}>
-          <div className="text-2xl font-bold" style={{ color: t1 }}>${totalSalary}</div>
+          {totalUsdcSalary > 0 && <div className="text-xl font-bold leading-tight" style={{ color: t1 }}>${totalUsdcSalary.toFixed(2)} <span className="text-sm font-semibold" style={{ color: t2 }}>USDC</span></div>}
+          {totalEurcSalary > 0 && <div className="text-xl font-bold leading-tight" style={{ color: t1 }}>€{totalEurcSalary.toFixed(2)} <span className="text-sm font-semibold" style={{ color: t2 }}>EURC</span></div>}
+          {totalUsdcSalary === 0 && totalEurcSalary === 0 && <div className="text-2xl font-bold" style={{ color: t1 }}>$0.00</div>}
           <div className="mt-0.5 text-sm" style={{ color: t2 }}>Total per payroll run</div>
         </div>
       </div>
@@ -505,7 +507,7 @@ export default function BusinessEmployeesPage() {
 
                   {/* Salary */}
                   <div className="text-right">
-                    <span className="font-semibold" style={{ color: t1 }}>${parseFloat(emp.salary).toFixed(2)}</span>
+                    <span className="font-semibold" style={{ color: t1 }}>{(emp.preferredToken ?? 'USDC') === 'EURC' ? '€' : '$'}{parseFloat(emp.salary).toFixed(2)}</span>
                     <div className="text-xs" style={{ color: t3 }}>{emp.preferredToken ?? 'USDC'}</div>
                   </div>
 
@@ -529,7 +531,7 @@ export default function BusinessEmployeesPage() {
               Total:{' '}
               {totalUsdcSalary > 0 && <span style={{ color: t1 }}>${totalUsdcSalary.toFixed(2)} USDC</span>}
               {totalUsdcSalary > 0 && totalEurcSalary > 0 && <span style={{ color: t2 }}> + </span>}
-              {totalEurcSalary > 0 && <span style={{ color: t1 }}>${totalEurcSalary.toFixed(2)} EURC</span>}
+              {totalEurcSalary > 0 && <span style={{ color: t1 }}>€{totalEurcSalary.toFixed(2)} EURC</span>}
               {' '}per run
             </span>
           </div>
