@@ -36,7 +36,7 @@ interface PayrollEntry {
   status:       string
   txHash:       string | null
   errorMessage: string | null
-  employee:     { name: string; walletAddress: string }
+  employee:     { name: string; walletAddress: string; preferredToken?: string }
 }
 
 interface SwapRecord {
@@ -540,7 +540,7 @@ function HistoryPage() {
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="text-sm font-bold text-white">${parseFloat(run.totalAmount).toFixed(2)}</div>
-                      <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token="USDC" size={12} />USDC</div>
+                      <div className="text-xs text-gray-500">mixed</div>
                     </div>
                     <StatusBadge status={run.status} />
                     <ChevronDown className={cn('h-4 w-4 text-gray-500 transition-transform shrink-0', open && 'rotate-180')} />
@@ -567,7 +567,13 @@ function HistoryPage() {
                               )}
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-semibold text-white">${parseFloat(entry.amount).toFixed(2)}</div>
+                              <div className="text-sm font-semibold text-white">
+                                {(entry.employee.preferredToken ?? 'USDC') === 'EURC' ? '€' : '$'}{parseFloat(entry.amount).toFixed(2)}
+                              </div>
+                              <div className="flex items-center justify-end gap-1 text-xs text-gray-500">
+                                <TokenLogo token={(entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC'} size={10} />
+                                {entry.employee.preferredToken ?? 'USDC'}
+                              </div>
                               {entry.txHash && (
                                 <a
                                   href={`${ARC_EXPLORER}/tx/${entry.txHash}`}

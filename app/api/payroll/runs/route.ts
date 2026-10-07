@@ -14,7 +14,7 @@ export async function GET() {
     take:    20,
     include: {
       entries: {
-        include: { employee: { select: { name: true, walletAddress: true } } },
+        include: { employee: { select: { name: true, walletAddress: true, preferredToken: true } } },
       },
       business: { select: { name: true } },
     },

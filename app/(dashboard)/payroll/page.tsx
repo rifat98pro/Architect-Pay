@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, Clock } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
-import ChainLogo from '@/components/chain-logo'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
@@ -142,14 +141,14 @@ export default function PayrollPage() {
   const totalEurcSalary = eurcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalSalary    = totalUsdcSalary + totalEurcSalary
   const totalUsdcBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  const totalEurcBalance = Object.values(eurcChainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  const arcBalance     = parseFloat(chainBalances['ARC-TESTNET'] ?? '0')
-  const usdcOk         = totalUsdcSalary === 0 || totalUsdcBalance >= totalUsdcSalary
-  const eurcOk         = totalEurcSalary === 0 || totalEurcBalance >= totalEurcSalary
+  const arcEurcBalance   = parseFloat(eurcChainBalances['ARC-TESTNET'] ?? '0')
+  const arcBalance       = parseFloat(chainBalances['ARC-TESTNET'] ?? '0')
+  const usdcOk           = totalUsdcSalary === 0 || totalUsdcBalance >= totalUsdcSalary
+  const eurcOk           = totalEurcSalary === 0 || arcEurcBalance >= totalEurcSalary
   const canRun         = !!businessId && employees.length > 0 && usdcOk && eurcOk
   const needsCctp      = !!businessId && totalUsdcSalary > 0 && arcBalance < totalUsdcSalary && totalUsdcBalance >= totalUsdcSalary
   const usdcShortfall  = Math.max(0, totalUsdcSalary - totalUsdcBalance)
-  const eurcShortfall  = Math.max(0, totalEurcSalary - totalEurcBalance)
+  const eurcShortfall  = Math.max(0, totalEurcSalary - arcEurcBalance)
 
   async function handleRun() {
     setError('')
@@ -164,7 +163,7 @@ export default function PayrollPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setSuccess(`Payroll complete — ${data.completed} paid, ${data.failed} failed.`)
-      await loadData()
+      await loadData(businessId || undefined)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payroll run failed')
     } finally {
@@ -230,25 +229,11 @@ export default function PayrollPage() {
             ${totalUsdcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">USDC</span>
           </div>
           <div className={`text-xl font-bold ${eurcOk ? 'text-white' : 'text-red-400'}`}>
-            €{totalEurcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span>
+            €{arcEurcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span>
           </div>
         </div>
       </div>
 
-      {/* Chain breakdown */}
-      {Object.entries(chainBalances).some(([, v]) => parseFloat(v) > 0) && (
-        <div className="mb-6 grid grid-cols-3 gap-2">
-          {Object.entries(chainBalances).filter(([, v]) => parseFloat(v) > 0).map(([chain, bal]) => (
-            <div key={chain} className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-2.5">
-              <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                <ChainLogo chain={chain} size={13} />
-                {chain.replace('-', ' ').replace('TESTNET', 'Testnet').replace('SEPOLIA', 'Sepolia')}
-              </span>
-              <span className="text-sm font-semibold text-white">${parseFloat(bal).toFixed(2)}</span>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Alerts */}
       {error   && <div className="mb-4 rounded-2xl border border-red-900/40 bg-red-900/20 px-5 py-3.5 text-sm text-red-400">{error}</div>}
@@ -257,7 +242,17 @@ export default function PayrollPage() {
       {needsCctp && (
         <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-900/40 bg-amber-900/10 px-5 py-3.5">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
-          <p className="text-sm text-amber-400">Arc balance (${arcBalance.toFixed(2)}) is lower than payout. Funds will be pulled via CCTP from other chains — adds ~2–3 min.</p>
+          <p className="text-sm text-amber-400">Arc USDC balance (${arcBalance.toFixed(2)}) is lower than payout. Funds will be aggregated via Circle CCTP from your other chains — adds ~2–3 min.</p>
+        </div>
+      )}
+
+      {eurcEmps.length > 0 && (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-blue-900/30 bg-blue-900/10 px-5 py-3.5">
+          <div className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-blue-400/50 flex items-center justify-center text-[10px] font-bold text-blue-400">i</div>
+          <div>
+            <p className="text-sm font-medium text-blue-300">EURC payroll sources from Arc only</p>
+            <p className="mt-0.5 text-xs text-blue-400/70">EURC payroll is settled instantly from your Arc wallet. Ensure your Arc EURC balance covers the total before running. You can deposit EURC to Arc from the Dashboard.</p>
+          </div>
         </div>
       )}
 
