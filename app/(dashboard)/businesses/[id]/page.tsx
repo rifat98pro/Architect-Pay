@@ -57,7 +57,7 @@ export default function BusinessEmployeesPage() {
   const setWalletMode     = (v: WalletMode) => setAddForm({ walletMode: v, usernameInput: '', address: '' })
   const setUsernameInput  = (v: string)     => setAddForm({ usernameInput: v })
   const setPreferredChain = (v: string)     => setAddForm({ preferredChain: v })
-  const setPreferredToken = (v: string)     => setAddForm({ preferredToken: v })
+  const setPreferredToken = (v: string)     => setAddForm({ preferredToken: v, ...(v === 'EURC' ? { preferredChain: 'ARC-TESTNET' } : {}) })
 
   const [lookupState,      setLookupState]      = useState<LookupState>('idle')
   const [resolvedAddress,  setResolvedAddress]  = useState('')
@@ -385,7 +385,7 @@ export default function BusinessEmployeesPage() {
               )}
             </div>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style={{ color: t3 }}>$</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style={{ color: t3 }}>{preferredToken === 'EURC' ? '€' : '$'}</span>
               <input type="number" step="0.01" min="0.01" placeholder="Salary amount" value={salary} onChange={(e) => setSalary(e.target.value)} className="input-base pl-7" required style={input} />
             </div>
             <div>
@@ -402,9 +402,17 @@ export default function BusinessEmployeesPage() {
             </div>
             <div className="relative sm:col-span-2">
               <label className="mb-1 block text-xs font-medium" style={{ color: t3 }}>Preferred payment chain</label>
-              <select value={preferredChain} onChange={(e) => setPreferredChain(e.target.value)} className="input-base w-full" style={input}>
-                {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
+              {preferredToken === 'EURC' ? (
+                <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5" style={{ background: L ? 'rgba(0,0,0,0.04)' : 'rgba(18,32,49,0.4)', borderColor: L ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)' }}>
+                  <ChainLogo chain="ARC-TESTNET" size={14} />
+                  <span className="text-sm font-medium" style={{ color: t1 }}>Arc Testnet</span>
+                  <span className="ml-auto text-xs" style={{ color: t3 }}>EURC payroll is Arc-only</span>
+                </div>
+              ) : (
+                <select value={CHAIN_OPTIONS.find(c => c.value === preferredChain) ? preferredChain : 'ARC-TESTNET'} onChange={(e) => setPreferredChain(e.target.value)} className="input-base w-full" style={input}>
+                  {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value} style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>{c.label}</option>)}
+                </select>
+              )}
             </div>
             <button type="submit"
               disabled={saving || (walletMode === 'username' && lookupState !== 'found')}
@@ -452,19 +460,27 @@ export default function BusinessEmployeesPage() {
                     {/* Wallet + chain + token — matches 1fr wallet column */}
                     <div className="min-w-0 flex flex-col gap-1.5">
                       <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="0x..." className="input-base font-mono text-xs w-full" style={input} />
-                      <div className="flex gap-1.5">
-                        <select value={editState.preferredChain} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="input-base text-xs flex-1" style={input}>
-                          {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                        </select>
-                        <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value })} className="input-base text-xs w-20" style={input}>
-                          <option value="USDC">USDC</option>
-                          <option value="EURC">EURC</option>
+                      <div className="flex gap-1.5 items-center">
+                        {editState.preferredToken === 'EURC' ? (
+                          <div className="flex items-center gap-1.5 rounded-lg border px-2 py-1.5 flex-1" style={{ background: L ? 'rgba(0,0,0,0.04)' : 'rgba(18,32,49,0.4)', borderColor: L ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)' }}>
+                            <ChainLogo chain="ARC-TESTNET" size={12} />
+                            <span className="text-xs" style={{ color: t2 }}>Arc Testnet</span>
+                            <span className="text-[10px] ml-auto" style={{ color: t3 }}>EURC only</span>
+                          </div>
+                        ) : (
+                          <select value={CHAIN_OPTIONS.find(c => c.value === editState.preferredChain) ? editState.preferredChain : 'ARC-TESTNET'} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="input-base text-xs flex-1" style={input}>
+                            {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value} style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>{c.label}</option>)}
+                          </select>
+                        )}
+                        <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value, ...(e.target.value === 'EURC' ? { preferredChain: 'ARC-TESTNET' } : {}) })} className="input-base text-xs w-20" style={input}>
+                          <option value="USDC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>USDC</option>
+                          <option value="EURC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>EURC</option>
                         </select>
                       </div>
                     </div>
                     {/* Salary — matches 100px salary column */}
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: t3 }}>$</span>
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: t3 }}>{editState.preferredToken === 'EURC' ? '€' : '$'}</span>
                       <input type="number" step="0.01" min="0.01" value={editState.salary} onChange={(e) => setEditState({ ...editState, salary: e.target.value })} className="input-base pl-5 text-xs w-full text-right" style={input} />
                     </div>
                     {/* Save / Cancel icons — matches 64px actions column */}

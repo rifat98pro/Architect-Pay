@@ -12,12 +12,13 @@ const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
 interface Employee { id: string; name: string; walletAddress: string; preferredToken?: string }
 interface PayrollEntry {
-  id:           string
-  amount:       string
-  status:       string
-  txHash:       string | null
-  errorMessage: string | null
-  employee:     Employee
+  id:               string
+  amount:           string
+  status:           string
+  txHash:           string | null
+  errorMessage:     string | null
+  cctpBurnCircleId: string | null
+  employee:         Employee
 }
 interface PayrollRun {
   id:          string
@@ -558,7 +559,9 @@ export default function PayrollPage() {
                             <div className="w-6 flex items-center justify-center">
                               {entry.status === 'COMPLETED'
                                 ? <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
-                                : <XCircle className="h-3.5 w-3.5 text-red-400" />
+                                : entry.status === 'PENDING'
+                                  ? <Loader2 className="h-3.5 w-3.5 text-blue-400 animate-spin" />
+                                  : <XCircle className="h-3.5 w-3.5 text-red-400" />
                               }
                             </div>
                             <div className="min-w-0">
@@ -569,7 +572,9 @@ export default function PayrollPage() {
                             <div>
                               {entry.status === 'COMPLETED'
                                 ? <span className="inline-flex items-center gap-1 rounded-full bg-green-400/10 px-2.5 py-1 text-xs font-medium text-green-400">Paid</span>
-                                : <span className="inline-flex items-center gap-1 rounded-full bg-red-400/10 px-2.5 py-1 text-xs font-medium text-red-400">Failed</span>
+                                : entry.status === 'PENDING'
+                                  ? <span className="inline-flex items-center gap-1 rounded-full bg-blue-400/10 px-2.5 py-1 text-xs font-medium text-blue-400">{entry.cctpBurnCircleId ? 'Settling' : 'Pending'}</span>
+                                  : <span className="inline-flex items-center gap-1 rounded-full bg-red-400/10 px-2.5 py-1 text-xs font-medium text-red-400">Failed</span>
                               }
                             </div>
                             <div className="text-right">
