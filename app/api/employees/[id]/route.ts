@@ -11,6 +11,7 @@ const editSchema = z.object({
   salary:        z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0).optional(),
   role:          z.string().max(100).optional(),
   preferredChain: z.string().max(50).optional(),
+  preferredToken: z.enum(['USDC', 'EURC']).optional(),
 })
 
 export async function PATCH(

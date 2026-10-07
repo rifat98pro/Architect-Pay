@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
-import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId } from '@/lib/circle'
+import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId, getWalletBalances } from '@/lib/circle'
 import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
@@ -37,9 +37,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No active employees' }, { status: 400 })
   }
 
-  const totalAmount   = employees.reduce((s, e) => s + parseFloat(e.salary), 0)
-  const platformFee   = calcFee(totalAmount)
-  const totalWithFee  = totalAmount + platformFee
+  const usdcEmps      = employees.filter((e) => (e.preferredToken ?? 'USDC') === 'USDC')
+  const eurcEmps      = employees.filter((e) => e.preferredToken === 'EURC')
+
+  const totalUsdcAmount = usdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
+  const totalEurcAmount = eurcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
+  const totalAmount   = totalUsdcAmount + totalEurcAmount
+  const platformFee   = calcFee(totalUsdcAmount)
+  const totalWithFee  = totalUsdcAmount + platformFee
 
   // Build chain wallet ID map
   const chainWalletIds: Partial<Record<CctpSourceChain, string>> = {}
@@ -49,18 +54,35 @@ export async function POST(req: Request) {
     }
   }
 
-  // Get all chain balances and compute funding plan
+  // Get all chain USDC balances and compute funding plan
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
-  const plan        = computeAggregatePlan(numericBals, totalWithFee)
 
-  if (!plan.feasible) {
-    const totalAvail = Object.values(numericBals).reduce((s, v) => s + v, 0)
-    return NextResponse.json(
-      { error: `Insufficient balance. Need $${totalAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee = $${totalWithFee.toFixed(2)}, have $${totalAvail.toFixed(2)} USDC total.` },
-      { status: 400 },
-    )
+  // Check USDC feasibility (only if there are USDC employees)
+  if (usdcEmps.length > 0) {
+    const plan = computeAggregatePlan(numericBals, totalWithFee)
+    if (!plan.feasible) {
+      const totalAvail = Object.values(numericBals).reduce((s, v) => s + v, 0)
+      return NextResponse.json(
+        { error: `Insufficient USDC. Need $${totalUsdcAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee = $${totalWithFee.toFixed(2)}, have $${totalAvail.toFixed(2)} USDC total.` },
+        { status: 400 },
+      )
+    }
   }
+
+  // Check EURC balance (only if there are EURC employees)
+  if (eurcEmps.length > 0) {
+    const arcBals  = await getWalletBalances(wallet.circleWalletId)
+    const eurcBal  = parseFloat(arcBals.eurc)
+    if (eurcBal < totalEurcAmount) {
+      return NextResponse.json(
+        { error: `Insufficient EURC. Need $${totalEurcAmount.toFixed(2)} EURC, have $${eurcBal.toFixed(2)} EURC on Arc.` },
+        { status: 400 },
+      )
+    }
+  }
+
+  const plan = usdcEmps.length > 0 ? computeAggregatePlan(numericBals, totalWithFee) : { feasible: true, plan: [] }
 
   // Create payroll run record
   const run = await db.payrollRun.create({
@@ -103,13 +125,39 @@ export async function POST(req: Request) {
       )
     }
 
-    // Step 2: Pay each employee — CCTP to their preferred chain if not Arc
+    const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
+
+    // Step 2: Pay each employee — route by token + preferred chain
     const results = await Promise.allSettled(
       run.entries.map(async (entry) => {
-        const emp       = employees.find((e) => e.id === entry.employeeId)!
-        const empChain  = (emp.preferredChain ?? 'ARC-TESTNET') as CctpSourceChain
-        let fromWalletId = wallet.circleWalletId
+        const emp        = employees.find((e) => e.id === entry.employeeId)!
+        const empToken   = (emp.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
+        const empChain   = (emp.preferredChain ?? 'ARC-TESTNET') as CctpSourceChain
 
+        if (empToken === 'EURC') {
+          // EURC supported only on Arc / ETH-SEPOLIA / BASE-SEPOLIA
+          const destChain = EURC_CHAINS.includes(empChain) ? empChain : 'ARC-TESTNET'
+          if (destChain !== 'ARC-TESTNET') {
+            const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain as CctpSourceChain)
+            await cctpTransfer({
+              sourceChain:      'ARC-TESTNET',
+              sourceWalletId:   wallet.circleWalletId,
+              destChain:        destChain as CctpSourceChain,
+              destWalletId,
+              arcWalletId:      wallet.circleWalletId,
+              recipientAddress: wallet.walletAddress,
+              amount:           entry.amount,
+              token:            'EURC',
+            })
+            const result = await sendUsdcPayment({ fromWalletId: destWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
+            return { entryId: entry.id, txHash: result.txHash }
+          }
+          const result = await sendUsdcPayment({ fromWalletId: wallet.circleWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
+          return { entryId: entry.id, txHash: result.txHash }
+        }
+
+        // USDC path — CCTP to preferred chain if not Arc
+        let fromWalletId = wallet.circleWalletId
         if (empChain !== 'ARC-TESTNET') {
           const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, empChain)
           await cctpTransfer({
@@ -123,12 +171,7 @@ export async function POST(req: Request) {
           })
           fromWalletId = destWalletId
         }
-
-        const result = await sendUsdcPayment({
-          fromWalletId,
-          toAddress: emp.walletAddress,
-          amount:    entry.amount,
-        })
+        const result = await sendUsdcPayment({ fromWalletId, toAddress: emp.walletAddress, amount: entry.amount })
         return { entryId: entry.id, txHash: result.txHash }
       }),
     )

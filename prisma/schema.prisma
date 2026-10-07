@@ -165,6 +165,7 @@ model Employee {
   salary         String
   role           String?
   preferredChain String         @default("ARC-TESTNET")
+  preferredToken String         @default("USDC")
   active         Boolean        @default(true)
   createdAt      DateTime       @default(now())
   payrollEntries PayrollEntry[]

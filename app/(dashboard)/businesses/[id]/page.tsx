@@ -25,8 +25,9 @@ interface Employee {
   salary:         string
   role:           string | null
   preferredChain: string
+  preferredToken: string
 }
-interface EditState { name: string; walletAddress: string; salary: string; role: string; preferredChain: string }
+interface EditState { name: string; walletAddress: string; salary: string; role: string; preferredChain: string; preferredToken: string }
 interface Business  { id: string; name: string; logoUrl?: string | null }
 
 export default function BusinessEmployeesPage() {
@@ -44,11 +45,11 @@ export default function BusinessEmployeesPage() {
   type LookupState = 'idle' | 'loading' | 'found' | 'notfound'
 
   const [addForm, setAddForm, clearAddForm] = useFeatureState(`biz-${bizId}-add-emp`, {
-    showForm: false, name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '', preferredChain: 'ARC-TESTNET',
+    showForm: false, name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '', preferredChain: 'ARC-TESTNET', preferredToken: 'USDC',
   })
   const showForm    = addForm.showForm
   const setShowForm = (v: boolean) => setAddForm({ showForm: v })
-  const { name, address, salary, role, walletMode, usernameInput, preferredChain } = addForm
+  const { name, address, salary, role, walletMode, usernameInput, preferredChain, preferredToken } = addForm
   const setName           = (v: string)     => setAddForm({ name: v })
   const setAddress        = (v: string)     => setAddForm({ address: v })
   const setSalary         = (v: string)     => setAddForm({ salary: v })
@@ -56,6 +57,7 @@ export default function BusinessEmployeesPage() {
   const setWalletMode     = (v: WalletMode) => setAddForm({ walletMode: v, usernameInput: '', address: '' })
   const setUsernameInput  = (v: string)     => setAddForm({ usernameInput: v })
   const setPreferredChain = (v: string)     => setAddForm({ preferredChain: v })
+  const setPreferredToken = (v: string)     => setAddForm({ preferredToken: v })
 
   const [lookupState,      setLookupState]      = useState<LookupState>('idle')
   const [resolvedAddress,  setResolvedAddress]  = useState('')
@@ -120,7 +122,7 @@ export default function BusinessEmployeesPage() {
       const res = await fetch('/api/employees', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, walletAddress: finalAddress, salary, role: role || undefined, businessId: bizId, preferredChain }),
+        body:    JSON.stringify({ name, walletAddress: finalAddress, salary, role: role || undefined, businessId: bizId, preferredChain, preferredToken }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(JSON.stringify(data.error))
@@ -144,7 +146,7 @@ export default function BusinessEmployeesPage() {
   function startEdit(emp: Employee) {
     setEditingId(emp.id)
     setEditError('')
-    setEditState({ name: emp.name, walletAddress: emp.walletAddress, salary: emp.salary, role: emp.role ?? '', preferredChain: emp.preferredChain ?? 'ARC-TESTNET' })
+    setEditState({ name: emp.name, walletAddress: emp.walletAddress, salary: emp.salary, role: emp.role ?? '', preferredChain: emp.preferredChain ?? 'ARC-TESTNET', preferredToken: emp.preferredToken ?? 'USDC' })
   }
 
   function cancelEdit() { setEditingId(null); setEditState(null); setEditError('') }
@@ -203,7 +205,9 @@ export default function BusinessEmployeesPage() {
     } finally { setLogoUploading(false) }
   }
 
-  const totalSalary = employees.reduce((s, e) => s + parseFloat(e.salary), 0).toFixed(2)
+  const totalUsdcSalary = employees.filter(e => (e.preferredToken ?? 'USDC') === 'USDC').reduce((s, e) => s + parseFloat(e.salary), 0)
+  const totalEurcSalary = employees.filter(e => e.preferredToken === 'EURC').reduce((s, e) => s + parseFloat(e.salary), 0)
+  const totalSalary = (totalUsdcSalary + totalEurcSalary).toFixed(2)
   const { theme } = useTheme()
   const L = theme === 'light'
   const card  = { background: L ? '#ffffff' : 'rgba(18,32,49,0.6)', border: `1px solid ${L ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)'}` }
@@ -380,7 +384,19 @@ export default function BusinessEmployeesPage() {
             </div>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style={{ color: t3 }}>$</span>
-              <input type="number" step="0.01" min="0.01" placeholder="Salary (USDC)" value={salary} onChange={(e) => setSalary(e.target.value)} className="input-base pl-7" required style={input} />
+              <input type="number" step="0.01" min="0.01" placeholder="Salary amount" value={salary} onChange={(e) => setSalary(e.target.value)} className="input-base pl-7" required style={input} />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium" style={{ color: t3 }}>Payment token</label>
+              <div className="flex gap-2">
+                {(['USDC', 'EURC'] as const).map((t) => (
+                  <button key={t} type="button" onClick={() => setPreferredToken(t)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 text-sm font-semibold transition ${preferredToken === t ? 'border-brand-500/50 bg-brand-500/10 text-brand-400' : 'border-gray-700 bg-gray-800/40 text-gray-500 hover:text-gray-300'}`}
+                    style={preferredToken !== t ? { borderColor: L ? 'rgba(0,0,0,0.1)' : undefined } : {}}>
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="relative sm:col-span-2">
               <label className="mb-1 block text-xs font-medium" style={{ color: t3 }}>Preferred payment chain</label>
@@ -431,12 +447,18 @@ export default function BusinessEmployeesPage() {
                       <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} placeholder="Full name" className="input-base text-sm" maxLength={100} style={input} />
                       <input type="text" value={editState.role} onChange={(e) => setEditState({ ...editState, role: e.target.value })} placeholder="Role" className="input-base text-xs" maxLength={100} style={input} />
                     </div>
-                    {/* Wallet + chain — matches 1fr wallet column */}
+                    {/* Wallet + chain + token — matches 1fr wallet column */}
                     <div className="min-w-0 flex flex-col gap-1.5">
                       <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="0x..." className="input-base font-mono text-xs w-full" style={input} />
-                      <select value={editState.preferredChain} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="input-base text-xs w-full" style={input}>
-                        {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                      </select>
+                      <div className="flex gap-1.5">
+                        <select value={editState.preferredChain} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="input-base text-xs flex-1" style={input}>
+                          {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                        </select>
+                        <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value })} className="input-base text-xs w-20" style={input}>
+                          <option value="USDC">USDC</option>
+                          <option value="EURC">EURC</option>
+                        </select>
+                      </div>
                     </div>
                     {/* Salary — matches 100px salary column */}
                     <div className="relative">
@@ -484,7 +506,7 @@ export default function BusinessEmployeesPage() {
                   {/* Salary */}
                   <div className="text-right">
                     <span className="font-semibold" style={{ color: t1 }}>${parseFloat(emp.salary).toFixed(2)}</span>
-                    <div className="text-xs" style={{ color: t3 }}>USDC</div>
+                    <div className="text-xs" style={{ color: t3 }}>{emp.preferredToken ?? 'USDC'}</div>
                   </div>
 
                   {/* Actions */}
@@ -503,7 +525,13 @@ export default function BusinessEmployeesPage() {
 
           <div className="px-6 py-3 flex items-center justify-between" style={{ borderTop: `1px solid ${divider}`, background: L ? '#f5f8fb' : 'rgba(18,32,49,0.6)' }}>
             <span className="text-xs" style={{ color: t3 }}>{employees.length} employee{employees.length !== 1 ? 's' : ''}</span>
-            <span className="text-xs font-medium" style={{ color: t2 }}>Total: <span style={{ color: t1 }}>${totalSalary} USDC</span> per run</span>
+            <span className="text-xs font-medium" style={{ color: t2 }}>
+              Total:{' '}
+              {totalUsdcSalary > 0 && <span style={{ color: t1 }}>${totalUsdcSalary.toFixed(2)} USDC</span>}
+              {totalUsdcSalary > 0 && totalEurcSalary > 0 && <span style={{ color: t2 }}> + </span>}
+              {totalEurcSalary > 0 && <span style={{ color: t1 }}>${totalEurcSalary.toFixed(2)} EURC</span>}
+              {' '}per run
+            </span>
           </div>
         </div>
       )}

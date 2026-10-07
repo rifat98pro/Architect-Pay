@@ -96,16 +96,16 @@ export default function DepositModal({
         {/* Step 1 — Token */}
         <div className="mb-3">
           <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">1. Select Token</div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
             {(['USDC', 'EURC'] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setToken(t)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 text-sm font-semibold transition ${
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all ${
                   token === t
-                    ? 'border-brand-500/50 bg-brand-500/10 text-brand-400'
-                    : 'border-gray-700 bg-gray-800/40 text-gray-500 hover:text-gray-300'
+                    ? 'bg-brand-500/15 text-brand-400 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
                 <TokenLogo token={t} size={16} />{t}

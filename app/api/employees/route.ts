@@ -12,6 +12,7 @@ const schema = z.object({
   role:          z.string().max(100).optional(),
   businessId:    z.string().optional(),
   preferredChain: z.string().max(50).optional(),
+  preferredToken: z.enum(['USDC', 'EURC']).optional(),
 })
 
 export async function GET(req: NextRequest) {
