@@ -30,6 +30,14 @@ export async function POST(req: Request) {
   })
   if (!wallet) return NextResponse.json({ error: 'Wallet not found' }, { status: 404 })
 
+  // Block duplicate concurrent runs
+  const activeRun = await db.payrollRun.findFirst({
+    where: { userId: user.id, status: 'PROCESSING', ...(businessId ? { businessId } : {}) },
+  })
+  if (activeRun) {
+    return NextResponse.json({ error: 'A payroll run is already in progress. Please wait for it to complete.' }, { status: 409 })
+  }
+
   const employees = await db.employee.findMany({
     where: { userId: user.id, active: true, ...(businessId ? { businessId } : {}) },
   })
@@ -152,9 +160,11 @@ export async function POST(req: Request) {
               token:            'EURC',
             })
             const result = await sendUsdcPayment({ fromWalletId: destWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
+            await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
             return { entryId: entry.id, txHash: result.txHash }
           }
           const result = await sendUsdcPayment({ fromWalletId: wallet.circleWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
+          await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
           return { entryId: entry.id, txHash: result.txHash }
         }
 
@@ -174,6 +184,7 @@ export async function POST(req: Request) {
           fromWalletId = destWalletId
         }
         const result = await sendUsdcPayment({ fromWalletId, toAddress: emp.walletAddress, amount: entry.amount })
+        await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
         return { entryId: entry.id, txHash: result.txHash }
       }),
     )

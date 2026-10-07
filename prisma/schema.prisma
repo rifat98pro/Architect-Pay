@@ -192,6 +192,7 @@ model PayrollEntry {
   amount       String
   status       String      @default("PENDING")
   txHash       String?
+  circleTxId   String?
   errorMessage String?
 }
 

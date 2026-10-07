@@ -20,17 +20,46 @@ export async function GET() {
     },
   })
 
-  // Auto-correct runs stuck at PROCESSING where all entries have reached a terminal state
+  const TEN_MIN_MS = 10 * 60 * 1000
+
+  // Auto-correct/auto-fail runs stuck at PROCESSING
   const fixedRuns = await Promise.all(
     runs.map(async (run) => {
       if (run.status !== 'PROCESSING' || run.entries.length === 0) return run
+
+      // All entries terminal → fix run status
       const terminal = run.entries.every((e) => e.status === 'COMPLETED' || e.status === 'FAILED')
-      if (!terminal) return run
-      const completed = run.entries.filter((e) => e.status === 'COMPLETED').length
-      const failed    = run.entries.filter((e) => e.status === 'FAILED').length
-      const newStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
-      await db.payrollRun.update({ where: { id: run.id }, data: { status: newStatus } })
-      return { ...run, status: newStatus }
+      if (terminal) {
+        const completed = run.entries.filter((e) => e.status === 'COMPLETED').length
+        const failed    = run.entries.filter((e) => e.status === 'FAILED').length
+        const newStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
+        await db.payrollRun.update({ where: { id: run.id }, data: { status: newStatus } })
+        return { ...run, status: newStatus }
+      }
+
+      // Auto-fail PENDING entries that have been stuck for >10 min
+      const ageMs = Date.now() - new Date(run.createdAt).getTime()
+      if (ageMs > TEN_MIN_MS) {
+        const pendingIds = run.entries.filter((e) => e.status === 'PENDING').map((e) => e.id)
+        if (pendingIds.length > 0) {
+          await db.payrollEntry.updateMany({
+            where: { id: { in: pendingIds } },
+            data:  { status: 'FAILED', errorMessage: 'Timed out — use Retry to re-attempt.' },
+          })
+          const updatedEntries = run.entries.map((e) =>
+            e.status === 'PENDING'
+              ? { ...e, status: 'FAILED', errorMessage: 'Timed out — use Retry to re-attempt.' }
+              : e
+          )
+          const completed = updatedEntries.filter((e) => e.status === 'COMPLETED').length
+          const failed    = updatedEntries.filter((e) => e.status === 'FAILED').length
+          const newStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
+          await db.payrollRun.update({ where: { id: run.id }, data: { status: newStatus } })
+          return { ...run, status: newStatus, entries: updatedEntries }
+        }
+      }
+
+      return run
     }),
   )
 

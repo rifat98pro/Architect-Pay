@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, Clock } from 'lucide-react'
+import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, Clock, ShieldCheck } from 'lucide-react'
+import TokenLogo from '@/components/token-logo'
 import { truncateAddress } from '@/lib/utils'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
@@ -67,6 +68,7 @@ export default function PayrollPage() {
   const [runs,          setRuns]          = useState<PayrollRun[]>([])
   const [loading,       setLoading]       = useState(true)
   const [running,       setRunning]       = useState(false)
+  const [confirming,    setConfirming]    = useState(false)
   const [error,         setError]         = useState('')
   const [success,       setSuccess]       = useState('')
 
@@ -151,6 +153,7 @@ export default function PayrollPage() {
   const eurcShortfall  = Math.max(0, totalEurcSalary - arcEurcBalance)
 
   async function handleRun() {
+    setConfirming(false)
     setError('')
     setSuccess('')
     setRunning(true)
@@ -268,7 +271,7 @@ export default function PayrollPage() {
       {/* Run payroll */}
       <div className="mb-8">
         <button
-          onClick={handleRun}
+          onClick={() => setConfirming(true)}
           disabled={running || !canRun || loading}
           className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-brand-500 py-4 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed"
         >
@@ -400,6 +403,90 @@ export default function PayrollPage() {
           </div>
         )
       })()}
+
+      {/* ── Confirmation modal ── */}
+      {confirming && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6"
+            style={{
+              background: 'linear-gradient(160deg, #0c1a2e 0%, #081422 100%)',
+              border:     '1px solid rgba(42,171,171,0.2)',
+              boxShadow:  '0 24px 64px rgba(0,0,0,0.6)',
+            }}
+          >
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15">
+                <ShieldCheck className="h-5 w-5 text-brand-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Confirm Payroll Run</h3>
+                <p className="text-xs text-gray-500">Double-check before sending</p>
+              </div>
+            </div>
+
+            <div className="mb-5 space-y-3 rounded-xl border border-gray-700/50 bg-gray-800/40 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Employees</span>
+                <span className="text-sm font-semibold text-white">{employees.length}</span>
+              </div>
+
+              {totalUsdcSalary > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">USDC payout</span>
+                  <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                    <TokenLogo token="USDC" size={14} />
+                    ${totalUsdcSalary.toFixed(2)} USDC
+                  </span>
+                </div>
+              )}
+
+              {totalEurcSalary > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">EURC payout</span>
+                  <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                    <TokenLogo token="EURC" size={14} />
+                    €{totalEurcSalary.toFixed(2)} EURC
+                  </span>
+                </div>
+              )}
+
+              {totalUsdcSalary > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Platform fee (0.01%)</span>
+                  <span className="text-xs text-amber-400">~${(totalUsdcSalary * 0.0001).toFixed(4)} USDC</span>
+                </div>
+              )}
+
+              <div className="my-1 border-t border-gray-700" />
+
+              <div className="flex items-start gap-1.5 text-xs text-amber-400 font-medium">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                This will send real funds to {employees.length} employee{employees.length !== 1 ? 's' : ''}. This action cannot be undone.
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirming(false)}
+                className="flex-1 rounded-xl border border-gray-700 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 transition"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={handleRun}
+                className="flex-1 rounded-xl bg-brand-500 py-2.5 text-sm font-semibold text-navy-950 hover:bg-brand-400 transition flex items-center justify-center gap-2"
+              >
+                <Play className="h-3.5 w-3.5 fill-current" />
+                Confirm & Run
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* History */}
       <div>

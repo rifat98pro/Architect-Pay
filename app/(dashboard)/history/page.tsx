@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
 import {
   CheckCircle2, XCircle, Clock, RefreshCw,
-  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight, ArrowUpCircle, ArrowDownCircle,
+  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight, ArrowUpCircle, ArrowDownCircle, RotateCcw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TokenLogo from '@/components/token-logo'
@@ -158,8 +158,19 @@ function HistoryPage() {
   const [received,  setReceived]  = useState<Payment[]>([])
   const [runs,      setRuns]      = useState<PayrollRun[]>([])
   const [swaps,     setSwaps]     = useState<SwapRecord[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const mintPollRef             = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [loading,   setLoading]   = useState(true)
+  const [retrying,  setRetrying]  = useState<string | null>(null)
+  const mintPollRef               = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const handleRetry = async (runId: string) => {
+    setRetrying(runId)
+    try {
+      await fetch('/api/payroll/retry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ runId }) })
+      const data = await fetch('/api/payroll/runs').then((r) => r.json())
+      setRuns(data.runs ?? [])
+    } catch { /* silent — user can retry again */ }
+    finally { setRetrying(null) }
+  }
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -539,10 +550,45 @@ function HistoryPage() {
                       <TxTimer createdAt={run.createdAt} status={run.status} />
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-sm font-bold text-white">${parseFloat(run.totalAmount).toFixed(2)}</div>
-                      <div className="text-xs text-gray-500">mixed</div>
+                      {(() => {
+                        const usdcTotal = run.entries
+                          .filter((e) => (e.employee.preferredToken ?? 'USDC') === 'USDC')
+                          .reduce((s, e) => s + parseFloat(e.amount), 0)
+                        const eurcTotal = run.entries
+                          .filter((e) => e.employee.preferredToken === 'EURC')
+                          .reduce((s, e) => s + parseFloat(e.amount), 0)
+                        return (
+                          <>
+                            {usdcTotal > 0 && (
+                              <div className="flex items-center justify-end gap-1 text-sm font-bold text-white">
+                                <TokenLogo token="USDC" size={12} />
+                                ${usdcTotal.toFixed(2)}
+                              </div>
+                            )}
+                            {eurcTotal > 0 && (
+                              <div className="flex items-center justify-end gap-1 text-sm font-bold text-white">
+                                <TokenLogo token="EURC" size={12} />
+                                €{eurcTotal.toFixed(2)}
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                     <StatusBadge status={run.status} />
+                    {(run.status === 'FAILED' || run.status === 'PARTIAL') && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRetry(run.id) }}
+                        disabled={retrying === run.id}
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-brand-500/40 bg-brand-500/10 px-2.5 py-1 text-xs font-semibold text-brand-400 hover:bg-brand-500/20 disabled:opacity-50 transition"
+                      >
+                        {retrying === run.id
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : <RotateCcw className="h-3 w-3" />
+                        }
+                        Retry
+                      </button>
+                    )}
                     <ChevronDown className={cn('h-4 w-4 text-gray-500 transition-transform shrink-0', open && 'rotate-180')} />
                   </button>
 
