@@ -183,18 +183,19 @@ export default function EmployeesPage() {
             title="Valid EVM address"
             required
           />
-          <div className="relative">
+          <div className="flex items-center rounded-lg border border-gray-700 bg-gray-900 overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
+            <span className="pl-4 pr-1 text-sm text-gray-500 shrink-0 select-none">$</span>
             <input
               type="number"
               step="0.01"
               min="0.01"
-              placeholder="Salary (USDC)"
+              placeholder="0.00"
               value={salary}
               onChange={(e) => setSalary(e.target.value)}
-              className="input-base pr-8"
+              className="flex-1 min-w-0 bg-transparent outline-none text-sm text-white placeholder:text-gray-500 py-2.5 pr-4"
               required
             />
-            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
+            <span className="pr-3.5 text-sm text-gray-500 shrink-0 select-none">USDC</span>
           </div>
           <button
             type="submit"
@@ -254,17 +255,18 @@ export default function EmployeesPage() {
                       placeholder="Wallet address (0x...)"
                       className="input-base font-mono text-xs"
                     />
-                    <div className="relative">
+                    <div className="flex items-center rounded-lg border border-gray-700 bg-gray-900 overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
+                      <span className="pl-3.5 pr-1 text-sm text-gray-500 shrink-0 select-none">$</span>
                       <input
                         type="number"
                         step="0.01"
                         min="0.01"
                         value={editState.salary}
                         onChange={(e) => setEditState({ ...editState, salary: e.target.value })}
-                        placeholder="Salary (USDC)"
-                        className="input-base pr-8 text-sm"
+                        placeholder="0.00"
+                        className="flex-1 min-w-0 bg-transparent outline-none text-sm text-white placeholder:text-gray-500 py-2.5 pr-3"
                       />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
+                      <span className="pr-3.5 text-sm text-gray-500 shrink-0 select-none">USDC</span>
                     </div>
                   </div>
                   <div className="flex gap-2">

@@ -384,9 +384,9 @@ export default function BusinessEmployeesPage() {
                 </div>
               )}
             </div>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style={{ color: t3 }}>{preferredToken === 'EURC' ? '€' : '$'}</span>
-              <input type="number" step="0.01" min="0.01" placeholder="Salary amount" value={salary} onChange={(e) => setSalary(e.target.value)} className="input-base pl-7" required style={input} />
+            <div className="flex items-center rounded-lg border overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition" style={{ background: input.background, borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)' }}>
+              <span className="pl-3.5 pr-1 text-sm shrink-0 select-none" style={{ color: t3 }}>{preferredToken === 'EURC' ? '€' : '$'}</span>
+              <input type="number" step="0.01" min="0.01" placeholder="0.00" value={salary} onChange={(e) => setSalary(e.target.value)} className="flex-1 min-w-0 bg-transparent outline-none text-sm py-2.5 pr-4 placeholder:text-gray-500 disabled:opacity-50" required style={{ color: input.color }} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium" style={{ color: t3 }}>Payment token</label>
@@ -479,9 +479,9 @@ export default function BusinessEmployeesPage() {
                       </div>
                     </div>
                     {/* Salary — matches 100px salary column */}
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: t3 }}>{editState.preferredToken === 'EURC' ? '€' : '$'}</span>
-                      <input type="number" step="0.01" min="0.01" value={editState.salary} onChange={(e) => setEditState({ ...editState, salary: e.target.value })} className="input-base pl-5 text-xs w-full text-right" style={input} />
+                    <div className="flex items-center rounded-lg border overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition w-full" style={{ background: input.background, borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)' }}>
+                      <span className="pl-2 pr-0.5 text-xs shrink-0 select-none" style={{ color: t3 }}>{editState.preferredToken === 'EURC' ? '€' : '$'}</span>
+                      <input type="number" step="0.01" min="0.01" value={editState.salary} onChange={(e) => setEditState({ ...editState, salary: e.target.value })} className="flex-1 min-w-0 bg-transparent outline-none text-xs text-right py-1.5 pr-2 placeholder:text-gray-500" style={{ color: input.color }} />
                     </div>
                     {/* Save / Cancel icons — matches 64px actions column */}
                     <div className="flex items-center justify-end gap-1">
