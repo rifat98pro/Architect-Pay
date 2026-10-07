@@ -10,7 +10,7 @@ import { truncateAddress } from '@/lib/utils'
 
 const ARC_EXPLORER = 'https://testnet.arcscan.app'
 
-interface Employee { id: string; name: string; walletAddress: string }
+interface Employee { id: string; name: string; walletAddress: string; preferredToken?: string }
 interface PayrollEntry {
   id:           string
   amount:       string
@@ -532,8 +532,16 @@ export default function PayrollPage() {
                       </div>
                       <StatusBadge status={run.status} />
                       <div className="text-right">
-                        <div className="text-sm font-semibold text-white">${parseFloat(run.totalAmount).toFixed(2)}</div>
-                        <div className="text-xs text-gray-600">mixed</div>
+                        {(() => {
+                          const usdcTotal = run.entries.filter((e) => (e.employee.preferredToken ?? 'USDC') === 'USDC').reduce((s, e) => s + parseFloat(e.amount), 0)
+                          const eurcTotal = run.entries.filter((e) => e.employee.preferredToken === 'EURC').reduce((s, e) => s + parseFloat(e.amount), 0)
+                          return (
+                            <>
+                              {usdcTotal > 0 && <div className="text-sm font-semibold text-white">${usdcTotal.toFixed(2)} <span className="text-xs text-gray-500">USDC</span></div>}
+                              {eurcTotal > 0 && <div className="text-sm font-semibold text-white">€{eurcTotal.toFixed(2)} <span className="text-xs text-gray-500">EURC</span></div>}
+                            </>
+                          )
+                        })()}
                       </div>
                     </button>
 
@@ -565,7 +573,7 @@ export default function PayrollPage() {
                               }
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-semibold text-white">${parseFloat(entry.amount).toFixed(2)}</div>
+                              <div className="text-sm font-semibold text-white">{(entry.employee.preferredToken ?? 'USDC') === 'EURC' ? '€' : '$'}{parseFloat(entry.amount).toFixed(2)}</div>
                               {entry.txHash && (
                                 <a
                                   href={`${ARC_EXPLORER}/tx/${entry.txHash}`}

@@ -190,10 +190,15 @@ model PayrollEntry {
   employeeId   String
   employee     Employee    @relation(fields: [employeeId], references: [id])
   amount       String
-  status       String      @default("PENDING")
-  txHash       String?
-  circleTxId   String?
-  errorMessage String?
+  status            String      @default("PENDING")
+  txHash            String?
+  circleTxId        String?
+  errorMessage      String?
+  cctpBurnCircleId  String?
+  burnTxHash        String?
+  srcDomain         Int?
+  receiverWalletId  String?
+  destTransmitter   String?
 }
 
 model SwapHistory {

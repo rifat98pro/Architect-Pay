@@ -3,7 +3,7 @@ import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId, getWalletBalances } from '@/lib/circle'
 import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
-import { cctpTransfer } from '@/lib/cctp'
+import { cctpTransfer, cctpBurnFast } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
 import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
@@ -148,8 +148,9 @@ export async function POST(req: Request) {
           // EURC supported only on Arc / ETH-SEPOLIA / BASE-SEPOLIA
           const destChain = EURC_CHAINS.includes(empChain) ? empChain : 'ARC-TESTNET'
           if (destChain !== 'ARC-TESTNET') {
+            // Fire burn async — iris relay settled by client polling
             const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain as CctpSourceChain)
-            await cctpTransfer({
+            const burn = await cctpBurnFast({
               sourceChain:      'ARC-TESTNET',
               sourceWalletId:   wallet.circleWalletId,
               destChain:        destChain as CctpSourceChain,
@@ -159,20 +160,21 @@ export async function POST(req: Request) {
               amount:           entry.amount,
               token:            'EURC',
             })
-            const result = await sendUsdcPayment({ fromWalletId: destWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
-            await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
-            return { entryId: entry.id, txHash: result.txHash }
+            await db.payrollEntry.update({
+              where: { id: entry.id },
+              data: { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter },
+            })
+            return { entryId: entry.id, txHash: null, asyncCctp: true as const }
           }
           const result = await sendUsdcPayment({ fromWalletId: wallet.circleWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
           await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
-          return { entryId: entry.id, txHash: result.txHash }
+          return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
         }
 
-        // USDC path — CCTP to preferred chain if not Arc
-        let fromWalletId = wallet.circleWalletId
+        // USDC path — cross-chain: fire burn async; Arc: send immediately
         if (empChain !== 'ARC-TESTNET') {
           const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, empChain)
-          await cctpTransfer({
+          const burn = await cctpBurnFast({
             sourceChain:      'ARC-TESTNET',
             sourceWalletId:   wallet.circleWalletId,
             destChain:        empChain,
@@ -181,21 +183,28 @@ export async function POST(req: Request) {
             recipientAddress: wallet.walletAddress,
             amount:           entry.amount,
           })
-          fromWalletId = destWalletId
+          await db.payrollEntry.update({
+            where: { id: entry.id },
+            data: { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter },
+          })
+          return { entryId: entry.id, txHash: null, asyncCctp: true as const }
         }
-        const result = await sendUsdcPayment({ fromWalletId, toAddress: emp.walletAddress, amount: entry.amount })
+        const result = await sendUsdcPayment({ fromWalletId: wallet.circleWalletId, toAddress: emp.walletAddress, amount: entry.amount })
         await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
-        return { entryId: entry.id, txHash: result.txHash }
+        return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
       }),
     )
 
-    let completed = 0
-    let failed    = 0
+    let completed  = 0
+    let failed     = 0
+    let asyncPending = 0
 
     for (let i = 0; i < results.length; i++) {
       const result  = results[i]
       const entryId = run.entries[i].id
-      if (result.status === 'fulfilled') {
+      if (result.status === 'fulfilled' && result.value.asyncCctp) {
+        asyncPending++ // CCTP burn submitted — mint+send happens via client polling
+      } else if (result.status === 'fulfilled') {
         await db.payrollEntry.update({ where: { id: entryId }, data: { status: 'COMPLETED', txHash: result.value.txHash } })
         completed++
       } else {
@@ -205,7 +214,10 @@ export async function POST(req: Request) {
       }
     }
 
-    const finalStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
+    // Keep PROCESSING if any entries still settling via CCTP
+    const finalStatus = asyncPending > 0
+      ? 'PROCESSING'
+      : failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
     await db.payrollRun.update({ where: { id: run.id }, data: { status: finalStatus } })
 
     // Collect platform fee (best-effort — don't fail the run if fee transfer fails)

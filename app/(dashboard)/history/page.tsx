@@ -161,6 +161,9 @@ function HistoryPage() {
   const [loading,   setLoading]   = useState(true)
   const [retrying,  setRetrying]  = useState<string | null>(null)
   const mintPollRef               = useRef<ReturnType<typeof setInterval> | null>(null)
+  const settlePollRef             = useRef<ReturnType<typeof setInterval> | null>(null)
+  const runsRef                   = useRef(runs)
+  runsRef.current                 = runs
 
   const handleRetry = async (runId: string) => {
     setRetrying(runId)
@@ -206,6 +209,35 @@ function HistoryPage() {
     tryMint()
     mintPollRef.current = setInterval(tryMint, 10_000)
     return () => { if (mintPollRef.current) { clearInterval(mintPollRef.current); mintPollRef.current = null } }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
+
+  // Poll settle endpoint every 15s for PROCESSING payroll runs (async CCTP settlement)
+  useEffect(() => {
+    if (loading) return
+
+    const settle = async () => {
+      const processing = runsRef.current.filter((r) => r.status === 'PROCESSING')
+      if (!processing.length) {
+        if (settlePollRef.current) { clearInterval(settlePollRef.current); settlePollRef.current = null }
+        return
+      }
+      for (const run of processing) {
+        try {
+          await fetch('/api/payroll/settle', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ runId: run.id }),
+          })
+        } catch { /* retry next tick */ }
+      }
+      const data = await fetch('/api/payroll/runs').then((r) => r.json())
+      setRuns(data.runs ?? [])
+    }
+
+    settle()
+    settlePollRef.current = setInterval(settle, 15_000)
+    return () => { if (settlePollRef.current) { clearInterval(settlePollRef.current); settlePollRef.current = null } }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 

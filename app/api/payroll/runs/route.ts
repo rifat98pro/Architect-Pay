@@ -37,10 +37,10 @@ export async function GET() {
         return { ...run, status: newStatus }
       }
 
-      // Auto-fail PENDING entries that have been stuck for >10 min
+      // Auto-fail PENDING entries stuck >10 min — but skip ones with active CCTP burns (they're legitimately in-flight)
       const ageMs = Date.now() - new Date(run.createdAt).getTime()
       if (ageMs > TEN_MIN_MS) {
-        const pendingIds = run.entries.filter((e) => e.status === 'PENDING').map((e) => e.id)
+        const pendingIds = run.entries.filter((e) => e.status === 'PENDING' && !e.cctpBurnCircleId).map((e) => e.id)
         if (pendingIds.length > 0) {
           await db.payrollEntry.updateMany({
             where: { id: { in: pendingIds } },
