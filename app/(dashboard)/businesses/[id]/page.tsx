@@ -479,7 +479,7 @@ export default function BusinessEmployeesPage() {
                           <div className="flex items-center gap-1.5 rounded-lg border px-2 py-1.5 flex-1" style={{ background: L ? 'rgba(0,0,0,0.04)' : 'rgba(18,32,49,0.4)', borderColor: L ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)' }}>
                             <ChainLogo chain="ARC-TESTNET" size={12} />
                             <span className="text-xs" style={{ color: t2 }}>Arc Testnet</span>
-                            <span className="text-[10px] ml-auto" style={{ color: t3 }}>EURC only</span>
+                            <span className="text-[10px]" style={{ color: t3 }}>· EURC only</span>
                           </div>
                         ) : (
                           <ChainSelect
