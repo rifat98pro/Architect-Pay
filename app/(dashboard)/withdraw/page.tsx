@@ -256,7 +256,7 @@ export default function WithdrawPage() {
           <ChainSelect
             value={destChain}
             onChange={setDestChain}
-            options={token === 'EURC' ? EURC_CHAINS : DEST_CHAINS}
+            options={(token === 'EURC' ? EURC_CHAINS : DEST_CHAINS).map((c) => ({ value: c.id, label: c.label }))}
             disabled={loading}
           />
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-blue-800/40 bg-blue-900/15 px-3 py-2 text-xs text-blue-400">

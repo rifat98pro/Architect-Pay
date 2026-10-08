@@ -13,9 +13,10 @@ interface Props {
   light?: boolean
   className?: string
   size?: 'sm' | 'md'
+  disabled?: boolean
 }
 
-export default function ChainSelect({ value, onChange, options, light = false, className = '', size = 'md' }: Props) {
+export default function ChainSelect({ value, onChange, options, light = false, className = '', size = 'md', disabled = false }: Props) {
   const [open, setOpen]   = useState(false)
   const [pos, setPos]     = useState({ top: 0, left: 0, width: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -60,8 +61,9 @@ export default function ChainSelect({ value, onChange, options, light = false, c
       <button
         ref={btnRef}
         type="button"
-        onClick={() => open ? setOpen(false) : openDropdown()}
-        className={`flex w-full items-center gap-2 rounded-lg border ${px} ${py} ${text} outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500`}
+        onClick={() => disabled ? undefined : open ? setOpen(false) : openDropdown()}
+        disabled={disabled}
+        className={`flex w-full items-center gap-2 rounded-lg border ${px} ${py} ${text} outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed`}
         style={{ background: bg, borderColor: border, color }}
       >
         <ChainLogo chain={selected.value} size={logo} />

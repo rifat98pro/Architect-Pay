@@ -334,7 +334,7 @@ export default function PaymentsPage() {
               value={destChain}
               onChange={setDestChain}
               disabled={loading}
-              options={filteredDestChains.map((c) => ({ id: c.id, label: c.label }))}
+              options={filteredDestChains.map((c) => ({ value: c.id, label: c.label }))}
             />
           </div>
         </div>
