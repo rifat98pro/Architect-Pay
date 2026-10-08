@@ -291,7 +291,7 @@ export default function WithdrawPage() {
             subtitle={
               token === 'USDC'
                 ? `Total available: $${totalUsdcBalance.toFixed(2)} USDC across all chains`
-                : `Total available: ${totalEurcBalance.toFixed(2)} EURC across Arc, Ethereum & Base`
+                : `Total available: €${totalEurcBalance.toFixed(2)} EURC across Arc, Ethereum & Base`
             }
           />
 
@@ -316,7 +316,7 @@ export default function WithdrawPage() {
           {insufficientFunds && (
             <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
-              Insufficient funds — max {token === 'USDC' ? `$${totalUsdcBalance.toFixed(2)}` : `${totalEurcBalance.toFixed(2)}`} {token}
+              Insufficient funds — max {token === 'USDC' ? `$${totalUsdcBalance.toFixed(2)}` : `€${totalEurcBalance.toFixed(2)}`} {token}
             </div>
           )}
 
@@ -326,7 +326,7 @@ export default function WithdrawPage() {
               onClick={() => setAmount(availableBalance.toFixed(2))}
               className="mt-2 text-xs text-brand-400 hover:underline"
             >
-              Use max ({token === 'USDC' ? `$${totalUsdcBalance.toFixed(2)}` : `${totalEurcBalance.toFixed(2)}`} {token})
+              Use max ({token === 'USDC' ? `$${totalUsdcBalance.toFixed(2)}` : `€${totalEurcBalance.toFixed(2)}`} {token})
             </button>
           )}
 
@@ -351,7 +351,7 @@ export default function WithdrawPage() {
                         {entry.label}
                       </div>
                       <span className="font-medium text-blue-200">
-                        {token === 'USDC' ? '$' : ''}{parseFloat(entry.amount).toFixed(2)} {token}
+                        {token === 'EURC' ? '€' : '$'}{parseFloat(entry.amount).toFixed(2)} {token}
                         {entry.isCctp
                           ? <span className="ml-1 text-blue-500">(~${parseFloat(entry.fee).toFixed(2)} fee)</span>
                           : <span className="ml-1 text-green-400">(instant)</span>}
@@ -401,7 +401,7 @@ export default function WithdrawPage() {
             ? 'Processing…'
             : insufficientFunds
               ? 'Insufficient funds'
-              : `Withdraw${amount ? ` ${token === 'USDC' ? `$${amount}` : amount}` : ''} ${token}`}
+              : `Withdraw${amount ? ` ${token === 'USDC' ? `$${amount}` : `€${amount}`}` : ''} ${token}`}
         </button>
       </form>
     </div>

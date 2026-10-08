@@ -342,7 +342,7 @@ function HistoryPage() {
                     <TxTimer createdAt={p.createdAt} updatedAt={p.updatedAt} status={p.status} />
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-white">${formatUSDC(p.amount)}</div>
+                    <div className="text-sm font-semibold text-white">{(p.token ?? 'USDC') === 'EURC' ? '€' : '$'}{formatUSDC(p.amount)}</div>
                     <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
                     {p.txHash && (
                       <a

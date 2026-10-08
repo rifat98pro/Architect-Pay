@@ -241,6 +241,7 @@ export default function BusinessEmployeesPage() {
       <div className="mb-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           {/* Logo with upload on click */}
+          <div className="flex flex-col items-center gap-1.5">
           <button
             type="button"
             onClick={() => logoInputRef.current?.click()}
@@ -268,6 +269,15 @@ export default function BusinessEmployeesPage() {
               </>
             )}
           </button>
+          <button
+            type="button"
+            onClick={() => logoInputRef.current?.click()}
+            className="text-[10px] font-medium transition hover:opacity-80"
+            style={{ color: t3 }}
+          >
+            {logoUploading ? 'Uploading…' : business?.logoUrl ? 'Change logo' : 'Upload logo'}
+          </button>
+          </div>
 
           {/* Name + subtitle */}
           <div>

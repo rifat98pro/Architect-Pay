@@ -175,7 +175,7 @@ export default function DashboardPage() {
             <span className="text-sm font-medium" style={{ color: theme === 'light' ? '#45607a' : '#8faab8' }}>Total EURC</span>
           </div>
           <div className="text-3xl font-bold tracking-tight" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
-            {parseFloat(totalEurc).toFixed(2)}
+            €{parseFloat(totalEurc).toFixed(2)}
             <span className="ml-2 text-base font-normal text-blue-400">EURC</span>
           </div>
           <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Unified EURC balance</div>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                 <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#1e3a8a' : '#93c5fd' }}>{EURC_CHAIN_LABEL[chain] ?? chain}</div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#1e3a8a' : '#ffffff' }}>{parseFloat(bal).toFixed(2)}</div>
+                <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#1e3a8a' : '#ffffff' }}>€{parseFloat(bal).toFixed(2)}</div>
                 <div className="flex items-center justify-end gap-1 text-xs text-blue-500">
                   <TokenLogo token="EURC" size={12} />EURC
                 </div>
