@@ -6,6 +6,8 @@ const LOGOS: Record<string, string> = {
   'BASE-SEPOLIA': '/chains/base.svg',
   'ARB-SEPOLIA':  '/chains/arb.svg',
   'MATIC-AMOY':   '/chains/pol.svg',
+  'AVAX-FUJI':    '/chains/avax.svg',
+  'OP-SEPOLIA':   '/chains/op.svg',
 }
 
 export default function ChainLogo({ chain, size = 20 }: Props) {

@@ -17,6 +17,8 @@ const CHAIN_OPTIONS = [
   { value: 'BASE-SEPOLIA', label: 'Base' },
   { value: 'ARB-SEPOLIA',  label: 'Arbitrum' },
   { value: 'MATIC-AMOY',   label: 'Polygon' },
+  { value: 'AVAX-FUJI',    label: 'Avalanche' },
+  { value: 'OP-SEPOLIA',   label: 'Optimism' },
 ]
 
 interface Employee {
@@ -27,6 +29,7 @@ interface Employee {
   role:           string | null
   preferredChain: string
   preferredToken: string
+  avatarUrl:      string | null
 }
 interface EditState { name: string; walletAddress: string; salary: string; role: string; preferredChain: string; preferredToken: string }
 interface Business  { id: string; name: string; logoUrl?: string | null }
@@ -63,6 +66,10 @@ export default function BusinessEmployeesPage() {
   const [lookupState,      setLookupState]      = useState<LookupState>('idle')
   const [resolvedAddress,  setResolvedAddress]  = useState('')
   const [resolvedName,     setResolvedName]     = useState('')
+
+  const [avatarUploading, setAvatarUploading] = useState<string | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [avatarTargetId, setAvatarTargetId] = useState<string | null>(null)
 
   const [copiedId,      setCopiedId]      = useState<string | null>(null)
   const [editingId,     setEditingId]     = useState<string | null>(null)
@@ -206,6 +213,23 @@ export default function BusinessEmployeesPage() {
     } finally { setLogoUploading(false) }
   }
 
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !avatarTargetId) return
+    e.target.value = ''
+    setAvatarUploading(avatarTargetId)
+    try {
+      const form = new FormData()
+      form.append('avatar', file)
+      const res  = await fetch(`/api/businesses/${bizId}/employees/${avatarTargetId}/avatar`, { method: 'POST', body: form })
+      const data = await res.json()
+      if (res.ok) setEmployees((prev) => prev.map((em) => em.id === avatarTargetId ? { ...em, avatarUrl: data.employee.avatarUrl } : em))
+    } finally {
+      setAvatarUploading(null)
+      setAvatarTargetId(null)
+    }
+  }
+
   const totalUsdcSalary = employees.filter(e => (e.preferredToken ?? 'USDC') === 'USDC').reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalEurcSalary = employees.filter(e => e.preferredToken === 'EURC').reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalSalary = (totalUsdcSalary + totalEurcSalary).toFixed(2)
@@ -235,8 +259,9 @@ export default function BusinessEmployeesPage() {
         <ArrowLeft className="h-4 w-4" /> Businesses
       </button>
 
-      {/* Hidden logo file input */}
-      <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+      {/* Hidden file inputs */}
+      <input ref={logoInputRef}   type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+      <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
 
       {/* Business identity header */}
       <div className="mb-8 flex items-center justify-between gap-4">
@@ -520,9 +545,31 @@ export default function BusinessEmployeesPage() {
                 <div key={emp.id} className="grid grid-cols-[180px_1fr_100px_64px] items-center gap-4 px-6 py-4 transition" style={{ borderTop: `1px solid ${divider}` }} onMouseEnter={e => (e.currentTarget.style.background = rowHover)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   {/* Employee info */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-sm font-bold text-brand-400">
-                      {emp.name[0].toUpperCase()}
-                    </div>
+                    <button
+                      type="button"
+                      className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden transition"
+                      style={{ background: emp.avatarUrl ? 'transparent' : 'rgba(42,171,171,0.15)', border: `1px solid ${L ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}` }}
+                      title="Upload photo"
+                      onClick={() => { setAvatarTargetId(emp.id); avatarInputRef.current?.click() }}
+                    >
+                      {avatarUploading === emp.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-brand-400" />
+                      ) : emp.avatarUrl ? (
+                        <>
+                          <img src={emp.avatarUrl} alt={emp.name} className="h-full w-full object-cover" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-full">
+                            <Camera className="h-3.5 w-3.5 text-white" />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm font-bold text-brand-400">{emp.name[0].toUpperCase()}</span>
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-full">
+                            <Camera className="h-3.5 w-3.5 text-white" />
+                          </div>
+                        </>
+                      )}
+                    </button>
                     <div className="min-w-0">
                       <div className="font-medium truncate" style={{ color: t1 }}>{emp.name}</div>
                       {emp.role && <div className="text-xs truncate" style={{ color: t3 }}>{emp.role}</div>}

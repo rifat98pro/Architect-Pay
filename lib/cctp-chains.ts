@@ -1,4 +1,4 @@
-export const CCTP_SOURCE_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA', 'ARB-SEPOLIA', 'MATIC-AMOY'] as const
+export const CCTP_SOURCE_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA', 'ARB-SEPOLIA', 'MATIC-AMOY', 'AVAX-FUJI', 'OP-SEPOLIA'] as const
 export type CctpSourceChain = (typeof CCTP_SOURCE_CHAINS)[number]
 export type AnyChain = CctpSourceChain
 
@@ -67,6 +67,22 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
     messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
   },
+  'AVAX-FUJI': {
+    label:                'Avalanche Fuji',
+    cctpDomain:           1,
+    rpcUrl:               'https://api.avax-test.network/ext/bc/C/rpc',
+    usdcAddress:          '0x5425890298aed601595a70AB815c96711a31Bc65',
+    tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
+  },
+  'OP-SEPOLIA': {
+    label:                'Optimism Sepolia',
+    cctpDomain:           2,
+    rpcUrl:               'https://sepolia.optimism.io',
+    usdcAddress:          '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
+    tokenMessengerV2:     '0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa',
+    messageTransmitterV2: '0xe737e5cebeeba77efe34d4aa090756590b1ce275',
+  },
 }
 
 // Kept for backward compatibility — same data as SOURCE_CHAIN_META['ARC-TESTNET']
@@ -80,4 +96,6 @@ export const CHAIN_LABEL: Record<CctpSourceChain, string> = {
   'BASE-SEPOLIA': 'Base Sepolia',
   'ARB-SEPOLIA':  'Arbitrum Sepolia',
   'MATIC-AMOY':   'Polygon Amoy',
+  'AVAX-FUJI':    'Avalanche Fuji',
+  'OP-SEPOLIA':   'Optimism Sepolia',
 }

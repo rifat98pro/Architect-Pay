@@ -409,7 +409,7 @@ function HistoryPage() {
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-semibold text-white">{p.token === 'EURC' ? '' : '$'}{formatUSDC(p.amount)}</div>
+                      <div className="text-sm font-semibold text-white">{p.token === 'EURC' ? '€' : '$'}{formatUSDC(p.amount)}</div>
                       <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
                     </div>
                     <StatusBadge status={p.status} />
