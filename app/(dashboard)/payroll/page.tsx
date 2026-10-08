@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, Clock, ShieldCheck } from 'lucide-react'
+import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, ShieldCheck, RefreshCw } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
 import { truncateAddress } from '@/lib/utils'
 
@@ -70,6 +70,7 @@ export default function PayrollPage() {
   const [loading,       setLoading]       = useState(true)
   const [running,       setRunning]       = useState(false)
   const [confirming,    setConfirming]    = useState(false)
+  const [retrying,      setRetrying]      = useState<Record<string, boolean>>({})
   const [error,         setError]         = useState('')
   const [success,       setSuccess]       = useState('')
 
@@ -97,6 +98,59 @@ export default function PayrollPage() {
   useEffect(() => {
     if (user?.id) loadData(businessId || undefined)
   }, [user?.id, businessId])
+
+  // Poll /api/payroll/settle every 15s while there are CCTP entries settling
+  useEffect(() => {
+    const processingRuns = runs.filter((r) =>
+      r.status === 'PROCESSING' &&
+      r.entries.some((e) => e.status === 'PENDING' && e.cctpBurnCircleId)
+    )
+    if (processingRuns.length === 0) return
+
+    const interval = setInterval(async () => {
+      for (const run of processingRuns) {
+        try {
+          await fetch('/api/payroll/settle', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ runId: run.id }),
+          })
+        } catch {}
+      }
+      // Refresh run list to show updated statuses
+      fetch('/api/payroll/runs')
+        .then((r) => r.json())
+        .then((d) => setRuns(d.runs ?? []))
+        .catch(() => {})
+    }, 15_000)
+
+    return () => clearInterval(interval)
+  }, [runs])
+
+  async function handleRetry(runId: string) {
+    setRetrying((prev) => ({ ...prev, [runId]: true }))
+    setError('')
+    setSuccess('')
+    try {
+      const res  = await fetch('/api/payroll/retry', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ runId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setSuccess(
+        data.status === 'PROCESSING'
+          ? `Retry submitted — ${data.asyncPending} payment${data.asyncPending !== 1 ? 's' : ''} settling via CCTP. Page updates automatically.`
+          : `Retry complete — ${data.completed} paid${data.failed > 0 ? `, ${data.failed} failed` : ''}.`
+      )
+      await loadData(businessId || undefined)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Retry failed')
+    } finally {
+      setRetrying((prev) => ({ ...prev, [runId]: false }))
+    }
+  }
 
   // Sync scheduleDay when business changes
   useEffect(() => {
@@ -166,7 +220,11 @@ export default function PayrollPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setSuccess(`Payroll complete — ${data.completed} paid, ${data.failed} failed.`)
+      setSuccess(
+        data.status === 'PROCESSING'
+          ? `Payroll submitted — payments settling via CCTP. This page will update automatically.`
+          : `Payroll complete — ${data.completed} paid${data.failed > 0 ? `, ${data.failed} failed` : ''}.`
+      )
       await loadData(businessId || undefined)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payroll run failed')
@@ -531,7 +589,22 @@ export default function PayrollPage() {
                           {new Date(run.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} · {run.entries.length} payments
                         </div>
                       </div>
-                      <StatusBadge status={run.status} />
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={run.status} />
+                        {(run.status === 'FAILED' || run.status === 'PARTIAL') && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRetry(run.id) }}
+                            disabled={retrying[run.id]}
+                            className="flex items-center gap-1 rounded-lg border border-amber-700/40 bg-amber-900/20 px-2 py-1 text-xs font-medium text-amber-400 hover:bg-amber-900/30 transition disabled:opacity-50"
+                          >
+                            {retrying[run.id]
+                              ? <Loader2 className="h-3 w-3 animate-spin" />
+                              : <RefreshCw className="h-3 w-3" />
+                            }
+                            {retrying[run.id] ? 'Retrying…' : 'Retry'}
+                          </button>
+                        )}
+                      </div>
                       <div className="text-right">
                         {(() => {
                           const usdcTotal = run.entries.filter((e) => (e.employee.preferredToken ?? 'USDC') === 'USDC').reduce((s, e) => s + parseFloat(e.amount), 0)

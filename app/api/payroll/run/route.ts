@@ -221,7 +221,8 @@ export async function POST(req: Request) {
     await db.payrollRun.update({ where: { id: run.id }, data: { status: finalStatus } })
 
     // Collect platform fee (best-effort — don't fail the run if fee transfer fails)
-    if (completed > 0) {
+    // Fire even for async payrolls — burns are already submitted so the cost is real
+    if (completed > 0 || asyncPending > 0) {
       try {
         await sendUsdcPayment({
           fromWalletId: wallet.circleWalletId,

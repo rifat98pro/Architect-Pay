@@ -9,15 +9,15 @@ import { cn } from '@/lib/utils'
 import { useTheme } from '@/context/theme-context'
 
 const navItems = [
-  { href: '/dashboard',  label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/payments',   label: 'Send Payment', icon: Send },
-  { href: '/businesses', label: 'Businesses',   icon: Building2 },
-  { href: '/payroll',    label: 'Payroll',       icon: Banknote },
-  { href: '/history',    label: 'History',       icon: History },
-  { href: '/swap',       label: 'Swap',          icon: ArrowUpDown },
-  { href: '/settings',   label: 'Settings',      icon: Settings },
-  { href: '/feedback',   label: 'Feedback',      icon: MessageSquare },
-  { href: '/support',    label: 'Support',       icon: LifeBuoy },
+  { href: '/dashboard',  label: 'Dashboard',    icon: LayoutDashboard, color: '#2aabab' },
+  { href: '/payments',   label: 'Send Payment', icon: Send,            color: '#3b82f6' },
+  { href: '/businesses', label: 'Businesses',   icon: Building2,       color: '#8b5cf6' },
+  { href: '/payroll',    label: 'Payroll',       icon: Banknote,        color: '#10b981' },
+  { href: '/history',    label: 'History',       icon: History,         color: '#f59e0b' },
+  { href: '/swap',       label: 'Swap',          icon: ArrowUpDown,     color: '#6366f1' },
+  { href: '/settings',   label: 'Settings',      icon: Settings,        color: '#64748b' },
+  { href: '/feedback',   label: 'Feedback',      icon: MessageSquare,   color: '#ec4899' },
+  { href: '/support',    label: 'Support',       icon: LifeBuoy,        color: '#f97316' },
 ]
 
 export default function Nav() {
@@ -58,24 +58,41 @@ export default function Nav() {
 
       {/* Nav links */}
       <nav className="flex-1 space-y-0.5">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon, color }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
+          const L = theme === 'light'
           return (
             <Link
               key={href}
               href={href}
               className={cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                active ? 'text-brand-400' : theme === 'light' ? 'text-gray-500 hover:text-gray-900' : 'text-gray-400 hover:text-white',
+                'group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-all duration-200',
+                active
+                  ? (L ? 'text-gray-900' : 'text-white')
+                  : (L ? 'text-gray-500 hover:text-gray-900' : 'text-gray-400 hover:text-white'),
               )}
               style={active ? {
-                background:  'linear-gradient(90deg, rgba(42,171,171,0.12) 0%, rgba(42,171,171,0.04) 100%)',
-                borderLeft:  '2px solid #2aabab',
-                paddingLeft: '10px',
-                boxShadow:   'inset 0 0 20px rgba(42,171,171,0.05)',
+                background: L
+                  ? `${color}18`
+                  : `linear-gradient(90deg, ${color}18 0%, ${color}08 100%)`,
+                borderLeft: `2px solid ${color}`,
+                paddingLeft: '8px',
               } : {}}
             >
-              <Icon className={cn('h-4 w-4 transition-all duration-200', active ? 'text-brand-400 drop-shadow-[0_0_6px_rgba(42,171,171,0.6)]' : 'group-hover:text-brand-500')} />
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200"
+                style={{
+                  background: active
+                    ? `${color}28`
+                    : L ? `${color}14` : `${color}18`,
+                  boxShadow: active ? `0 0 8px ${color}40` : 'none',
+                }}
+              >
+                <Icon
+                  className="h-3.5 w-3.5 transition-all duration-200"
+                  style={{ color: active ? color : `${color}bb` }}
+                />
+              </span>
               {label}
             </Link>
           )
@@ -87,9 +104,12 @@ export default function Nav() {
           href="https://faucet.circle.com/"
           target="_blank"
           rel="noopener noreferrer"
-          className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${theme === 'light' ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900' : 'text-gray-500 hover:bg-gray-800/50 hover:text-white'}`}
+          className={`group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-all duration-200 ${theme === 'light' ? 'text-gray-500 hover:text-gray-900' : 'text-gray-400 hover:text-white'}`}
         >
-          <Droplets className="h-4 w-4 group-hover:text-brand-500 transition" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200"
+            style={{ background: '#06b6d418', boxShadow: 'none' }}>
+            <Droplets className="h-3.5 w-3.5 transition-colors duration-200" style={{ color: '#06b6d4bb' }} />
+          </span>
           Get Faucet
         </a>
       </nav>
@@ -97,10 +117,15 @@ export default function Nav() {
       {/* Theme toggle */}
       <button
         onClick={toggle}
-        className={`mb-3 flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition ${theme === 'light' ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900' : 'text-gray-400 hover:bg-gray-800/40 hover:text-white'}`}
+        className={`mb-3 flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-sm font-medium transition-all duration-200 ${theme === 'light' ? 'text-gray-500 hover:text-gray-900' : 'text-gray-400 hover:text-white'}`}
       >
-        <span className="flex items-center gap-3">
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <span className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+            style={{ background: theme === 'dark' ? '#fbbf2418' : '#818cf818' }}>
+            {theme === 'dark'
+              ? <Sun  className="h-3.5 w-3.5" style={{ color: '#fbbf24bb' }} />
+              : <Moon className="h-3.5 w-3.5" style={{ color: '#818cf8bb' }} />}
+          </span>
           {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
         </span>
         <span className="flex h-5 w-9 items-center rounded-full px-0.5 transition-all"
@@ -143,9 +168,11 @@ export default function Nav() {
         )}
         <button
           onClick={logout}
-          className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition ${theme === 'light' ? 'text-gray-500 hover:bg-gray-200/60 hover:text-gray-900' : 'text-gray-500 hover:bg-gray-800/60 hover:text-white'}`}
+          className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-sm font-medium transition-all duration-200 ${theme === 'light' ? 'text-gray-500 hover:text-red-600' : 'text-gray-500 hover:text-red-400'}`}
         >
-          <LogOut className="h-4 w-4" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ background: '#ef444418' }}>
+            <LogOut className="h-3.5 w-3.5" style={{ color: '#ef4444bb' }} />
+          </span>
           Sign out
         </button>
       </div>

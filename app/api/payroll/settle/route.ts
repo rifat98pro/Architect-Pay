@@ -3,6 +3,7 @@ import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { checkTransaction, sendUsdcPayment } from '@/lib/circle'
 import { checkAttestationOnce, mintFromAttestation } from '@/lib/cctp'
+import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 
 export const maxDuration = 60
 
@@ -15,7 +16,11 @@ export async function POST(req: Request) {
 
   const run = await db.payrollRun.findUnique({
     where:   { id: runId, userId: user.id },
-    include: {
+    select: {
+      id:          true,
+      userId:      true,
+      status:      true,
+      totalAmount: true,
       entries: {
         where:   { status: 'PENDING', cctpBurnCircleId: { not: null } },
         include: { employee: true },
@@ -78,7 +83,15 @@ export async function POST(req: Request) {
     const completed   = allEntries.filter((e) => e.status === 'COMPLETED').length
     const failed      = allEntries.filter((e) => e.status === 'FAILED').length
     const finalStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
-    await db.payrollRun.update({ where: { id: runId }, data: { status: finalStatus } })
+    // Only update + log if status is actually changing
+    if (run.status !== finalStatus) {
+      await db.payrollRun.update({ where: { id: runId }, data: { status: finalStatus } })
+      // Log on-chain when the run fully completes for the first time
+      if (finalStatus === 'COMPLETED' || finalStatus === 'PARTIAL') {
+        const wallet = await db.wallet.findUnique({ where: { userId: user.id } })
+        if (wallet) logPayrollRunOnChain(wallet.circleWalletId, run.totalAmount, completed)
+      }
+    }
   }
 
   return NextResponse.json({ settled })
