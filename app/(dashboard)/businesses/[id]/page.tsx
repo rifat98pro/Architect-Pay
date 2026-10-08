@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck, ArrowLeft, AtSign, Wallet, CheckCircle2, XCircle, Camera } from 'lucide-react'
+import { UserPlus, Trash2, Loader2, Pencil, Check, X, Copy, CheckCheck, ArrowLeft, AtSign, Wallet, CheckCircle2, XCircle, Camera, ChevronDown } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/context/theme-context'
@@ -478,14 +478,20 @@ export default function BusinessEmployeesPage() {
                             <span className="text-[10px] ml-auto" style={{ color: t3 }}>EURC only</span>
                           </div>
                         ) : (
-                          <select value={CHAIN_OPTIONS.find(c => c.value === editState.preferredChain) ? editState.preferredChain : 'ARC-TESTNET'} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="input-base text-xs flex-1" style={input}>
-                            {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value} style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>{c.label}</option>)}
-                          </select>
+                          <div className="relative flex-1">
+                            <select value={CHAIN_OPTIONS.find(c => c.value === editState.preferredChain) ? editState.preferredChain : 'ARC-TESTNET'} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="w-full appearance-none rounded-lg border text-xs pl-2 pr-6 py-1.5 outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" style={{ background: L ? '#f3f4f6' : '#0d1f33', borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)', color: L ? '#0b1e47' : '#ffffff' }}>
+                              {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value} style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>{c.label}</option>)}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: t3 }} />
+                          </div>
                         )}
-                        <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value, ...(e.target.value === 'EURC' ? { preferredChain: 'ARC-TESTNET' } : {}) })} className="input-base text-xs w-20" style={input}>
-                          <option value="USDC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>USDC</option>
-                          <option value="EURC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>EURC</option>
-                        </select>
+                        <div className="relative w-20">
+                          <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value, ...(e.target.value === 'EURC' ? { preferredChain: 'ARC-TESTNET' } : {}) })} className="w-full appearance-none rounded-lg border text-xs pl-2 pr-6 py-1.5 outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" style={{ background: L ? '#f3f4f6' : '#0d1f33', borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)', color: L ? '#0b1e47' : '#ffffff' }}>
+                            <option value="USDC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>USDC</option>
+                            <option value="EURC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>EURC</option>
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: t3 }} />
+                        </div>
                       </div>
                     </div>
                     {/* Salary — matches 100px salary column */}
