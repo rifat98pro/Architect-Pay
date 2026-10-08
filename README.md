@@ -170,7 +170,7 @@ User clicks "Run Payroll"
 |----------|-------|
 | Network Name | Arc Testnet |
 | Chain ID | `5042002` (0x4cef52) |
-| RPC URL | `https://rpc.testnet.arc.network` |
+| RPC URL | `https://rpc.testnet.arc.io` |
 | Block Explorer | `https://testnet.arcscan.app` |
 | Gas Token | USDC |
 | Faucet | [faucet.circle.com](https://faucet.circle.com) |
