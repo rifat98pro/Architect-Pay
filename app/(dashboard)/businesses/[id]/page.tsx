@@ -9,6 +9,7 @@ import { truncateAddress } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/context/theme-context'
 import ChainLogo from '@/components/chain-logo'
+import ChainSelect from '@/components/chain-select'
 
 const CHAIN_OPTIONS = [
   { value: 'ARC-TESTNET',  label: 'Arc Testnet' },
@@ -419,9 +420,12 @@ export default function BusinessEmployeesPage() {
                   <span className="ml-auto text-xs" style={{ color: t3 }}>EURC payroll is Arc-only</span>
                 </div>
               ) : (
-                <select value={CHAIN_OPTIONS.find(c => c.value === preferredChain) ? preferredChain : 'ARC-TESTNET'} onChange={(e) => setPreferredChain(e.target.value)} className="input-base w-full" style={input}>
-                  {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value} style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>{c.label}</option>)}
-                </select>
+                <ChainSelect
+                  value={CHAIN_OPTIONS.find(c => c.value === preferredChain) ? preferredChain : 'ARC-TESTNET'}
+                  onChange={setPreferredChain}
+                  options={CHAIN_OPTIONS}
+                  light={L}
+                />
               )}
             </div>
             <button type="submit"
@@ -478,12 +482,14 @@ export default function BusinessEmployeesPage() {
                             <span className="text-[10px] ml-auto" style={{ color: t3 }}>EURC only</span>
                           </div>
                         ) : (
-                          <div className="relative flex-1">
-                            <select value={CHAIN_OPTIONS.find(c => c.value === editState.preferredChain) ? editState.preferredChain : 'ARC-TESTNET'} onChange={(e) => setEditState({ ...editState, preferredChain: e.target.value })} className="w-full appearance-none rounded-lg border text-xs pl-2 pr-6 py-1.5 outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" style={{ background: L ? '#f3f4f6' : '#0d1f33', borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)', color: L ? '#0b1e47' : '#ffffff' }}>
-                              {CHAIN_OPTIONS.map((c) => <option key={c.value} value={c.value} style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>{c.label}</option>)}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: t3 }} />
-                          </div>
+                          <ChainSelect
+                            value={CHAIN_OPTIONS.find(c => c.value === editState.preferredChain) ? editState.preferredChain : 'ARC-TESTNET'}
+                            onChange={(v) => setEditState({ ...editState, preferredChain: v })}
+                            options={CHAIN_OPTIONS}
+                            light={L}
+                            size="sm"
+                            className="flex-1"
+                          />
                         )}
                         <div className="relative w-20">
                           <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value, ...(e.target.value === 'EURC' ? { preferredChain: 'ARC-TESTNET' } : {}) })} className="w-full appearance-none rounded-lg border text-xs pl-2 pr-6 py-1.5 outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" style={{ background: L ? '#f3f4f6' : '#0d1f33', borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)', color: L ? '#0b1e47' : '#ffffff' }}>
