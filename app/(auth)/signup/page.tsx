@@ -92,13 +92,13 @@ export default function SignupPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Verification failed'); return }
-      await signIn('credentials', { identifier: email, password, callbackUrl: '/dashboard' })
+      await signIn('credentials', { identifier: email, password, callbackUrl: '/onboarding' })
     } finally { setLoading(false) }
   }
 
   async function handleGoogle() {
     setLoading(true)
-    await signIn('google', { callbackUrl: '/dashboard' })
+    await signIn('google', { callbackUrl: '/onboarding' })
   }
 
   return (
