@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, CheckCircle2,
@@ -16,7 +17,22 @@ function XLogo({ size = 20 }: { size?: number }) {
   )
 }
 
+const HERO_LINES = [
+  { text: 'GLOBAL PAYROLL',     size: 'clamp(2rem, 5.5vw, 4.5rem)' },
+  { text: 'STABLECOIN PAYMENTS', size: 'clamp(1.4rem, 3.8vw, 3rem)' },
+  { text: 'EVERY BUSINESS',      size: 'clamp(1.4rem, 3.8vw, 3rem)' },
+]
+
 export default function LandingPage() {
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % HERO_LINES.length)
+    }, 1600)
+    return () => clearInterval(id)
+  }, [])
+
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: '#000', color: '#e2eaf4' }}>
 
@@ -59,25 +75,27 @@ export default function LandingPage() {
         <div className="relative z-10 flex flex-col items-center">
           <div
             className="mb-8 select-none text-center font-black uppercase leading-none"
-            style={{ letterSpacing: '-0.03em', color: '#2aabab' }}
+            style={{ letterSpacing: '-0.03em' }}
           >
-            {[
-              { text: 'GLOBAL PAYROLL',     size: 'clamp(2rem, 5.5vw, 4.5rem)', opacity: 1    },
-              { text: 'STABLECOIN PAYMENTS', size: 'clamp(1.4rem, 3.8vw, 3rem)', opacity: 0.45 },
-              { text: 'EVERY BUSINESS',      size: 'clamp(1.4rem, 3.8vw, 3rem)', opacity: 0.45 },
-            ].map(({ text, size, opacity }) => (
-              <div
-                key={text}
-                style={{
-                  fontSize: size,
-                  opacity,
-                  lineHeight: 1.05,
-                  textShadow: opacity === 1 ? '0 0 80px rgba(42,171,171,0.5)' : 'none',
-                }}
-              >
-                {text}
-              </div>
-            ))}
+            {HERO_LINES.map(({ text, size }, i) => {
+              const isActive = i === activeIdx
+              return (
+                <div
+                  key={text}
+                  style={{
+                    fontSize:   size,
+                    lineHeight: 1.05,
+                    color:      isActive ? '#2aabab' : 'rgba(42,171,171,0.22)',
+                    textShadow: isActive
+                      ? '0 0 40px rgba(42,171,171,0.9), 0 0 80px rgba(42,171,171,0.5), 0 0 120px rgba(42,171,171,0.25)'
+                      : 'none',
+                    transition: 'color 0.5s ease, text-shadow 0.5s ease',
+                  }}
+                >
+                  {text}
+                </div>
+              )
+            })}
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
