@@ -18,6 +18,11 @@ export async function GET() {
     },
     orderBy: { createdAt: 'desc' },
     take:    50,
+    include: {
+      sender: {
+        select: { username: true, displayName: true, name: true, image: true },
+      },
+    },
   })
 
   return NextResponse.json({ received })

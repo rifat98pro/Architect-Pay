@@ -28,6 +28,12 @@ interface Payment {
   txHash:           string | null
   createdAt:        string
   updatedAt:        string
+  sender?: {
+    username:    string | null
+    displayName: string | null
+    name:        string | null
+    image:       string | null
+  }
 }
 
 interface PayrollEntry {
@@ -433,37 +439,67 @@ function HistoryPage() {
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</span>
             </div>
             <div className="divide-y divide-gray-800/60">
-              {received.map((p) => (
-                <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
-                  <div className="min-w-0">
-                    <div className="truncate font-mono text-sm font-medium text-white">
-                      {p.recipientLabel ? `${p.recipientLabel} · ` : ''}{truncateAddress(p.recipientAddress, 6)}
+              {received.map((p) => {
+                const s          = p.sender
+                const isArchUser = !!s
+                const senderName = s?.displayName ?? s?.name ?? s?.username ?? null
+                const senderHandle = s?.username ? `@${s.username}` : null
+                const avatarLetter = (senderName ?? '?')[0].toUpperCase()
+                return (
+                  <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
+                    <div className="min-w-0 flex items-center gap-3">
+                      {/* Sender avatar */}
+                      <div className="relative shrink-0">
+                        <div className="h-9 w-9 overflow-hidden rounded-full" style={{ background: isArchUser ? 'rgba(42,171,171,0.15)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                          {s?.image ? (
+                            <img src={s.image} alt={senderName ?? ''} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm font-bold" style={{ color: isArchUser ? '#2aabab' : '#666' }}>
+                              {avatarLetter}
+                            </div>
+                          )}
+                        </div>
+                        {isArchUser && (
+                          <div className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full" style={{ background: '#000', border: '1px solid rgba(42,171,171,0.4)' }}>
+                            <div className="h-2 w-2 rounded-full" style={{ background: '#2aabab' }} />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        {isArchUser ? (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-semibold text-white truncate">{senderName}</span>
+                            {senderHandle && <span className="text-xs text-brand-400">{senderHandle}</span>}
+                            <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" style={{ background: 'rgba(42,171,171,0.12)', color: '#2aabab' }}>Architect Pay</span>
+                          </div>
+                        ) : (
+                          <div className="font-mono text-sm font-medium text-white truncate">
+                            {truncateAddress(p.recipientAddress, 6)}
+                          </div>
+                        )}
+                        <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          <ChainLogo chain={p.destChain} size={12} />
+                          <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                          <span className="text-gray-700">·</span>
+                          <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {p.txHash && (
+                          <a href={`${ARC_EXPLORER}/tx/${p.txHash}`} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
+                            {p.txHash.slice(0, 6)}…{p.txHash.slice(-4)}
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
-                      <ChainLogo chain={p.destChain} size={12} />
-                      <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
-                      <span className="text-gray-700">·</span>
-                      <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-green-400">+{p.token === 'EURC' ? '€' : '$'}{formatUSDC(p.amount)}</div>
+                      <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
                     </div>
-                    {p.txHash && (
-                      <a
-                        href={`${ARC_EXPLORER}/tx/${p.txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
-                      >
-                        {p.txHash.slice(0, 6)}…{p.txHash.slice(-4)}
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    )}
+                    <StatusBadge status={p.status} />
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-green-400">+{p.token === 'EURC' ? '' : '$'}{formatUSDC(p.amount)}</div>
-                    <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
-                  </div>
-                  <StatusBadge status={p.status} />
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )

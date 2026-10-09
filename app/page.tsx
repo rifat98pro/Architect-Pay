@@ -81,7 +81,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
-            Global payroll and stablecoin payments for businesses. Manage multiple businesses and pay teams across chains from one account. Web2 simplicity.
+            Global payroll and stablecoin payments for businesses. Manage multiple businesses and pay teams across chains from one account with Web2 simplicity.
           </p>
 
           <div className="flex items-center gap-4">
