@@ -48,7 +48,7 @@ export async function depositToUnifiedBalance({
 export async function getUnifiedBalance(walletAddress: string): Promise<{ confirmed: string; pending: string }> {
   const res = await kit.unifiedBalance.getBalances({
     sources: { address: walletAddress },
-    networkType: 'testnet',
+    networkType: 'mainnet',
     includePending: true,
   })
   const r = res as unknown as { totalConfirmedBalance: string; totalPendingBalance?: string }
@@ -75,7 +75,7 @@ export async function spendFromUnifiedBalance({
     from: [{ adapter, address: walletAddress }],
     to: {
       adapter,
-      chain: 'Arc_Testnet',
+      chain: 'Arc',
       recipientAddress,
       address: walletAddress,
     },
@@ -91,7 +91,7 @@ export async function swapTokens({
   tokenIn,
   tokenOut,
   amountIn,
-  chain = 'Arc_Testnet',
+  chain = 'Arc',
   toChain,
   toAddress,
 }: {

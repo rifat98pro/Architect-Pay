@@ -7,7 +7,7 @@ import {
   type CctpSourceChain,
 } from '@/lib/cctp-chains'
 
-const IRIS_API = 'https://iris-api-sandbox.circle.com'
+const IRIS_API = 'https://iris-api.circle.com'
 
 const APPROVE_ABI = {
   type:             'function' as const,

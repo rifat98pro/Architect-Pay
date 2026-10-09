@@ -15,13 +15,13 @@ import ChainLogo from '@/components/chain-logo'
 import { useTheme } from '@/context/theme-context'
 
 const EXPLORER: Record<string, string> = {
-  'ARC-TESTNET':  'https://testnet.arcscan.app',
-  'ETH-SEPOLIA':  'https://sepolia.etherscan.io',
-  'BASE-SEPOLIA': 'https://sepolia.basescan.org',
-  'ARB-SEPOLIA':  'https://sepolia.arbiscan.io',
-  'MATIC-AMOY':   'https://amoy.polygonscan.com',
-  'AVAX-FUJI':    'https://testnet.snowtrace.io',
-  'OP-SEPOLIA':   'https://sepolia-optimism.etherscan.io',
+  'ARC-TESTNET':  'https://arcscan.app',
+  'ETH-SEPOLIA':  'https://etherscan.io',
+  'BASE-SEPOLIA': 'https://basescan.org',
+  'ARB-SEPOLIA':  'https://arbiscan.io',
+  'MATIC-AMOY':   'https://polygonscan.com',
+  'AVAX-FUJI':    'https://snowtrace.io',
+  'OP-SEPOLIA':   'https://optimistic.etherscan.io',
 }
 function txUrl(chain: string, hash: string) {
   return `${EXPLORER[chain] ?? EXPLORER['ARC-TESTNET']}/tx/${hash}`
@@ -342,14 +342,14 @@ function HistoryPage() {
                       ) : (
                         <>
                           <ChainLogo chain={p.sourceChain} size={12} />
-                          <span className="text-xs text-gray-500">{p.sourceChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                          <span className="text-xs text-gray-500">{p.sourceChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
                         </>
                       )}
                       {(p.sourceChain !== p.destChain) && (
                         <>
                           <ArrowRight className="h-3 w-3 text-gray-700 shrink-0" />
                           <ChainLogo chain={p.destChain} size={12} />
-                          <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                          <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
                         </>
                       )}
                       <span className="text-gray-700">·</span>
@@ -410,7 +410,7 @@ function HistoryPage() {
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
                         <ChainLogo chain={p.destChain} size={12} />
-                        <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                        <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
                         <span className="text-gray-700">·</span>
                         <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
                       </div>
@@ -494,7 +494,7 @@ function HistoryPage() {
                         )}
                         <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
                           <ChainLogo chain={p.destChain} size={12} />
-                          <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','')}</span>
+                          <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
                           <span className="text-gray-700">·</span>
                           <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
                         </div>
@@ -552,12 +552,12 @@ function HistoryPage() {
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
                         <ChainLogo chain={s.srcChain} size={12} />
-                        <span className="text-xs text-gray-500">{s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','')}</span>
+                        <span className="text-xs text-gray-500">{s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
                         {isCross && (
                           <>
                             <ArrowLeftRight className="h-3 w-3 text-gray-700 shrink-0" />
                             <ChainLogo chain={s.destChain} size={12} />
-                            <span className="text-xs text-gray-500">{s.destChain.replace('-TESTNET','').replace('-SEPOLIA','')}</span>
+                            <span className="text-xs text-gray-500">{s.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
                           </>
                         )}
                         <span className="text-gray-700">·</span>

@@ -1,6 +1,6 @@
 import { initiateDeveloperControlledWalletsClient } from '@circle-fin/developer-controlled-wallets'
 import { db } from '@/lib/db'
-import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
+import { CCTP_SOURCE_CHAINS, CIRCLE_BLOCKCHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 
 function getClient() {
   return initiateDeveloperControlledWalletsClient({
@@ -32,7 +32,7 @@ export async function createCircleWallet(userId: string): Promise<AllChainWallet
   if (!walletSetId) throw new Error('Failed to create Circle wallet set')
 
   const walletRes = await client.createWallets({
-    blockchains: ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA', 'ARB-SEPOLIA', 'MATIC-AMOY'],
+    blockchains: CCTP_SOURCE_CHAINS.map((c) => CIRCLE_BLOCKCHAIN[c]) as never[],
     count:       1,
     walletSetId,
     accountType: 'SCA',
@@ -91,14 +91,14 @@ export async function syncChainWallets(
 
     if (setId) {
       // Look up from Circle API
-      const res = await client.listWallets({ walletSetId: setId, blockchain: chain as never, pageSize: 5 })
+      const res = await client.listWallets({ walletSetId: setId, blockchain: CIRCLE_BLOCKCHAIN[chain] as never, pageSize: 5 })
       circleWalletId = res.data?.wallets?.[0]?.id ?? null
     }
 
     if (!circleWalletId && setId) {
       // Create the missing chain wallet in the same wallet set
       const res = await client.createWallets({
-        blockchains: [chain as never],
+        blockchains: [CIRCLE_BLOCKCHAIN[chain] as never],
         count:       1,
         walletSetId: setId,
         accountType: 'SCA',
@@ -133,12 +133,12 @@ export async function getOrCreateChainWalletId(
   if (cached) return cached.circleWalletId
 
   // Look up from Circle API
-  const res = await client.listWallets({ walletSetId, blockchain: chain as never, pageSize: 5 })
+  const res = await client.listWallets({ walletSetId, blockchain: CIRCLE_BLOCKCHAIN[chain] as never, pageSize: 5 })
   const found = res.data?.wallets?.[0]
   if (!found?.id) {
     // Chain wallet doesn't exist yet — create it in the existing wallet set
     const created = await client.createWallets({
-      blockchains: [chain as never],
+      blockchains: [CIRCLE_BLOCKCHAIN[chain] as never],
       count:       1,
       walletSetId,
       accountType: 'SCA',
