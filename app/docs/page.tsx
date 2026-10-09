@@ -117,7 +117,7 @@ export default function DocsPage() {
             <div className="grid gap-4 sm:grid-cols-3">
               {[
                 { icon: <Zap className="h-5 w-5" />,   title: 'Instant payments',    desc: 'Arc → Arc transfers settle immediately with no fees.',          color: '#2aabab' },
-                { icon: <Globe className="h-5 w-5" />,  title: 'Cross-chain CCTP',   desc: 'Send USDC & EURC across 7 chains via Circle CCTP.',            color: '#60a5fa' },
+                { icon: <Globe className="h-5 w-5" />,  title: 'Cross-chain CCTP',   desc: 'Send USDC & EURC across all supported chains via Circle CCTP.',            color: '#60a5fa' },
                 { icon: <Users className="h-5 w-5" />,  title: 'Automated payroll',   desc: 'Schedule monthly payroll runs for any number of employees.',   color: '#a78bfa' },
               ].map((f) => (
                 <div key={f.title} className="rounded-xl border p-5" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.07)' }}>
@@ -339,7 +339,7 @@ GET /api/swap/history`}</CodeBlock>
                 },
                 {
                   q: 'What tokens are supported?',
-                  a: 'USDC and EURC. USDC is supported on all 7 chains. EURC is supported on Arc, Ethereum, and Base only.',
+                  a: 'USDC and EURC. USDC is supported on all chains. EURC is supported on Arc, Ethereum, and Base only.',
                 },
                 {
                   q: 'What if I close the tab during a cross-chain transfer?',

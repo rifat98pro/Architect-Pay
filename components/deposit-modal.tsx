@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, Copy, CheckCheck, AlertTriangle, AtSign, ChevronDown } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import ChainLogo from '@/components/chain-logo'
@@ -35,6 +35,16 @@ export default function DepositModal({
   const [copiedUsername, setCopiedUsername] = useState(false)
   const [token,          setToken]          = useState<'USDC' | 'EURC'>('USDC')
   const [chainId,        setChainId]        = useState('ARC-TESTNET')
+  const [dropdownOpen,   setDropdownOpen]   = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   const chains        = token === 'EURC' ? EURC_CHAINS : USDC_CHAINS
   const selectedChain = chains.find((c) => c.id === chainId) ?? chains[0]
@@ -119,17 +129,34 @@ export default function DepositModal({
         {/* Step 2 — Network */}
         <div className="mb-4">
           <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">2. Select Network</div>
-          <div className="relative">
-            <select
-              value={chainId}
-              onChange={(e) => setChainId(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-gray-700 bg-gray-800/60 py-2.5 pl-4 pr-9 text-sm text-white outline-none focus:border-brand-500/50"
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((o) => !o)}
+              className="flex w-full items-center gap-2.5 rounded-xl border border-gray-700 bg-gray-800/60 px-3 py-2.5 text-sm text-white transition hover:border-gray-600"
             >
-              {chains.map((c) => (
-                <option key={c.id} value={c.id}>{c.label} — {c.network}</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <ChainLogo chain={selectedChain.id} size={18} />
+              <span className="flex-1 text-left font-medium">{selectedChain.label}</span>
+              <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {dropdownOpen && (
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-2xl">
+                {chains.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => { setChainId(c.id); setDropdownOpen(false) }}
+                    className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition ${
+                      c.id === chainId ? 'bg-brand-500/10 text-white' : 'text-gray-300 hover:bg-gray-800'
+                    }`}
+                  >
+                    <ChainLogo chain={c.id} size={18} />
+                    <span className="font-medium">{c.label}</span>
+                    {c.id === chainId && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-400" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Critical warning */}

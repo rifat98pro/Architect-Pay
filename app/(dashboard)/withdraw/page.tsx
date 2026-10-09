@@ -264,7 +264,7 @@ export default function WithdrawPage() {
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-blue-800/40 bg-blue-900/15 px-3 py-2 text-xs text-blue-400">
             <Layers className="h-3.5 w-3.5 shrink-0" />
             {token === 'USDC'
-              ? 'Balances across all 5 chains are combined via CCTP and sent to this chain'
+              ? 'Balances across all supported chains are combined via CCTP and sent to this chain'
               : 'EURC balances across Arc, Ethereum, and Base are combined via CCTPx and sent to this chain'}
           </div>
         </div>
