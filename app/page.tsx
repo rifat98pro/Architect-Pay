@@ -115,9 +115,8 @@ export default function LandingPage() {
 
       {/* ── Stats strip ────────────────────────────────────────────────────── */}
       <section className="border-y px-6 py-10" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 text-center sm:grid-cols-4">
+        <div className="mx-auto grid max-w-4xl grid-cols-3 gap-6 text-center">
           {[
-            { value: '7 chains',    label: 'Supported networks'     },
             { value: 'USDC & EURC', label: 'Stablecoins supported'  },
             { value: '0.01%',       label: 'Platform fee'            },
             { value: 'Instant',     label: 'Same-chain transfers'    },
@@ -142,7 +141,7 @@ export default function LandingPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
               { icon: <Building2 className="h-5 w-5" />,      title: 'Multi-Business Management', desc: 'Create multiple businesses under one account. Each business has its own employee roster, payroll history, and settings.',  color: '#2aabab' },
-              { icon: <Users className="h-5 w-5" />,           title: 'Global Payroll',             desc: 'Add employees, set salaries, run payroll with one click. Pay any wallet on any of 7 supported chains simultaneously.',       color: '#60a5fa' },
+              { icon: <Users className="h-5 w-5" />,           title: 'Global Payroll',             desc: 'Add employees, set salaries, run payroll with one click. Pay any wallet on any supported chain simultaneously.',            color: '#60a5fa' },
               { icon: <Globe className="h-5 w-5" />,           title: 'Stablecoin Payments',        desc: 'Send USDC and EURC to any wallet address globally. Instant on the same chain, ~2–3 min cross-chain via Circle CCTP.',       color: '#a78bfa' },
               { icon: <Calendar className="h-5 w-5" />,        title: 'Scheduled Auto-Payroll',     desc: 'Set a payday date once. Payroll fires automatically every month — even while you sleep.',                                    color: '#34d399' },
               { icon: <Wallet className="h-5 w-5" />,          title: 'No Wallet Setup',            desc: 'Sign up with email and password. Wallets are created and managed for you. No seed phrases, no MetaMask, no gas fees.',       color: '#fb923c' },
@@ -226,7 +225,7 @@ export default function LandingPage() {
 
           {/* Cross-chain flow */}
           <div className="mt-12 rounded-2xl border p-8" style={{ background: 'rgba(42,171,171,0.04)', borderColor: 'rgba(42,171,171,0.15)' }}>
-            <p className="mb-6 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: '#2aabab' }}>What happens under the hood (Circle CCTP V2)</p>
+            <p className="mb-6 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: '#2aabab' }}>What happens under the hood (Circle CCTP)</p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               {[
                 { label: 'Your funds on any chain',   bg: 'rgba(255,255,255,0.05)', color: '#888'    },
@@ -359,7 +358,7 @@ export default function LandingPage() {
                   {[
                     'Next.js 14 App Router + TypeScript',
                     'Circle Developer-Controlled Wallets SDK',
-                    'CCTP V2 (viem encodeFunctionData)',
+                    'CCTP (viem encodeFunctionData)',
                     'Prisma + Neon PostgreSQL',
                     'NextAuth.js sessions',
                     'Tailwind CSS',
@@ -374,7 +373,7 @@ export default function LandingPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { title: 'Circle CCTP V2',  href: 'https://developers.circle.com/stablecoins/cctp-getting-started', tag: 'Docs'     },
+                  { title: 'Circle CCTP',     href: 'https://developers.circle.com/stablecoins/cctp-getting-started', tag: 'Docs'     },
                   { title: 'Arc Testnet',     href: 'https://developers.circle.com/arc',                              tag: 'Docs'     },
                   { title: 'ArcScan',         href: 'https://testnet.arcscan.app',                                    tag: 'Explorer' },
                   { title: 'Circle Faucet',   href: 'https://faucet.circle.com',                                      tag: 'Faucet'   },
@@ -496,7 +495,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
             <Image src="/logo.png" alt="Architect Pay" width={18} height={18} className="rounded-md object-contain opacity-50" />
-            <span>Architect Pay · Global payroll & stablecoin payments · Powered by Circle CCTP V2</span>
+            <span>Architect Pay · Global payroll & stablecoin payments · Powered by Circle CCTP</span>
           </div>
           <div className="flex items-center gap-5">
             <Link href="/terms"   className="transition-colors hover:text-white">Terms</Link>
