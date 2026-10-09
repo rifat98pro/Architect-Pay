@@ -224,7 +224,7 @@ export default function WithdrawPage() {
             onClick={() => router.push('/history?tab=withdrawals')}
             className="self-start rounded-lg border border-green-700/50 bg-green-900/40 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-800/40"
           >
-            Withdrawal History →
+            Track your transaction here: History →
           </button>
         </div>
       )}

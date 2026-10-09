@@ -299,7 +299,18 @@ export default function PayrollPage() {
 
       {/* Alerts */}
       {error   && <div className="mb-4 rounded-2xl border border-red-900/40 bg-red-900/20 px-5 py-3.5 text-sm text-red-400">{error}</div>}
-      {success && <div className="mb-4 flex items-center gap-2 rounded-2xl border border-green-900/40 bg-green-900/20 px-5 py-3.5 text-sm text-green-400"><CheckCircle2 className="h-4 w-4 shrink-0" />{success}</div>}
+      {success && (
+        <div className="mb-4 flex flex-col gap-2 rounded-2xl border border-green-900/40 bg-green-900/20 px-5 py-3.5 text-sm text-green-400">
+          <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />{success}</div>
+          <button
+            type="button"
+            onClick={() => router.push('/history?tab=payroll')}
+            className="self-start rounded-lg border border-green-700/50 bg-green-900/40 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-800/40"
+          >
+            Track your transaction here: History →
+          </button>
+        </div>
+      )}
 
       {needsCctp && (
         <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-900/40 bg-amber-900/10 px-5 py-3.5">

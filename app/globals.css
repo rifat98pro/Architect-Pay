@@ -67,7 +67,7 @@
 
   /* Cards / panels */
   html.light [data-scope="dashboard"] .rounded-2xl.border,
-  html.light [data-scope="dashboard"] .rounded-xl.border {
+  html.light [data-scope="dashboard"] .rounded-xl.border:not([data-chain-dropdown]) {
     background: var(--ap-card) !important;
     border-color: var(--ap-card-border) !important;
   }

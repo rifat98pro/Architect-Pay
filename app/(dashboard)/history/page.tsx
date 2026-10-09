@@ -163,6 +163,16 @@ function HistoryPage() {
   const setTab      = (v: 'payments' | 'withdrawals' | 'received' | 'payroll' | 'swaps') => setHistoryUI({ tab: v })
   const setExpanded = (v: string | null)                     => setHistoryUI({ expanded: v })
 
+  // Cache fetched data in AppState so navigating back within 60s shows instant data
+  const CACHE_TTL = 60_000
+  const [historyCache, setHistoryCache] = useFeatureState('history-cache', {
+    payments:  [] as Payment[],
+    received:  [] as Payment[],
+    runs:      [] as PayrollRun[],
+    swaps:     [] as SwapRecord[],
+    fetchedAt: 0,
+  })
+
   // Auto-switch tab from URL query param (e.g. ?tab=withdrawals)
   useEffect(() => {
     const t = searchParams.get('tab')
@@ -172,11 +182,11 @@ function HistoryPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [payments,  setPayments]  = useState<Payment[]>([])
-  const [received,  setReceived]  = useState<Payment[]>([])
-  const [runs,      setRuns]      = useState<PayrollRun[]>([])
-  const [swaps,     setSwaps]     = useState<SwapRecord[]>([])
-  const [loading,   setLoading]   = useState(true)
+  const [payments,  setPayments]  = useState<Payment[]>(() => historyCache.payments)
+  const [received,  setReceived]  = useState<Payment[]>(() => historyCache.received)
+  const [runs,      setRuns]      = useState<PayrollRun[]>(() => historyCache.runs)
+  const [swaps,     setSwaps]     = useState<SwapRecord[]>(() => historyCache.swaps)
+  const [loading,   setLoading]   = useState(() => historyCache.fetchedAt === 0)
   const [retrying,  setRetrying]  = useState<string | null>(null)
   const mintPollRef               = useRef<ReturnType<typeof setInterval> | null>(null)
   const settlePollRef             = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -261,17 +271,26 @@ function HistoryPage() {
 
   useEffect(() => {
     if (!user?.id) return
+    // Use cached data if it's fresh (< 60s old) — prevents reload flicker on tab switch
+    if (historyCache.fetchedAt > 0 && Date.now() - historyCache.fetchedAt < CACHE_TTL) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
     Promise.all([
       fetch('/api/payments/history').then((r) => r.json()),
       fetch('/api/payments/received').then((r) => r.json()),
       fetch('/api/payroll/runs').then((r) => r.json()),
       fetch('/api/swap/history').then((r) => r.json()),
     ]).then(([payData, recData, runData, swapData]) => {
-      setPayments(payData.payments ?? [])
-      setReceived(recData.received ?? [])
-      setRuns(runData.runs ?? [])
-      setSwaps(swapData.swaps ?? [])
+      const p = payData.payments ?? []
+      const r = recData.received ?? []
+      const u = runData.runs ?? []
+      const s = swapData.swaps ?? []
+      setPayments(p); setReceived(r); setRuns(u); setSwaps(s)
+      setHistoryCache({ payments: p, received: r, runs: u, swaps: s, fetchedAt: Date.now() })
     }).finally(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   return (

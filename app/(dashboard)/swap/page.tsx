@@ -93,14 +93,24 @@ export default function SwapPage() {
   const setDestChain = (v: Chain)      => setSwapForm({ destChain: v })
   const setDirection = (v: Direction)  => setSwapForm({ direction: v, amount: '' })
   const setAmount    = (v: string)     => setSwapForm({ amount: v })
-  const [bals,       setBals]       = useState<BalMap>({
-    'ARC-TESTNET':  { usdc: '0', eurc: '0' },
-    'ETH-SEPOLIA':  { usdc: '0', eurc: '0' },
-    'BASE-SEPOLIA': { usdc: '0', eurc: '0' },
+  const BAL_CACHE_TTL  = 30_000
+  const RATE_CACHE_TTL = 60_000
+
+  const [swapCache, setSwapCache] = useFeatureState('swap-cache', {
+    bals: {
+      'ARC-TESTNET':  { usdc: '0', eurc: '0' },
+      'ETH-SEPOLIA':  { usdc: '0', eurc: '0' },
+      'BASE-SEPOLIA': { usdc: '0', eurc: '0' },
+    } as BalMap,
+    eurcUsd:      null as number | null,
+    balFetchedAt: 0,
+    rateFetchedAt: 0,
   })
-  const [eurcUsd,    setEurcUsd]    = useState<number | null>(null)
-  const [rateLoading,setRateLoading]= useState(true)
-  const [balLoading, setBalLoading] = useState(true)
+
+  const [bals,       setBals]       = useState<BalMap>(() => swapCache.bals)
+  const [eurcUsd,    setEurcUsd]    = useState<number | null>(() => swapCache.eurcUsd)
+  const [rateLoading,setRateLoading]= useState(() => swapCache.rateFetchedAt === 0)
+  const [balLoading, setBalLoading] = useState(() => swapCache.balFetchedAt === 0)
   const [loading,    setLoading]    = useState(false)
   const [pending,    setPending]    = useState(false)
   const [success,    setSuccess]    = useState(false)
@@ -115,7 +125,7 @@ export default function SwapPage() {
     try {
       const res  = await fetch('/api/wallet/balance')
       const data = await res.json()
-      setBals({
+      const next: BalMap = {
         'ARC-TESTNET':  {
           usdc: parseFloat(data.chainBalances?.['ARC-TESTNET']      ?? '0').toFixed(2),
           eurc: parseFloat(data.eurcChainBalances?.['ARC-TESTNET']  ?? '0').toFixed(2),
@@ -128,13 +138,23 @@ export default function SwapPage() {
           usdc: parseFloat(data.chainBalances?.['BASE-SEPOLIA']     ?? '0').toFixed(2),
           eurc: parseFloat(data.eurcChainBalances?.['BASE-SEPOLIA'] ?? '0').toFixed(2),
         },
-      })
+      }
+      setBals(next)
+      setSwapCache({ bals: next, balFetchedAt: Date.now() })
     } finally {
       setBalLoading(false)
     }
   }
 
-  useEffect(() => { if (user?.id) fetchBalances() }, [user?.id])
+  useEffect(() => {
+    if (!user?.id) return
+    if (swapCache.balFetchedAt > 0 && Date.now() - swapCache.balFetchedAt < BAL_CACHE_TTL) {
+      setBalLoading(false)
+      return
+    }
+    fetchBalances()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   useEffect(() => {
     async function fetchRate() {
@@ -143,12 +163,19 @@ export default function SwapPage() {
         const res  = await fetch('/api/price')
         const data = await res.json()
         setEurcUsd(data.eurcUsd)
+        setSwapCache({ eurcUsd: data.eurcUsd, rateFetchedAt: Date.now() })
       } catch { setEurcUsd(1.1) }
       finally  { setRateLoading(false) }
     }
-    fetchRate()
+    // Skip initial fetch if rate was recently cached
+    if (swapCache.rateFetchedAt > 0 && Date.now() - swapCache.rateFetchedAt < RATE_CACHE_TTL) {
+      setRateLoading(false)
+    } else {
+      fetchRate()
+    }
     const id = setInterval(fetchRate, 60_000)
     return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const tokenIn  = direction === 'eurc-to-usdc' ? 'EURC' : 'USDC'
@@ -214,24 +241,33 @@ export default function SwapPage() {
           <div className="mb-3 rounded-xl bg-red-900/30 border border-red-900/50 px-4 py-3 text-sm text-red-400">{error}</div>
         )}
         {success && (
-          <div className="mb-3 flex items-center gap-2 rounded-xl bg-green-900/20 border border-green-900/40 px-4 py-3 text-sm text-green-400">
-            <CheckCircle2 className="h-4 w-4 shrink-0" /> Swap completed successfully.
+          <div className="mb-3 flex flex-col gap-2 rounded-xl bg-green-900/20 border border-green-900/40 px-4 py-3 text-sm text-green-400">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" /> Your swap is processing. Funds will arrive shortly.
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push('/history?tab=swaps')}
+              className="self-start rounded-lg border border-green-700/50 bg-green-900/40 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-800/40"
+            >
+              Track your transaction here: History →
+            </button>
           </div>
         )}
         {pending && (
           <div className="mb-3 rounded-xl bg-amber-900/20 border border-amber-800/40 px-4 py-3 text-sm">
             <div className="flex items-center gap-2 text-amber-400 font-medium mb-1.5">
-              <Clock className="h-4 w-4 shrink-0" /> EURC cross-chain transfer submitted
+              <Clock className="h-4 w-4 shrink-0" /> Your swap is processing via CCTP
             </div>
             <p className="text-amber-400/80 text-xs leading-relaxed mb-2">
               Cross-chain EURC transfers take <span className="font-semibold text-amber-300">up to 15 minutes</span> to arrive on the destination chain. Your funds are safe — the transaction is being processed via CCTP.
             </p>
             <button
               type="button"
-              onClick={() => router.push('/history')}
+              onClick={() => router.push('/history?tab=swaps')}
               className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-semibold text-amber-300 transition"
             >
-              Track in History →
+              Track your transaction here: History →
             </button>
           </div>
         )}

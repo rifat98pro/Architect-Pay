@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import ChainLogo from './chain-logo'
+import { useTheme } from '@/context/theme-context'
 
 interface Option { value: string; label: string }
 
@@ -16,7 +17,9 @@ interface Props {
   disabled?: boolean
 }
 
-export default function ChainSelect({ value, onChange, options, light = false, className = '', size = 'md', disabled = false }: Props) {
+export default function ChainSelect({ value, onChange, options, light: lightProp, className = '', size = 'md', disabled = false }: Props) {
+  const { theme } = useTheme()
+  const light = lightProp ?? (theme === 'light')
   const [open, setOpen]   = useState(false)
   const [pos, setPos]     = useState({ top: 0, left: 0, width: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -74,15 +77,18 @@ export default function ChainSelect({ value, onChange, options, light = false, c
       {open && (
         <div
           ref={dropRef}
-          className="rounded-xl border py-1 shadow-xl"
+          data-chain-dropdown
+          className="py-1 shadow-xl"
           style={{
-            position: 'fixed',
-            top:  pos.top,
-            left: pos.left,
-            width: pos.width,
-            background: dropBg,
+            position:    'fixed',
+            top:         pos.top,
+            left:        pos.left,
+            width:       pos.width,
+            background:  dropBg,
             borderColor: dropBorder,
-            zIndex: 9999,
+            border:      `1px solid ${dropBorder}`,
+            borderRadius: '12px',
+            zIndex:      9999,
           }}
         >
           {options.map((opt) => (

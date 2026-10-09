@@ -291,7 +291,7 @@ export default function PaymentsPage() {
               onClick={() => router.push('/history?tab=payments')}
               className="self-start rounded-lg border border-green-700/50 bg-green-900/40 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-800/40"
             >
-              Payment History →
+              Track your transaction here: History →
             </button>
           </div>
         )}
@@ -305,10 +305,10 @@ export default function PaymentsPage() {
             </p>
             <button
               type="button"
-              onClick={() => router.push('/history')}
+              onClick={() => router.push('/history?tab=payments')}
               className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-semibold text-amber-300 transition"
             >
-              Track in History →
+              Track your transaction here: History →
             </button>
           </div>
         )}
