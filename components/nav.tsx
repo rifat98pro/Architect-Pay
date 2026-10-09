@@ -52,7 +52,7 @@ export default function Nav() {
         </Link>
         <div className="mt-1 flex items-center gap-1.5 px-0.5">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand-500 shadow-[0_0_6px_rgba(42,171,171,0.8)]" />
-          <span className="text-xs text-gray-500">Arc Testnet</span>
+          <span className="text-xs text-gray-500">Mainnet</span>
         </div>
       </div>
 

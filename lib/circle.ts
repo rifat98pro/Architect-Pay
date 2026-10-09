@@ -42,14 +42,14 @@ export async function createCircleWallet(userId: string): Promise<AllChainWallet
   const wallets = walletRes.data?.wallets ?? []
   const find = (chain: string) => wallets.find((w) => w.blockchain === chain)
 
-  const arcRaw = find('ARC-TESTNET')
+  const arcRaw = find(CIRCLE_BLOCKCHAIN['ARC-TESTNET'])
   if (!arcRaw?.id || !arcRaw?.address) throw new Error('Failed to create Arc wallet')
 
   const arcWallet: CircleWallet = { id: arcRaw.id, address: arcRaw.address }
 
   const chainWallets: Partial<Record<CctpSourceChain, CircleWallet>> = {}
   for (const chain of CCTP_SOURCE_CHAINS) {
-    const w = find(chain)
+    const w = find(CIRCLE_BLOCKCHAIN[chain])
     if (w?.id && w?.address) chainWallets[chain] = { id: w.id, address: w.address }
   }
 
