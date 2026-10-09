@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   // Fetch live balances and compute plan
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
-  const plan        = computeAggregatePlan(numericBals, targetAmount)
+  const plan        = computeAggregatePlan(numericBals, targetAmount, destChain)
 
   if (!plan.feasible) {
     return NextResponse.json(

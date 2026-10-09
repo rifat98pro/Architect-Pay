@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const amountStr = req.nextUrl.searchParams.get('amount')
+  const destChain = req.nextUrl.searchParams.get('dest') ?? 'ARC-TESTNET'
   const amount    = parseFloat(amountStr ?? '0')
   if (!amount || amount <= 0) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
-  const result      = computeAggregatePlan(numericBals, amount)
+  const result      = computeAggregatePlan(numericBals, amount, destChain)
 
   return NextResponse.json(result)
 }

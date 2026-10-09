@@ -151,7 +151,7 @@ export default function PaymentsPage() {
     try {
       const url = tkn === 'EURC'
         ? `/api/payments/aggregate-plan-eurc?amount=${n}&dest=${dest}`
-        : `/api/payments/aggregate-plan?amount=${n}`
+        : `/api/payments/aggregate-plan?amount=${n}&dest=${dest}`
       const res  = await fetch(url)
       const data = await res.json()
       setPlan(data.plan ?? null)

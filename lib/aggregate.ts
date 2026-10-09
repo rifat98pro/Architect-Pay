@@ -17,26 +17,34 @@ export interface AggregatePlan {
 }
 
 const CHAIN_LABEL: Record<string, string> = {
-  'ARC-TESTNET':  'Arc Testnet',
-  'ETH-SEPOLIA':  'Ethereum Sepolia',
-  'BASE-SEPOLIA': 'Base Sepolia',
-  'ARB-SEPOLIA':  'Arbitrum Sepolia',
-  'MATIC-AMOY':   'Polygon Amoy',
+  'ARC-TESTNET':  'Arc',
+  'ETH-SEPOLIA':  'Ethereum',
+  'BASE-SEPOLIA': 'Base',
+  'ARB-SEPOLIA':  'Arbitrum',
+  'MATIC-AMOY':   'Polygon',
+  'AVAX-FUJI':    'Avalanche',
+  'OP-SEPOLIA':   'Optimism',
 }
 
 export function computeAggregatePlan(
   chainBalances: Record<string, number>,
   targetAmount: number,
+  destChain = 'ARC-TESTNET',
 ): AggregatePlan {
   const plan: AggregatePlanEntry[] = []
   let remaining = targetAmount
   let totalFee  = 0
 
+  // Arc funds are "instant" only when dest is also Arc; otherwise they need CCTP bridging
+  const arcIsCctp = destChain !== 'ARC-TESTNET'
+
   const arcBal = chainBalances['ARC-TESTNET'] ?? 0
   if (arcBal > 0 && remaining > 0) {
     const use = parseFloat(Math.min(arcBal, remaining).toFixed(6))
-    plan.push({ chain: 'ARC-TESTNET', label: 'Arc Testnet', amount: use.toFixed(6), fee: '0', isCctp: false })
-    remaining -= use
+    const fee = arcIsCctp ? parseFloat((use * 0.01).toFixed(6)) : 0
+    plan.push({ chain: 'ARC-TESTNET', label: 'Arc', amount: use.toFixed(6), fee: fee.toFixed(6), isCctp: arcIsCctp })
+    totalFee  += fee
+    remaining -= arcIsCctp ? use - fee : use
   }
 
   if (remaining > 0.001) {
