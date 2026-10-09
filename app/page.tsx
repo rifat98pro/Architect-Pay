@@ -94,7 +94,6 @@ export default function LandingPage() {
               className="flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-black transition-all hover:opacity-90"
               style={{ background: '#2aabab', boxShadow: '0 0 30px rgba(42,171,171,0.35)' }}
             >
-              <Zap className="h-4 w-4" />
               Get Started Free
             </Link>
             <a
@@ -488,7 +487,6 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-black transition-all hover:opacity-90"
             style={{ background: '#2aabab', boxShadow: '0 0 40px rgba(42,171,171,0.3)' }}
           >
-            <Zap className="h-4 w-4" />
             Get Started Free
           </Link>
         </div>
