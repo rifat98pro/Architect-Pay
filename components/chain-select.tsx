@@ -26,7 +26,7 @@ export default function ChainSelect({ value, onChange, options, light = false, c
   function openDropdown() {
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
-      setPos({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX, width: r.width })
+      setPos({ top: r.bottom + 4, left: r.left, width: r.width })
     }
     setOpen(true)
   }
