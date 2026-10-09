@@ -117,7 +117,7 @@ export default function DocsPage() {
             <div className="grid gap-4 sm:grid-cols-3">
               {[
                 { icon: <Zap className="h-5 w-5" />,   title: 'Instant payments',    desc: 'Arc → Arc transfers settle immediately with no fees.',          color: '#2aabab' },
-                { icon: <Globe className="h-5 w-5" />,  title: 'Cross-chain CCTP V2', desc: 'Send USDC & EURC across 5 chains via Circle CCTP.',            color: '#60a5fa' },
+                { icon: <Globe className="h-5 w-5" />,  title: 'Cross-chain CCTP',   desc: 'Send USDC & EURC across 7 chains via Circle CCTP.',            color: '#60a5fa' },
                 { icon: <Users className="h-5 w-5" />,  title: 'Automated payroll',   desc: 'Schedule monthly payroll runs for any number of employees.',   color: '#a78bfa' },
               ].map((f) => (
                 <div key={f.title} className="rounded-xl border p-5" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.07)' }}>
@@ -136,12 +136,12 @@ export default function DocsPage() {
                 {
                   n: 1,
                   title: 'Create an account',
-                  body: 'Sign up at architect-pay.vercel.app/signup. A Circle SCA wallet is provisioned instantly on Arc Testnet and all supported chains.',
+                  body: 'Sign up at architect-pay.vercel.app/signup. A Circle SCA wallet is provisioned instantly on Arc and all supported chains.',
                 },
                 {
                   n: 2,
-                  title: 'Get testnet USDC',
-                  body: 'Visit faucet.circle.com and request testnet USDC on any supported chain (Arc, Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, or Polygon Amoy).',
+                  title: 'Fund your wallet',
+                  body: 'Go to your Dashboard and click Deposit. Send USDC or EURC from any exchange or wallet on Arc, Ethereum, Base, Arbitrum, Polygon, Avalanche, or Optimism.',
                 },
                 {
                   n: 3,
@@ -170,7 +170,7 @@ export default function DocsPage() {
           {/* Payments */}
           <Section id="payments" title="Payments API">
             <p className="mb-6 text-sm leading-relaxed" style={{ color: '#888' }}>
-              Send USDC or EURC to any EVM address on any supported chain. Same-chain payments use Circle&apos;s transfer API directly. Cross-chain payments use CCTP V2.
+              Send USDC or EURC to any EVM address on any supported chain. Same-chain payments use Circle&apos;s transfer API directly. Cross-chain payments use Circle CCTP.
             </p>
             <CodeBlock>{`POST /api/payments/send
 
@@ -251,8 +251,8 @@ GET /api/payroll/runs`}</CodeBlock>
             </div>
             <div className="rounded-xl border p-5" style={{ background: 'rgba(251,191,36,0.04)', borderColor: 'rgba(251,191,36,0.15)' }}>
               <p className="text-sm font-semibold mb-1" style={{ color: '#fbbf24' }}>Supported Chains</p>
-              <p className="text-sm" style={{ color: '#888' }}>Arc Testnet · Ethereum Sepolia · Base Sepolia · Arbitrum Sepolia · Polygon Amoy</p>
-              <p className="text-sm mt-1" style={{ color: '#888' }}>EURC is supported on Arc Testnet, Ethereum Sepolia, and Base Sepolia only.</p>
+              <p className="text-sm" style={{ color: '#888' }}>Arc · Ethereum · Base · Arbitrum · Polygon · Avalanche · Optimism</p>
+              <p className="text-sm mt-1" style={{ color: '#888' }}>EURC is supported on Arc, Ethereum, and Base only.</p>
             </div>
           </Section>
 
@@ -327,7 +327,7 @@ GET /api/swap/history`}</CodeBlock>
               {[
                 {
                   q: 'Is this on mainnet?',
-                  a: 'Currently testnet only. We use Arc Testnet and Circle sandbox environments. No real money is involved. Mainnet is coming soon.',
+                  a: 'Yes — Architect Pay is live on mainnet. All transactions use real USDC and EURC.',
                 },
                 {
                   q: 'Who pays gas fees?',
@@ -335,11 +335,11 @@ GET /api/swap/history`}</CodeBlock>
                 },
                 {
                   q: 'Why does cross-chain take 20+ minutes?',
-                  a: "Circle's Iris attestation service is slow on testnet — this is normal. On mainnet, cross-chain CCTP transfers complete in 2–5 minutes.",
+                  a: "Circle's Iris attestation service processes cross-chain CCTP transfers in 2–5 minutes. Congestion on source or destination chains can occasionally add extra time.",
                 },
                 {
                   q: 'What tokens are supported?',
-                  a: 'USDC and EURC. USDC is supported on all 5 chains. EURC is supported on Arc Testnet, Ethereum Sepolia, and Base Sepolia.',
+                  a: 'USDC and EURC. USDC is supported on all 7 chains. EURC is supported on Arc, Ethereum, and Base only.',
                 },
                 {
                   q: 'What if I close the tab during a cross-chain transfer?',
@@ -384,7 +384,7 @@ GET /api/swap/history`}</CodeBlock>
       {/* Footer */}
       <footer className="border-t mt-16 px-6 py-8 text-center text-xs" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#444' }}>
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 sm:flex-row sm:justify-between">
-          <span>Architect Pay · Built on Arc Testnet · Powered by Circle CCTP V2</span>
+          <span>Architect Pay · Powered by Circle CCTP</span>
           <Link href="/" className="hover:text-white transition-colors">← Back to homepage</Link>
         </div>
       </footer>

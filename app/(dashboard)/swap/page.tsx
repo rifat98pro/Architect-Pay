@@ -12,9 +12,9 @@ type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
 type Chain = 'ARC-TESTNET' | 'ETH-SEPOLIA' | 'BASE-SEPOLIA'
 
 const CHAINS: { id: Chain; label: string; short: string; swapSupported: boolean }[] = [
-  { id: 'ARC-TESTNET',  label: 'Arc Testnet',  short: 'Arc Testnet', swapSupported: true  },
-  { id: 'ETH-SEPOLIA',  label: 'ETH Sepolia',  short: 'ETH Sepolia', swapSupported: false },
-  { id: 'BASE-SEPOLIA', label: 'Base Sepolia', short: 'Base Sepolia', swapSupported: false },
+  { id: 'ARC-TESTNET',  label: 'Arc',      short: 'Arc',      swapSupported: true  },
+  { id: 'ETH-SEPOLIA',  label: 'Ethereum', short: 'Ethereum', swapSupported: false },
+  { id: 'BASE-SEPOLIA', label: 'Base',     short: 'Base',     swapSupported: false },
 ]
 
 type BalMap = Record<Chain, { usdc: string; eurc: string }>

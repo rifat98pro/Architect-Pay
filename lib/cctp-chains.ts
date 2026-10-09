@@ -38,9 +38,8 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     rpcUrl:               'https://rpc.mainnet.arc.io',
     usdcAddress:          '0x3600000000000000000000000000000000000000',
     eurcAddress:          '0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1',
-    // Arc mainnet uses same contract addresses as testnet (Circle-controlled deployment)
-    tokenMessengerV2:     '0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA',
-    messageTransmitterV2: '0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275',
+    tokenMessengerV2:     '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
+    messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
   },
   'ETH-SEPOLIA': {
     label:                'Ethereum',
@@ -80,7 +79,7 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     label:                'Avalanche',
     cctpDomain:           1,
     rpcUrl:               'https://api.avax.network/ext/bc/C/rpc',
-    usdcAddress:          '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6',
+    usdcAddress:          '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
     eurcAddress:          '0xC891EB4cbdEFf6e073e859e987815Ed1505c2ACD',
     tokenMessengerV2:     '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
     messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',

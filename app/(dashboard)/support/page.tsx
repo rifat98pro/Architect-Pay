@@ -46,7 +46,7 @@ const FAQS = [
   {
     id: 'getting-started',
     q: 'How do I fund my wallet?',
-    a: 'Click the Deposit button on your Dashboard. A QR code and your wallet address will appear. Send USDC or EURC from any exchange or wallet — it works on Arc Testnet, Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, and Polygon Amoy.',
+    a: 'Click the Deposit button on your Dashboard. A QR code and your wallet address will appear. Send USDC or EURC from any exchange or wallet — it works on Arc, Ethereum, Base, Arbitrum, Polygon, Avalanche, and Optimism.',
   },
   {
     id: 'getting-started',
@@ -56,7 +56,7 @@ const FAQS = [
   {
     id: 'payments',
     q: 'How long do cross-chain transfers take?',
-    a: 'Cross-chain transfers via Circle CCTP V2 typically settle in 2–3 minutes. Arc Testnet → Arc Testnet payments are instant with zero fee.',
+    a: 'Cross-chain transfers via Circle CCTP typically settle in 2–3 minutes. Arc → Arc payments are instant with zero fee.',
   },
   {
     id: 'payments',
@@ -230,8 +230,8 @@ export default function SupportPage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Circle CCTP Docs',  href: 'https://developers.circle.com/stablecoins/cctp-getting-started', icon: <ExternalLink className="h-3.5 w-3.5" /> },
-          { label: 'Arc Testnet',       href: 'https://developers.circle.com/arc',                              icon: <ExternalLink className="h-3.5 w-3.5" /> },
-          { label: 'ArcScan Explorer',  href: 'https://testnet.arcscan.app',                                    icon: <ExternalLink className="h-3.5 w-3.5" /> },
+          { label: 'Arc Docs',          href: 'https://developers.circle.com/arc',                              icon: <ExternalLink className="h-3.5 w-3.5" /> },
+          { label: 'ArcScan Explorer',  href: 'https://arcscan.app',                                            icon: <ExternalLink className="h-3.5 w-3.5" /> },
         ].map((link) => (
           <a
             key={link.label}

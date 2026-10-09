@@ -13,13 +13,13 @@ import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
 
 const DEST_CHAINS = [
-  { id: 'ARC-TESTNET',  label: 'Arc Testnet'       },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum Sepolia'  },
-  { id: 'BASE-SEPOLIA', label: 'Base Sepolia'       },
-  { id: 'ARB-SEPOLIA',  label: 'Arbitrum Sepolia'  },
-  { id: 'MATIC-AMOY',   label: 'Polygon Amoy'      },
-  { id: 'AVAX-FUJI',    label: 'Avalanche Fuji'    },
-  { id: 'OP-SEPOLIA',   label: 'Optimism Sepolia'  },
+  { id: 'ARC-TESTNET',  label: 'Arc'       },
+  { id: 'ETH-SEPOLIA',  label: 'Ethereum'  },
+  { id: 'BASE-SEPOLIA', label: 'Base'      },
+  { id: 'ARB-SEPOLIA',  label: 'Arbitrum'  },
+  { id: 'MATIC-AMOY',   label: 'Polygon'   },
+  { id: 'AVAX-FUJI',    label: 'Avalanche' },
+  { id: 'OP-SEPOLIA',   label: 'Optimism'  },
 ]
 
 type RecipientMode = 'wallet' | 'username'

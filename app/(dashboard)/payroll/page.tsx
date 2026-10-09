@@ -8,7 +8,7 @@ import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Chev
 import TokenLogo from '@/components/token-logo'
 import { truncateAddress } from '@/lib/utils'
 
-const ARC_EXPLORER = 'https://testnet.arcscan.app'
+const ARC_EXPLORER = 'https://arcscan.app'
 
 interface Employee { id: string; name: string; walletAddress: string; preferredToken?: string }
 interface PayrollEntry {

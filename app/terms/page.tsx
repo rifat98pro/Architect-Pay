@@ -49,7 +49,7 @@ export default function TermsPage() {
             <ul className="list-disc space-y-1.5 pl-5">
               <li>You acknowledge that blockchain transactions are irreversible once confirmed on-chain.</li>
               <li>You are solely responsible for ensuring recipient wallet addresses are correct before sending.</li>
-              <li>Cross-chain transfers via Circle CCTP V2 may take 2–10 minutes to settle and cannot be cancelled after initiation.</li>
+              <li>Cross-chain transfers via Circle CCTP may take 2–10 minutes to settle and cannot be cancelled after initiation.</li>
               <li>Architect Pay charges a 0.01% platform fee on cross-chain payments, cross-chain swaps, and payroll runs.</li>
             </ul>
           </section>

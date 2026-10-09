@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Architect Pay',
-  description: 'Pay employees and bills with USDC on Arc Testnet',
+  description: 'Pay employees and bills with USDC on Arc and other leading blockchains',
   icons: { icon: '/logo.png' },
 }
 

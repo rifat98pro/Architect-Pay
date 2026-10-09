@@ -7,17 +7,19 @@ import ChainLogo from '@/components/chain-logo'
 import TokenLogo from '@/components/token-logo'
 
 const USDC_CHAINS = [
-  { id: 'ARC-TESTNET',  label: 'Arc Testnet',       network: 'Arc Testnet' },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum',           network: 'Ethereum Sepolia' },
-  { id: 'BASE-SEPOLIA', label: 'Base',               network: 'Base Sepolia' },
-  { id: 'ARB-SEPOLIA',  label: 'Arbitrum',           network: 'Arbitrum Sepolia' },
-  { id: 'MATIC-AMOY',   label: 'Polygon',            network: 'Polygon Amoy' },
+  { id: 'ARC-TESTNET',  label: 'Arc',      network: 'Arc' },
+  { id: 'ETH-SEPOLIA',  label: 'Ethereum', network: 'Ethereum' },
+  { id: 'BASE-SEPOLIA', label: 'Base',     network: 'Base' },
+  { id: 'ARB-SEPOLIA',  label: 'Arbitrum', network: 'Arbitrum' },
+  { id: 'MATIC-AMOY',   label: 'Polygon',  network: 'Polygon' },
+  { id: 'AVAX-FUJI',    label: 'Avalanche',network: 'Avalanche' },
+  { id: 'OP-SEPOLIA',   label: 'Optimism', network: 'Optimism' },
 ]
 
 const EURC_CHAINS = [
-  { id: 'ARC-TESTNET',  label: 'Arc Testnet', network: 'Arc Testnet' },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum',    network: 'Ethereum Sepolia' },
-  { id: 'BASE-SEPOLIA', label: 'Base',        network: 'Base Sepolia' },
+  { id: 'ARC-TESTNET',  label: 'Arc',      network: 'Arc' },
+  { id: 'ETH-SEPOLIA',  label: 'Ethereum', network: 'Ethereum' },
+  { id: 'BASE-SEPOLIA', label: 'Base',     network: 'Base' },
 ]
 
 export default function DepositModal({

@@ -104,10 +104,10 @@ export default function LandingPage() {
           <div className="mt-6">
             <span
               className="inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium"
-              style={{ borderColor: 'rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.06)', color: '#fbbf24' }}
+              style={{ borderColor: 'rgba(42,171,171,0.25)', background: 'rgba(42,171,171,0.06)', color: '#2aabab' }}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
-              Testnet only · No real money · Mainnet coming soon
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+              Now Live on Mainnet
             </span>
           </div>
         </div>
@@ -374,9 +374,9 @@ export default function LandingPage() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { title: 'Circle CCTP',     href: 'https://developers.circle.com/stablecoins/cctp-getting-started', tag: 'Docs'     },
-                  { title: 'Arc Testnet',     href: 'https://developers.circle.com/arc',                              tag: 'Docs'     },
-                  { title: 'ArcScan',         href: 'https://testnet.arcscan.app',                                    tag: 'Explorer' },
-                  { title: 'Circle Faucet',   href: 'https://faucet.circle.com',                                      tag: 'Faucet'   },
+                  { title: 'Arc',             href: 'https://developers.circle.com/arc',                              tag: 'Docs'     },
+                  { title: 'ArcScan',         href: 'https://arcscan.app',                                            tag: 'Explorer' },
+                  { title: 'Circle Docs',     href: 'https://developers.circle.com',                                  tag: 'Docs'     },
                 ].map((doc) => (
                   <a
                     key={doc.title}
@@ -501,7 +501,7 @@ export default function LandingPage() {
             <Link href="/terms"   className="transition-colors hover:text-white">Terms</Link>
             <Link href="/privacy" className="transition-colors hover:text-white">Privacy</Link>
             <a href="https://x.com/architectpay" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Twitter</a>
-            <p className="hidden sm:block">All transactions use testnet USDC — no real money involved.</p>
+            <p className="hidden sm:block">Powered by Circle CCTP · Real USDC on mainnet</p>
           </div>
         </div>
       </footer>

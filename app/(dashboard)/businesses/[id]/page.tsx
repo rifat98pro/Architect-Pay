@@ -12,7 +12,7 @@ import ChainLogo from '@/components/chain-logo'
 import ChainSelect from '@/components/chain-select'
 
 const CHAIN_OPTIONS = [
-  { value: 'ARC-TESTNET',  label: 'Arc Testnet' },
+  { value: 'ARC-TESTNET',  label: 'Arc' },
   { value: 'ETH-SEPOLIA',  label: 'Ethereum' },
   { value: 'BASE-SEPOLIA', label: 'Base' },
   { value: 'ARB-SEPOLIA',  label: 'Arbitrum' },
@@ -441,7 +441,7 @@ export default function BusinessEmployeesPage() {
               {preferredToken === 'EURC' ? (
                 <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5" style={{ background: L ? 'rgba(0,0,0,0.04)' : 'rgba(18,32,49,0.4)', borderColor: L ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)' }}>
                   <ChainLogo chain="ARC-TESTNET" size={14} />
-                  <span className="text-sm font-medium" style={{ color: t1 }}>Arc Testnet</span>
+                  <span className="text-sm font-medium" style={{ color: t1 }}>Arc</span>
                   <span className="ml-auto text-xs" style={{ color: t3 }}>EURC payroll is Arc-only</span>
                 </div>
               ) : (
@@ -503,7 +503,7 @@ export default function BusinessEmployeesPage() {
                         {editState.preferredToken === 'EURC' ? (
                           <div className="flex items-center gap-1.5 rounded-lg border px-2 py-1.5 flex-1" style={{ background: L ? 'rgba(0,0,0,0.04)' : 'rgba(18,32,49,0.4)', borderColor: L ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)' }}>
                             <ChainLogo chain="ARC-TESTNET" size={12} />
-                            <span className="text-xs" style={{ color: t2 }}>Arc Testnet</span>
+                            <span className="text-xs" style={{ color: t2 }}>Arc</span>
                             <span className="text-[10px]" style={{ color: t3 }}>· EURC only</span>
                           </div>
                         ) : (
@@ -586,7 +586,7 @@ export default function BusinessEmployeesPage() {
                     </div>
                     <div className="mt-0.5 flex items-center gap-1">
                       <ChainLogo chain={emp.preferredChain ?? 'ARC-TESTNET'} size={10} />
-                      <span className="text-[10px]" style={{ color: t3 }}>{CHAIN_OPTIONS.find((c) => c.value === emp.preferredChain)?.label ?? 'Arc Testnet'}</span>
+                      <span className="text-[10px]" style={{ color: t3 }}>{CHAIN_OPTIONS.find((c) => c.value === emp.preferredChain)?.label ?? 'Arc'}</span>
                     </div>
                   </div>
 
