@@ -21,5 +21,6 @@ export async function GET(request: Request) {
     found:         true,
     displayName:   user.displayName ?? user.name ?? raw,
     walletAddress: user.wallet.walletAddress,
+    image:         user.image ?? null,
   })
 }

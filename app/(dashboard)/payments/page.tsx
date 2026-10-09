@@ -86,6 +86,7 @@ export default function PaymentsPage() {
   const [lookupState, setLookupState]         = useState<LookupState>('idle')
   const [resolvedAddress, setResolvedAddress] = useState('')
   const [resolvedName, setResolvedName]       = useState('')
+  const [resolvedImage, setResolvedImage]     = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -120,9 +121,11 @@ export default function PaymentsPage() {
           setLookupState('found')
           setResolvedAddress(data.walletAddress)
           setResolvedName(data.displayName)
+          setResolvedImage(data.image ?? null)
         } else {
           setLookupState('notfound')
           setResolvedAddress('')
+          setResolvedImage(null)
           setResolvedName('')
         }
       } catch { setLookupState('notfound') }
@@ -393,8 +396,11 @@ export default function PaymentsPage() {
               )}
               {lookupState === 'found' && (
                 <div className="mt-2 flex items-center gap-3 rounded-xl border border-brand-500/30 bg-brand-500/8 px-3 py-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-sm font-bold text-brand-400">
-                    {resolvedName?.[0]?.toUpperCase() ?? '?'}
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-sm font-bold text-brand-400 overflow-hidden">
+                    {resolvedImage
+                      ? <img src={resolvedImage} alt={resolvedName} className="h-full w-full object-cover" />
+                      : (resolvedName?.[0]?.toUpperCase() ?? '?')
+                    }
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

@@ -14,7 +14,18 @@ import TokenLogo from '@/components/token-logo'
 import ChainLogo from '@/components/chain-logo'
 import { useTheme } from '@/context/theme-context'
 
-const ARC_EXPLORER = 'https://testnet.arcscan.app'
+const EXPLORER: Record<string, string> = {
+  'ARC-TESTNET':  'https://testnet.arcscan.app',
+  'ETH-SEPOLIA':  'https://sepolia.etherscan.io',
+  'BASE-SEPOLIA': 'https://sepolia.basescan.org',
+  'ARB-SEPOLIA':  'https://sepolia.arbiscan.io',
+  'MATIC-AMOY':   'https://amoy.polygonscan.com',
+  'AVAX-FUJI':    'https://testnet.snowtrace.io',
+  'OP-SEPOLIA':   'https://sepolia-optimism.etherscan.io',
+}
+function txUrl(chain: string, hash: string) {
+  return `${EXPLORER[chain] ?? EXPLORER['ARC-TESTNET']}/tx/${hash}`
+}
 
 interface Payment {
   id:               string
@@ -26,6 +37,7 @@ interface Payment {
   destChain:        string
   status:           string
   txHash:           string | null
+  burnTxHash:       string | null
   createdAt:        string
   updatedAt:        string
   sender?: {
@@ -42,7 +54,7 @@ interface PayrollEntry {
   status:       string
   txHash:       string | null
   errorMessage: string | null
-  employee:     { name: string; walletAddress: string; preferredToken?: string }
+  employee:     { name: string; walletAddress: string; preferredToken?: string; preferredChain?: string }
 }
 
 interface SwapRecord {
@@ -346,21 +358,22 @@ function HistoryPage() {
                       <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
                     </div>
                     <TxTimer createdAt={p.createdAt} updatedAt={p.updatedAt} status={p.status} />
+                    <div className="mt-0.5 flex flex-wrap gap-2">
+                      {p.txHash && (
+                        <a href={txUrl(p.destChain, p.txHash)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
+                          {p.txHash.slice(0, 8)}…{p.txHash.slice(-6)} <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                      {p.burnTxHash && p.sourceChain !== 'ALL_CHAINS' && (
+                        <a href={txUrl(p.sourceChain, p.burnTxHash)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:underline">
+                          burn: {p.burnTxHash.slice(0, 6)}… <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold text-white">{(p.token ?? 'USDC') === 'EURC' ? '€' : '$'}{formatUSDC(p.amount)}</div>
                     <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(p.token as 'USDC' | 'EURC') ?? 'USDC'} size={12} />{p.token ?? 'USDC'}</div>
-                    {p.txHash && (
-                      <a
-                        href={`${ARC_EXPLORER}/tx/${p.txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
-                      >
-                        {p.txHash.slice(0, 6)}…{p.txHash.slice(-4)}
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    )}
                   </div>
                   <StatusBadge status={p.status} />
                 </div>
@@ -402,17 +415,18 @@ function HistoryPage() {
                         <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
                       </div>
                       <TxTimer createdAt={p.createdAt} updatedAt={p.updatedAt} status={p.status} />
-                      {p.txHash && (
-                        <a
-                          href={`${ARC_EXPLORER}/tx/${p.txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
-                        >
-                          {p.txHash.slice(0, 6)}…{p.txHash.slice(-4)}
-                          <ExternalLink className="h-2.5 w-2.5" />
-                        </a>
-                      )}
+                      <div className="mt-0.5 flex flex-wrap gap-2">
+                        {p.txHash && (
+                          <a href={txUrl(p.destChain, p.txHash)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
+                            {p.txHash.slice(0, 8)}…{p.txHash.slice(-6)} <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        )}
+                        {p.burnTxHash && (
+                          <a href={txUrl(p.sourceChain, p.burnTxHash)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:underline">
+                            burn: {p.burnTxHash.slice(0, 6)}… <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-semibold text-white">{p.token === 'EURC' ? '€' : '$'}{formatUSDC(p.amount)}</div>
@@ -484,12 +498,18 @@ function HistoryPage() {
                           <span className="text-gray-700">·</span>
                           <span className="text-xs text-gray-600">{new Date(p.createdAt).toLocaleDateString()}</span>
                         </div>
-                        {p.txHash && (
-                          <a href={`${ARC_EXPLORER}/tx/${p.txHash}`} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
-                            {p.txHash.slice(0, 6)}…{p.txHash.slice(-4)}
-                            <ExternalLink className="h-2.5 w-2.5" />
-                          </a>
-                        )}
+                        <div className="mt-0.5 flex flex-wrap gap-2">
+                          {p.txHash && (
+                            <a href={txUrl(p.destChain, p.txHash)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
+                              {p.txHash.slice(0, 8)}…{p.txHash.slice(-6)} <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          )}
+                          {p.burnTxHash && p.sourceChain !== 'ALL_CHAINS' && (
+                            <a href={txUrl(p.sourceChain, p.burnTxHash)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:underline">
+                              burn: {p.burnTxHash.slice(0, 6)}… <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -546,12 +566,12 @@ function HistoryPage() {
                       <TxTimer createdAt={s.createdAt} status={s.status} />
                       {s.txHash && (
                         <a
-                          href={`${ARC_EXPLORER}/tx/${s.txHash}`}
+                          href={txUrl(s.destChain, s.txHash)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
                         >
-                          {s.txHash.slice(0, 6)}…{s.txHash.slice(-4)}
+                          {s.txHash.slice(0, 8)}…{s.txHash.slice(-6)}
                           <ExternalLink className="h-2.5 w-2.5" />
                         </a>
                       )}
@@ -690,12 +710,12 @@ function HistoryPage() {
                               </div>
                               {entry.txHash && (
                                 <a
-                                  href={`${ARC_EXPLORER}/tx/${entry.txHash}`}
+                                  href={txUrl(entry.employee.preferredChain ?? 'ARC-TESTNET', entry.txHash)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
                                 >
-                                  {entry.txHash.slice(0, 6)}…
+                                  {entry.txHash.slice(0, 8)}…{entry.txHash.slice(-6)}
                                   <ExternalLink className="h-2.5 w-2.5" />
                                 </a>
                               )}
