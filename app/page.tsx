@@ -84,8 +84,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
-            Pay your team globally — no crypto knowledge required. Sign up, add employees, and run payroll.
-            The blockchain handles security, settlement, and the audit trail invisibly.
+            Global payroll and stablecoin payments for businesses. Manage multiple businesses and pay teams across chains from one account. Web2 simplicity.
           </p>
 
           <div className="flex items-center gap-4">
