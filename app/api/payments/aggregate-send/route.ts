@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
-import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId } from '@/lib/circle'
+import { getAllChainBalances, sendUsdcPayment, waitForTransaction, getOrCreateChainWalletId } from '@/lib/circle'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
@@ -122,14 +122,16 @@ export async function POST(req: NextRequest) {
       amount,
     })
 
+    const txHash = result.txHash ?? await waitForTransaction(result.id)
+
     await db.payment.update({
       where: { id: payment.id },
-      data:  { status: 'COMPLETED', txHash: result.txHash },
+      data:  { status: 'COMPLETED', txHash },
     })
 
     logPaymentOnChain(wallet.circleWalletId, recipientAddress, amount, label ?? '')
 
-    return NextResponse.json({ success: true, paymentId: payment.id, txHash: result.txHash })
+    return NextResponse.json({ success: true, paymentId: payment.id, txHash })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[aggregate-send]', message)
