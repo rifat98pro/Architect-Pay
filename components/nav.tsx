@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { LayoutDashboard, Send, History, Building2, Banknote, LogOut, Droplets, Settings, MessageSquare, ArrowUpDown, LifeBuoy, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, Send, History, Building2, Banknote, LogOut, Settings, MessageSquare, ArrowUpDown, LifeBuoy, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/context/theme-context'
 
@@ -98,20 +98,6 @@ export default function Nav() {
           )
         })}
 
-        <div className="my-2 mx-3 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)' }} />
-
-        <a
-          href="https://faucet.circle.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-all duration-200 ${theme === 'light' ? 'text-gray-500 hover:text-gray-900' : 'text-gray-400 hover:text-white'}`}
-        >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200"
-            style={{ background: '#06b6d418', boxShadow: 'none' }}>
-            <Droplets className="h-3.5 w-3.5 transition-colors duration-200" style={{ color: '#06b6d4bb' }} />
-          </span>
-          Get Faucet
-        </a>
       </nav>
 
       {/* Theme toggle */}
