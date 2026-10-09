@@ -4,8 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
-  ChevronRight, Banknote, Building2, RefreshCw, CheckCircle2,
-  ArrowLeftRight, Calendar,
+  ChevronRight, Banknote, Building2, CheckCircle2,
+  Calendar,
 } from 'lucide-react'
 
 function XLogo({ size = 20 }: { size?: number }) {
@@ -52,22 +52,19 @@ export default function LandingPage() {
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
       <section className="relative flex min-h-[92vh] flex-col items-center justify-center overflow-hidden px-6 text-center">
 
-        {/* Subtle radial glow behind text */}
         <div className="pointer-events-none absolute inset-0" style={{
           background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(42,171,171,0.08) 0%, transparent 70%)',
         }} />
 
         <div className="relative z-10 flex flex-col items-center">
-          {/* All headline lines — solid teal, stacked */}
           <div
             className="mb-8 select-none text-center font-black uppercase leading-none"
             style={{ letterSpacing: '-0.03em', color: '#2aabab' }}
           >
             {[
-              { text: 'ONE WALLET', size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
-              { text: 'PAY GLOBAL', size: 'clamp(2rem, 5.5vw, 4.5rem)', opacity: 1 },
-              { text: 'ANY CHAIN',  size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
-              { text: 'ANY BUSINESS', size: 'clamp(1.5rem, 4vw, 3.2rem)', opacity: 0.45 },
+              { text: 'GLOBAL PAYROLL',     size: 'clamp(2rem, 5.5vw, 4.5rem)', opacity: 1    },
+              { text: 'STABLECOIN PAYMENTS', size: 'clamp(1.4rem, 3.8vw, 3rem)', opacity: 0.45 },
+              { text: 'EVERY BUSINESS',      size: 'clamp(1.4rem, 3.8vw, 3rem)', opacity: 0.45 },
             ].map(({ text, size, opacity }) => (
               <div
                 key={text}
@@ -120,10 +117,10 @@ export default function LandingPage() {
       <section className="border-y px-6 py-10" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
         <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 text-center sm:grid-cols-4">
           {[
-            { value: '7 chains',  label: 'Supported networks'    },
-            { value: '~2–3 min', label: 'Cross-chain settlement' },
-            { value: '0.01%',    label: 'Platform fee'           },
-            { value: 'Instant',  label: 'Same-chain transfers'   },
+            { value: '7 chains',    label: 'Supported networks'     },
+            { value: 'USDC & EURC', label: 'Stablecoins supported'  },
+            { value: '0.01%',       label: 'Platform fee'            },
+            { value: 'Instant',     label: 'Same-chain transfers'    },
           ].map((s) => (
             <div key={s.label}>
               <div className="text-2xl font-bold" style={{ color: '#2aabab' }}>{s.value}</div>
@@ -138,18 +135,18 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
             <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Everything you need</div>
-            <h2 className="text-3xl font-bold text-white">Feels like a bank app. Runs on blockchain.</h2>
-            <p className="mt-3 text-sm" style={{ color: '#555' }}>No wallets to manage, no gas fees to worry about, no crypto expertise required — just a clean dashboard that works.</p>
+            <h2 className="text-3xl font-bold text-white">Built for businesses, not crypto experts</h2>
+            <p className="mt-3 text-sm" style={{ color: '#555' }}>Everything runs on blockchain. Nothing about it feels like blockchain.</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { icon: <Users className="h-5 w-5" />,         title: 'One-Click Payroll',         desc: 'Add employees, set salaries in USD, run payroll with one click. No crypto knowledge needed — it just works.',             color: '#2aabab' },
-              { icon: <Globe className="h-5 w-5" />,          title: 'Pay Anywhere, Any Chain',   desc: 'Send money globally to any wallet on 7 networks. Recipients get stablecoins — no exchange, no conversion.',               color: '#60a5fa' },
-              { icon: <ArrowLeftRight className="h-5 w-5" />, title: 'Instant Swaps',             desc: 'Convert between USDC and EURC in seconds from your dashboard. No DEX, no slippage surprises.',                           color: '#a78bfa' },
-              { icon: <Calendar className="h-5 w-5" />,       title: 'Auto-Pay on Schedule',      desc: 'Set a payday once — payroll runs itself every month. Your team gets paid even if you forget.',                             color: '#34d399' },
-              { icon: <Wallet className="h-5 w-5" />,         title: 'No Wallet Setup Required',  desc: 'We create and manage wallets for you. No seed phrases, no MetaMask, no gas fees — fully abstracted.',                     color: '#fb923c' },
-              { icon: <Shield className="h-5 w-5" />,         title: 'Immutable Audit Trail',     desc: 'Every payment is recorded on-chain automatically. Full history, explorer links, nothing to reconcile manually.',           color: '#f472b6' },
+              { icon: <Building2 className="h-5 w-5" />,      title: 'Multi-Business Management', desc: 'Create multiple businesses under one account. Each business has its own employee roster, payroll history, and settings.',  color: '#2aabab' },
+              { icon: <Users className="h-5 w-5" />,           title: 'Global Payroll',             desc: 'Add employees, set salaries, run payroll with one click. Pay any wallet on any of 7 supported chains simultaneously.',       color: '#60a5fa' },
+              { icon: <Globe className="h-5 w-5" />,           title: 'Stablecoin Payments',        desc: 'Send USDC and EURC to any wallet address globally. Instant on the same chain, ~2–3 min cross-chain via Circle CCTP.',       color: '#a78bfa' },
+              { icon: <Calendar className="h-5 w-5" />,        title: 'Scheduled Auto-Payroll',     desc: 'Set a payday date once. Payroll fires automatically every month — even while you sleep.',                                    color: '#34d399' },
+              { icon: <Wallet className="h-5 w-5" />,          title: 'No Wallet Setup',            desc: 'Sign up with email and password. Wallets are created and managed for you. No seed phrases, no MetaMask, no gas fees.',       color: '#fb923c' },
+              { icon: <Shield className="h-5 w-5" />,          title: 'On-Chain Audit Trail',       desc: 'Every payroll run and payment is logged immutably on-chain. Full history with explorer links — no spreadsheet needed.',      color: '#f472b6' },
             ].map((feat) => (
               <div
                 key={feat.title}
@@ -182,7 +179,8 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
             <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Simple setup</div>
-            <h2 className="text-3xl font-bold text-white">Three steps. No crypto experience needed.</h2>
+            <h2 className="text-3xl font-bold text-white">Up and running in minutes</h2>
+            <p className="mt-3 text-sm" style={{ color: '#555' }}>No blockchain knowledge required — if you can use a bank app, you can use Architect Pay.</p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-3">
@@ -190,20 +188,20 @@ export default function LandingPage() {
               {
                 step: '01',
                 icon: <Wallet className="h-6 w-6" />,
-                title: 'Sign up like any app',
-                body: 'Enter your email, set a password, done. We silently create and manage a multi-chain wallet for you behind the scenes — no seed phrases, no MetaMask.',
+                title: 'Create your account',
+                body: 'Sign up with email and password like any web app. We silently provision multi-chain wallets for you — no seed phrases, no MetaMask required.',
               },
               {
                 step: '02',
-                icon: <Globe className="h-6 w-6" />,
-                title: 'Add funds your way',
-                body: 'Deposit USDC from any chain, or buy directly with a debit card. Funds appear in your dashboard in minutes — cross-chain bridging happens invisibly.',
+                icon: <Building2 className="h-6 w-6" />,
+                title: 'Add your businesses & teams',
+                body: 'Create one or more businesses, add employees with their wallet addresses and salaries. Mix USDC and EURC, different chains — all in one place.',
               },
               {
                 step: '03',
                 icon: <Banknote className="h-6 w-6" />,
-                title: 'Pay your team',
-                body: 'Add employees, set salaries, click Run Payroll. Everyone gets paid to their wallet — on any chain they prefer. Blockchain provides the receipt, you get the peace of mind.',
+                title: 'Run payroll & send payments',
+                body: 'Hit Run Payroll and every employee gets paid to their preferred chain instantly. Or send one-off payments to any address globally.',
               },
             ].map((item, i) => (
               <div
@@ -226,20 +224,20 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* CCTP flow */}
+          {/* Cross-chain flow */}
           <div className="mt-12 rounded-2xl border p-8" style={{ background: 'rgba(42,171,171,0.04)', borderColor: 'rgba(42,171,171,0.15)' }}>
-            <p className="mb-6 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: '#2aabab' }}>CCTP V2 Cross-Chain Flow</p>
+            <p className="mb-6 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: '#2aabab' }}>What happens under the hood (Circle CCTP V2)</p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               {[
-                { label: 'Your ETH/Base/ARB/Polygon wallet', bg: 'rgba(255,255,255,0.05)', color: '#888' },
+                { label: 'Your funds on any chain',   bg: 'rgba(255,255,255,0.05)', color: '#888'    },
                 null,
-                { label: 'depositForBurn via CCTP',          bg: 'rgba(251,191,36,0.08)',  color: '#fbbf24' },
+                { label: 'Burn on source chain',      bg: 'rgba(251,191,36,0.08)',  color: '#fbbf24' },
                 null,
-                { label: 'Iris API attestation',             bg: 'rgba(96,165,250,0.08)',  color: '#60a5fa' },
+                { label: 'Circle attestation',        bg: 'rgba(96,165,250,0.08)',  color: '#60a5fa' },
                 null,
-                { label: 'receiveMessage on Arc',            bg: 'rgba(52,211,153,0.08)',  color: '#34d399' },
+                { label: 'Mint on destination chain', bg: 'rgba(52,211,153,0.08)',  color: '#34d399' },
                 null,
-                { label: 'USDC in Arc wallet',               bg: 'rgba(42,171,171,0.12)',  color: '#2aabab' },
+                { label: 'Employee receives payment', bg: 'rgba(42,171,171,0.12)',  color: '#2aabab' },
               ].map((item, i) =>
                 item === null
                   ? <ChevronRight key={i} className="h-4 w-4" style={{ color: 'rgba(255,255,255,0.15)' }} />
@@ -262,30 +260,30 @@ export default function LandingPage() {
             {[
               {
                 icon: <Users className="h-5 w-5" />,
-                title: 'Global Payroll Teams',
-                body: 'Pay remote employees and contractors in USDC regardless of which chain their wallet is on. Schedule auto-runs so payroll never slips.',
-                bullets: ['Add employee roster with salaries', 'One-click batch payroll', 'Scheduled monthly auto-pay'],
+                title: 'Remote-First Companies',
+                body: 'Pay distributed teams across any country and chain in USDC or EURC. No FX fees, no bank delays, no paperwork.',
+                bullets: ['Employees choose their preferred chain', 'Payroll runs automatically each month', 'Full payment history on-chain'],
                 color: '#2aabab',
               },
               {
                 icon: <Building2 className="h-5 w-5" />,
-                title: 'Vendor & Supplier Payments',
-                body: 'Pay vendors on-chain without asking them to use a specific chain. Any EVM address receives USDC or EURC instantly.',
-                bullets: ['Instant on-chain payments', 'Wallet address + label tracking', 'Full history with explorer links'],
+                title: 'Multi-Business Owners',
+                body: 'Manage multiple companies from a single Architect Pay account. Separate employees, payroll runs, and histories per business.',
+                bullets: ['Unlimited businesses under one login', 'Each business is fully isolated', 'Switch between businesses in one click'],
                 color: '#60a5fa',
               },
               {
-                icon: <RefreshCw className="h-5 w-5" />,
-                title: 'Cross-Chain Treasury',
-                body: 'Aggregate USDC scattered across multiple chains into a single spendable Arc balance. No manual bridging or per-chain gas management.',
-                bullets: ['Auto-aggregate from all chains', 'Parallel CCTP pulls', 'Arc becomes unified treasury'],
+                icon: <Globe className="h-5 w-5" />,
+                title: 'Vendor & Contractor Payments',
+                body: "Pay freelancers and suppliers globally without asking what chain they're on. Any EVM address receives USDC or EURC.",
+                bullets: ['One-off payments to any wallet', 'Wallet address + label tracking', 'Explorer links for every transaction'],
                 color: '#a78bfa',
               },
               {
                 icon: <Zap className="h-5 w-5" />,
-                title: 'Instant Internal Transfers',
-                body: 'Arc → Arc transfers are instant with zero fee. Perfect for internal wallet settlements or real-time invoice payments.',
-                bullets: ['Zero fee on-Arc transfers', 'Circle Gas Station sponsors gas', 'No MetaMask or seed phrases'],
+                title: 'Crypto-Native Startups',
+                body: 'Replace your manual stablecoin payroll spreadsheets with a proper system. Audit-ready, automated, multi-chain.',
+                bullets: ['Replace manual wallet sends', 'On-chain proof of every payment', 'No gas management or RPC setup'],
                 color: '#34d399',
               },
             ].map((uc) => (
@@ -323,7 +321,6 @@ export default function LandingPage() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            {/* API routes */}
             <div className="rounded-2xl border p-8" style={{ background: 'rgba(0,0,0,0.6)', borderColor: 'rgba(42,171,171,0.15)' }}>
               <div className="mb-6 flex items-center gap-3">
                 <Code2 className="h-5 w-5" style={{ color: '#2aabab' }} />
@@ -472,14 +469,17 @@ export default function LandingPage() {
 
       {/* ── Footer CTA ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden px-6 py-32 text-center">
+        <div className="pointer-events-none absolute inset-0" style={{
+          background: 'radial-gradient(ellipse 50% 60% at 50% 50%, rgba(42,171,171,0.06) 0%, transparent 70%)',
+        }} />
         <div className="relative z-10 mx-auto max-w-xl">
           <h2 className="mb-4 text-4xl font-bold text-white">
-            Global payroll,
+            One account.
             <br />
-            <span style={{ color: '#2aabab' }}>without the complexity.</span>
+            <span style={{ color: '#2aabab' }}>Every business. Every team.</span>
           </h2>
           <p className="mb-8 text-sm leading-relaxed" style={{ color: '#555' }}>
-            Set up in under a minute. No wallet, no crypto knowledge, no gas fees. Just pay your team.
+            Global payroll and stablecoin payments — set up in minutes, no crypto knowledge needed.
           </p>
           <Link
             href="/signup"
@@ -496,7 +496,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
             <Image src="/logo.png" alt="Architect Pay" width={18} height={18} className="rounded-md object-contain opacity-50" />
-            <span>Architect Pay · Built on Arc Testnet · Powered by Circle CCTP V2</span>
+            <span>Architect Pay · Global payroll & stablecoin payments · Powered by Circle CCTP V2</span>
           </div>
           <div className="flex items-center gap-5">
             <Link href="/terms"   className="transition-colors hover:text-white">Terms</Link>
@@ -506,7 +506,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-
 
     </div>
   )
