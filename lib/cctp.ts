@@ -78,7 +78,10 @@ async function getUsdcFee(srcDomain: number, dstDomain: number, amountMicro: big
 }> {
   const url = `${IRIS_API}/v2/burn/USDC/fees/${srcDomain}/${dstDomain}`
   const res  = await fetch(url)
-  if (!res.ok) throw new Error(`Failed to fetch CCTP fee: ${res.status}`)
+  // Arc mainnet (domain 26) is not yet in Circle's fee database — fall back to zero fee
+  if (!res.ok) {
+    return { feeAmount: BigInt(0), totalToApprove: amountMicro, finalityThreshold: 1000 }
+  }
 
   const tiers = await res.json() as Array<{ finalityThreshold: number; minimumFee: number }>
   const sorted = [...tiers].sort((a, b) => a.finalityThreshold - b.finalityThreshold)

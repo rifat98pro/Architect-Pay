@@ -35,16 +35,14 @@ export function computeAggregatePlan(
   let remaining = targetAmount
   let totalFee  = 0
 
-  // Arc funds are "instant" only when dest is also Arc; otherwise they need CCTP bridging
+  // Arc funds are "instant" only when dest is also Arc; otherwise they bridge via CCTP (zero fee on Arc mainnet)
   const arcIsCctp = destChain !== 'ARC-TESTNET'
 
   const arcBal = chainBalances['ARC-TESTNET'] ?? 0
   if (arcBal > 0 && remaining > 0) {
     const use = parseFloat(Math.min(arcBal, remaining).toFixed(6))
-    const fee = arcIsCctp ? parseFloat((use * 0.01).toFixed(6)) : 0
-    plan.push({ chain: 'ARC-TESTNET', label: 'Arc', amount: use.toFixed(6), fee: fee.toFixed(6), isCctp: arcIsCctp })
-    totalFee  += fee
-    remaining -= arcIsCctp ? use - fee : use
+    plan.push({ chain: 'ARC-TESTNET', label: 'Arc', amount: use.toFixed(6), fee: '0', isCctp: arcIsCctp })
+    remaining -= use
   }
 
   if (remaining > 0.001) {

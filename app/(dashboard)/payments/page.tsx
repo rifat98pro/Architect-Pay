@@ -485,7 +485,8 @@ export default function PaymentsPage() {
                       <span className="text-blue-400">{entry.label}</span>
                       <span className="font-medium text-blue-200">
                         {token === 'EURC' ? '' : '$'}{parseFloat(entry.amount).toFixed(2)} {token}
-                        {entry.isCctp && <span className="ml-1 text-blue-500">(~{token === 'EURC' ? '' : '$'}{parseFloat(entry.fee).toFixed(2)} fee)</span>}
+                        {entry.isCctp && parseFloat(entry.fee) > 0 && <span className="ml-1 text-blue-500">(~{token === 'EURC' ? '' : '$'}{parseFloat(entry.fee).toFixed(2)} fee)</span>}
+                        {entry.isCctp && parseFloat(entry.fee) === 0 && <span className="ml-1 text-amber-400">(via CCTP, ~2–5 min)</span>}
                         {!entry.isCctp && <span className="ml-1 text-green-400">(instant)</span>}
                       </span>
                     </div>
