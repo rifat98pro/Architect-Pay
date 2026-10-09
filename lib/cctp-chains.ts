@@ -76,7 +76,7 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
   },
   'AVAX-FUJI': {
-    label:                'Avalanche',
+    label:                'Avalanche C-Chain',
     cctpDomain:           1,
     rpcUrl:               'https://api.avax.network/ext/bc/C/rpc',
     usdcAddress:          '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',

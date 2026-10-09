@@ -17,7 +17,7 @@ const CHAIN_OPTIONS = [
   { value: 'BASE-SEPOLIA', label: 'Base' },
   { value: 'ARB-SEPOLIA',  label: 'Arbitrum' },
   { value: 'MATIC-AMOY',   label: 'Polygon' },
-  { value: 'AVAX-FUJI',    label: 'Avalanche' },
+  { value: 'AVAX-FUJI',    label: 'Avalanche C-Chain' },
   { value: 'OP-SEPOLIA',   label: 'Optimism' },
 ]
 

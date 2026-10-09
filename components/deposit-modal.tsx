@@ -12,7 +12,7 @@ const USDC_CHAINS = [
   { id: 'BASE-SEPOLIA', label: 'Base',     network: 'Base' },
   { id: 'ARB-SEPOLIA',  label: 'Arbitrum', network: 'Arbitrum' },
   { id: 'MATIC-AMOY',   label: 'Polygon',  network: 'Polygon' },
-  { id: 'AVAX-FUJI',    label: 'Avalanche',network: 'Avalanche' },
+  { id: 'AVAX-FUJI',    label: 'Avalanche C-Chain', network: 'Avalanche C-Chain' },
   { id: 'OP-SEPOLIA',   label: 'Optimism', network: 'Optimism' },
 ]
 

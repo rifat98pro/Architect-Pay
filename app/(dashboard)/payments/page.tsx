@@ -18,7 +18,7 @@ const DEST_CHAINS = [
   { id: 'BASE-SEPOLIA', label: 'Base'      },
   { id: 'ARB-SEPOLIA',  label: 'Arbitrum'  },
   { id: 'MATIC-AMOY',   label: 'Polygon'   },
-  { id: 'AVAX-FUJI',    label: 'Avalanche' },
+  { id: 'AVAX-FUJI',    label: 'Avalanche C-Chain' },
   { id: 'OP-SEPOLIA',   label: 'Optimism'  },
 ]
 
