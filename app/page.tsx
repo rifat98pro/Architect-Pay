@@ -84,8 +84,8 @@ export default function LandingPage() {
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
-            On-chain payroll infrastructure for global businesses. Run payroll, send cross-chain
-            USDC &amp; EURC payments, and manage employees from a single wallet.
+            Pay your team globally — no crypto knowledge required. Sign up, add employees, and run payroll.
+            The blockchain handles security, settlement, and the audit trail invisibly.
           </p>
 
           <div className="flex items-center gap-4">
@@ -121,10 +121,10 @@ export default function LandingPage() {
       <section className="border-y px-6 py-10" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
         <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 text-center sm:grid-cols-4">
           {[
-            { value: '5 chains',  label: 'Supported networks'    },
+            { value: '7 chains',  label: 'Supported networks'    },
             { value: '~2–3 min', label: 'Cross-chain settlement' },
             { value: '0.01%',    label: 'Platform fee'           },
-            { value: 'Instant',  label: 'Arc → Arc transfers'    },
+            { value: 'Instant',  label: 'Same-chain transfers'   },
           ].map((s) => (
             <div key={s.label}>
               <div className="text-2xl font-bold" style={{ color: '#2aabab' }}>{s.value}</div>
@@ -139,18 +139,18 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
             <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Everything you need</div>
-            <h2 className="text-3xl font-bold text-white">Built for modern finance teams</h2>
-            <p className="mt-3 text-sm" style={{ color: '#555' }}>One platform for payroll, payments, swaps, and multi-chain treasury.</p>
+            <h2 className="text-3xl font-bold text-white">Feels like a bank app. Runs on blockchain.</h2>
+            <p className="mt-3 text-sm" style={{ color: '#555' }}>No wallets to manage, no gas fees to worry about, no crypto expertise required — just a clean dashboard that works.</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { icon: <Users className="h-5 w-5" />,         title: 'Global Payroll',           desc: 'Add employees, set salaries, run payroll in one click. Schedule auto-runs on any day of the month.',                        color: '#2aabab' },
-              { icon: <Globe className="h-5 w-5" />,          title: 'Cross-Chain Payments',     desc: 'Send USDC & EURC across Ethereum, Base, Arbitrum, Polygon, and Arc via Circle CCTP V2.',                                  color: '#60a5fa' },
-              { icon: <ArrowLeftRight className="h-5 w-5" />, title: 'EURC ↔ USDC Swaps',       desc: 'Swap between stablecoins across chains instantly from your unified dashboard.',                                            color: '#a78bfa' },
-              { icon: <Calendar className="h-5 w-5" />,       title: 'Scheduled Payroll',        desc: 'Set a payday once — payroll runs automatically every month on your chosen date.',                                          color: '#34d399' },
-              { icon: <Wallet className="h-5 w-5" />,         title: 'Developer-Controlled Wallets', desc: 'Circle SCA wallets with no seed phrases. Gas is sponsored — employees pay nothing.',                                  color: '#fb923c' },
-              { icon: <Shield className="h-5 w-5" />,         title: 'On-Chain Audit Trail',     desc: 'Every payment, swap, and payroll run recorded on-chain with ArcScan explorer links.',                                     color: '#f472b6' },
+              { icon: <Users className="h-5 w-5" />,         title: 'One-Click Payroll',         desc: 'Add employees, set salaries in USD, run payroll with one click. No crypto knowledge needed — it just works.',             color: '#2aabab' },
+              { icon: <Globe className="h-5 w-5" />,          title: 'Pay Anywhere, Any Chain',   desc: 'Send money globally to any wallet on 7 networks. Recipients get stablecoins — no exchange, no conversion.',               color: '#60a5fa' },
+              { icon: <ArrowLeftRight className="h-5 w-5" />, title: 'Instant Swaps',             desc: 'Convert between USDC and EURC in seconds from your dashboard. No DEX, no slippage surprises.',                           color: '#a78bfa' },
+              { icon: <Calendar className="h-5 w-5" />,       title: 'Auto-Pay on Schedule',      desc: 'Set a payday once — payroll runs itself every month. Your team gets paid even if you forget.',                             color: '#34d399' },
+              { icon: <Wallet className="h-5 w-5" />,         title: 'No Wallet Setup Required',  desc: 'We create and manage wallets for you. No seed phrases, no MetaMask, no gas fees — fully abstracted.',                     color: '#fb923c' },
+              { icon: <Shield className="h-5 w-5" />,         title: 'Immutable Audit Trail',     desc: 'Every payment is recorded on-chain automatically. Full history, explorer links, nothing to reconcile manually.',           color: '#f472b6' },
             ].map((feat) => (
               <div
                 key={feat.title}
@@ -183,7 +183,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
             <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Simple setup</div>
-            <h2 className="text-3xl font-bold text-white">Three steps, then you&apos;re live</h2>
+            <h2 className="text-3xl font-bold text-white">Three steps. No crypto experience needed.</h2>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-3">
@@ -191,20 +191,20 @@ export default function LandingPage() {
               {
                 step: '01',
                 icon: <Wallet className="h-6 w-6" />,
-                title: 'Create your account',
-                body: 'Sign up in seconds. We instantly provision a Circle SCA wallet on Arc Testnet and every supported chain — no seed phrases, no MetaMask.',
+                title: 'Sign up like any app',
+                body: 'Enter your email, set a password, done. We silently create and manage a multi-chain wallet for you behind the scenes — no seed phrases, no MetaMask.',
               },
               {
                 step: '02',
                 icon: <Globe className="h-6 w-6" />,
-                title: 'Fund from any chain',
-                body: 'Deposit USDC from Ethereum, Base, Arbitrum, or Polygon. CCTP V2 burns it on the source chain and mints directly to your Arc wallet in ~2–3 min.',
+                title: 'Add funds your way',
+                body: 'Deposit USDC from any chain, or buy directly with a debit card. Funds appear in your dashboard in minutes — cross-chain bridging happens invisibly.',
               },
               {
                 step: '03',
                 icon: <Banknote className="h-6 w-6" />,
-                title: 'Run payroll or send',
-                body: 'Add employees with wallet addresses and salaries, then hit Run Payroll. Or send one-off payments to any address instantly. All on-chain, fully auditable.',
+                title: 'Pay your team',
+                body: 'Add employees, set salaries, click Run Payroll. Everyone gets paid to their wallet — on any chain they prefer. Blockchain provides the receipt, you get the peace of mind.',
               },
             ].map((item, i) => (
               <div
@@ -475,12 +475,12 @@ export default function LandingPage() {
       <section className="relative overflow-hidden px-6 py-32 text-center">
         <div className="relative z-10 mx-auto max-w-xl">
           <h2 className="mb-4 text-4xl font-bold text-white">
-            Ready to run payroll
+            Global payroll,
             <br />
-            <span style={{ color: '#2aabab' }}>on-chain?</span>
+            <span style={{ color: '#2aabab' }}>without the complexity.</span>
           </h2>
           <p className="mb-8 text-sm leading-relaxed" style={{ color: '#555' }}>
-            Set up your account in under a minute. No wallet required.
+            Set up in under a minute. No wallet, no crypto knowledge, no gas fees. Just pay your team.
           </p>
           <Link
             href="/signup"
