@@ -11,21 +11,20 @@ import ChainLogo from '@/components/chain-logo'
 type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
 type Chain = 'ARC-TESTNET' | 'ETH-SEPOLIA' | 'BASE-SEPOLIA'
 
-const CHAINS: { id: Chain; label: string; short: string; swapSupported: boolean }[] = [
-  { id: 'ARC-TESTNET',  label: 'Arc',      short: 'Arc',      swapSupported: true  },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum', short: 'Ethereum', swapSupported: false },
-  { id: 'BASE-SEPOLIA', label: 'Base',     short: 'Base',     swapSupported: false },
+const CHAINS: { id: Chain; label: string; short: string }[] = [
+  { id: 'ARC-TESTNET',  label: 'Arc',      short: 'Arc'      },
+  { id: 'ETH-SEPOLIA',  label: 'Ethereum', short: 'Ethereum' },
+  { id: 'BASE-SEPOLIA', label: 'Base',     short: 'Base'     },
 ]
 
 type BalMap = Record<Chain, { usdc: string; eurc: string }>
 
 function ChainDropdown({
-  value, onChange, tokenLabel, colorClass,
+  value, onChange, tokenLabel,
 }: {
   value: Chain
   onChange: (c: Chain) => void
   tokenLabel: string
-  colorClass: string
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -63,20 +62,14 @@ function ChainDropdown({
             <button
               key={c.id}
               type="button"
-              disabled={!c.swapSupported}
-              onClick={() => { if (c.swapSupported) { onChange(c.id); setOpen(false) } }}
+              onClick={() => { onChange(c.id); setOpen(false) }}
               className={`flex w-full items-center gap-2.5 px-4 py-3 text-sm transition ${
-                !c.swapSupported
-                  ? 'text-gray-600 cursor-not-allowed'
-                  : value === c.id
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-300 hover:bg-gray-800'
+                value === c.id ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800'
               }`}
             >
               <ChainLogo chain={c.id} size={18} />
               <span className="flex-1">{c.label}</span>
-              {!c.swapSupported && <span className="text-[10px] text-gray-700 bg-gray-800 px-1.5 py-0.5 rounded">mainnet only</span>}
-              {value === c.id && c.swapSupported && <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />}
+              {value === c.id && <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />}
             </button>
           ))}
         </div>
@@ -262,7 +255,6 @@ export default function SwapPage() {
                 value={srcChain}
                 onChange={(c) => { setSrcChain(c); setAmount(''); setError('') }}
                 tokenLabel={tokenIn}
-                colorClass="bg-blue-500/20 text-blue-400"
               />
             </div>
             <div className="mt-3 flex items-center justify-between">
@@ -308,7 +300,6 @@ export default function SwapPage() {
                 value={destChain}
                 onChange={(c) => { setDestChain(c); setError('') }}
                 tokenLabel={tokenOut}
-                colorClass="bg-brand-500/20 text-brand-400"
               />
             </div>
             <div className="mt-3 flex items-center justify-between">

@@ -10,9 +10,9 @@ export const dynamic     = 'force-dynamic'
 export const maxDuration = 120
 
 const CHAIN_MAP: Record<string, string> = {
-  'ARC-TESTNET':  'Arc_Testnet',
-  'ETH-SEPOLIA':  'Ethereum_Sepolia',
-  'BASE-SEPOLIA': 'Base_Sepolia',
+  'ARC-TESTNET':  'Arc',
+  'ETH-SEPOLIA':  'Ethereum',
+  'BASE-SEPOLIA': 'Base',
 }
 
 const CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'] as const
