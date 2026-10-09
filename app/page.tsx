@@ -83,13 +83,12 @@ export default function LandingPage() {
                 <div
                   key={text}
                   style={{
-                    fontSize:   size,
-                    lineHeight: 1.05,
-                    color:      isActive ? '#2aabab' : 'rgba(42,171,171,0.22)',
-                    textShadow: isActive
-                      ? '0 0 40px rgba(42,171,171,0.9), 0 0 80px rgba(42,171,171,0.5), 0 0 120px rgba(42,171,171,0.25)'
-                      : 'none',
-                    transition: 'color 0.5s ease, text-shadow 0.5s ease',
+                    fontSize:    size,
+                    lineHeight:  1.05,
+                    color:       isActive ? '#2aabab' : 'rgba(42,171,171,0.2)',
+                    textShadow:  isActive ? '0 0 32px rgba(42,171,171,0.55)' : 'none',
+                    transition:  'color 0.6s ease, text-shadow 0.6s ease',
+                    willChange:  'color',
                   }}
                 >
                   {text}
