@@ -38,6 +38,7 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     rpcUrl:               'https://rpc.mainnet.arc.io',
     usdcAddress:          '0x3600000000000000000000000000000000000000',
     eurcAddress:          '0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1',
+    eurcTokenManager:     '0x431871229103b780868f8C6BB820cd16ECf942BC',
     tokenMessengerV2:     '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
     messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
   },
