@@ -231,7 +231,7 @@ export default function SupportPage() {
         {[
           { label: 'Circle CCTP Docs',  href: 'https://developers.circle.com/stablecoins/cctp-getting-started', icon: <ExternalLink className="h-3.5 w-3.5" /> },
           { label: 'Arc Docs',          href: 'https://developers.circle.com/arc',                              icon: <ExternalLink className="h-3.5 w-3.5" /> },
-          { label: 'ArcScan Explorer',  href: 'https://arcscan.app',                                            icon: <ExternalLink className="h-3.5 w-3.5" /> },
+          { label: 'ArcScan Explorer',  href: 'https://arbiscan.io',                                            icon: <ExternalLink className="h-3.5 w-3.5" /> },
         ].map((link) => (
           <a
             key={link.label}
