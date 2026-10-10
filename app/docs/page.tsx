@@ -347,7 +347,7 @@ GET /api/swap/history`}</CodeBlock>
                 },
                 {
                   q: 'Is there a fee?',
-                  a: 'Same-chain transfers: free. Cross-chain transfers: 0.01% platform fee (minimum $0.10), plus Circle CCTP has no additional fee at standard finality.',
+                  a: 'Same-chain transfers: free. Cross-chain transfers: 0.01% platform fee (minimum $0.01), plus Circle CCTP has no additional fee at standard finality.',
                 },
               ].map((item) => (
                 <details
