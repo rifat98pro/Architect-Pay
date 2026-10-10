@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // Step 1: Run CCTP pulls in parallel (non-Arc chains → user's own Arc wallet)
-    const cctpEntries = plan.plan.filter((e) => e.isCctp && e.chain !== 'ARC-TESTNET')
+    const cctpEntries = plan.plan.filter((e) => e.isCctp)
 
     if (cctpEntries.length > 0) {
       await Promise.all(

@@ -63,19 +63,6 @@ const DEPOSIT_FOR_BURN_ABI = {
   outputs: [],
 }
 
-// USDC: CCTP V1-style 4-arg depositForBurn (TokenMessengerWithFees — Arc only)
-const DEPOSIT_FOR_BURN_4ARG_ABI = {
-  type:            'function' as const,
-  name:            'depositForBurn',
-  stateMutability: 'nonpayable' as const,
-  inputs: [
-    { name: 'amount',            type: 'uint256' },
-    { name: 'destinationDomain', type: 'uint32'  },
-    { name: 'mintRecipient',     type: 'bytes32' },
-    { name: 'burnToken',         type: 'address' },
-  ],
-  outputs: [],
-}
 
 // EURC: CrossChainTokenService crossChainTransfer
 const CROSS_CHAIN_TRANSFER_ABI = {
@@ -290,10 +277,6 @@ export async function cctpBurn({
 
     console.log(`[cctp/usdc] burn phase: ${sourceChain} → ${destChain ?? 'ARC-TESTNET'}`)
 
-    // Use TokenMessengerWithFees (4-arg) when available — simpler call that the bundler can simulate
-    const messengerAddress = srcMeta.tokenMessengerWithFees ?? srcMeta.tokenMessengerV2
-    const useSimpleAbi     = !!srcMeta.tokenMessengerWithFees
-
     const { feeAmount, totalToApprove, finalityThreshold } = await getUsdcFee(srcMeta.cctpDomain, dstDomain, amountMicro)
 
     const walletAddress = await getChainWalletAddress(sourceWalletId)
@@ -301,22 +284,18 @@ export async function cctpBurn({
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [messengerAddress, totalToApprove] }),
+      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
     // Wait until the allowance is visible on-chain before submitting depositForBurn.
     // Arc RPC nodes can lag after a tx confirms, causing the bundler to see stale state.
-    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, messengerAddress, totalToApprove)
-
-    const burnCallData = useSimpleAbi
-      ? encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_4ARG_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken] })
-      : encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI],      functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] })
+    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
 
     const burnTxId = await executeContractCall({
       walletId:        sourceWalletId,
-      contractAddress: messengerAddress,
-      callData:        burnCallData,
+      contractAddress: srcMeta.tokenMessengerV2,
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
     })
     const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => { throw new Error(`[step2-depositForBurn] ${e.message}`) })
     console.log(`[cctp/usdc] burn confirmed: ${burnTxHash}`)
@@ -391,9 +370,6 @@ export async function cctpBurnFast({
     const burnToken   = srcMeta.usdcAddress
     const recipient32 = pad(recipientAddress as `0x${string}`, { size: 32 })
 
-    const messengerAddress = srcMeta.tokenMessengerWithFees ?? srcMeta.tokenMessengerV2
-    const useSimpleAbi     = !!srcMeta.tokenMessengerWithFees
-
     const { feeAmount, totalToApprove, finalityThreshold } = await getUsdcFee(srcMeta.cctpDomain, dstDomain, amountMicro)
 
     const walletAddress = await getChainWalletAddress(sourceWalletId)
@@ -402,22 +378,18 @@ export async function cctpBurnFast({
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [messengerAddress, totalToApprove] }),
+      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
     // Wait for allowance to be visible on-chain before submitting depositForBurn
-    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, messengerAddress, totalToApprove)
-
-    const burnCallData = useSimpleAbi
-      ? encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_4ARG_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken] })
-      : encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI],      functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] })
+    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
 
     // Submit burn — don't wait, return Circle tx ID immediately
     const burnCircleTxId = await executeContractCall({
       walletId:        sourceWalletId,
-      contractAddress: messengerAddress,
-      callData:        burnCallData,
+      contractAddress: srcMeta.tokenMessengerV2,
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
     })
 
     console.log(`[cctp/usdc] burn submitted (no-wait): circleId=${burnCircleTxId}`)
