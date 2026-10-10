@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 const server = createAppServerKit({
   onramp: {
     apiKey:         process.env.CIRCLE_API_KEY!,
-    referrerDomain: process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, '').split('/')[0] ?? 'localhost:3000',
+    referrerDomain: process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, '').split('/')[0].split(':')[0] ?? 'localhost',
   },
 })
 
