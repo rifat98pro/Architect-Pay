@@ -23,24 +23,26 @@ export const CIRCLE_BLOCKCHAIN: Record<CctpSourceChain, string> = {
 }
 
 export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
-  label:                string
-  cctpDomain:           number
-  rpcUrl:               string
-  usdcAddress:          `0x${string}`
-  eurcAddress?:         `0x${string}`
-  eurcTokenManager?:    `0x${string}`
-  tokenMessengerV2:     `0x${string}`
-  messageTransmitterV2: `0x${string}`
+  label:                    string
+  cctpDomain:               number
+  rpcUrl:                   string
+  usdcAddress:              `0x${string}`
+  eurcAddress?:             `0x${string}`
+  eurcTokenManager?:        `0x${string}`
+  tokenMessengerV2:         `0x${string}`
+  tokenMessengerWithFees?:  `0x${string}`
+  messageTransmitterV2:     `0x${string}`
 }> = {
   'ARC-TESTNET': {
-    label:                'Arc',
-    cctpDomain:           26,
-    rpcUrl:               'https://rpc.mainnet.arc.io',
-    usdcAddress:          '0x3600000000000000000000000000000000000000',
-    eurcAddress:          '0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1',
-    eurcTokenManager:     '0x431871229103b780868f8C6BB820cd16ECf942BC',
-    tokenMessengerV2:     '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
-    messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
+    label:                   'Arc',
+    cctpDomain:              26,
+    rpcUrl:                  'https://rpc.mainnet.arc.io',
+    usdcAddress:             '0x3600000000000000000000000000000000000000',
+    eurcAddress:             '0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1',
+    eurcTokenManager:        '0x431871229103b780868f8C6BB820cd16ECf942BC',
+    tokenMessengerV2:        '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
+    tokenMessengerWithFees:  '0x71f54F818671cD0D7ea140Da213e5C8b5C92a408',
+    messageTransmitterV2:    '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
   },
   'ETH-SEPOLIA': {
     label:                'Ethereum',
