@@ -1,13 +1,35 @@
 'use server'
 
 import { encodeFunctionData, encodePacked, pad } from 'viem'
-import { executeContractCall, waitForTransaction } from '@/lib/circle'
+import { executeContractCall, waitForTransaction, getChainWalletAddress } from '@/lib/circle'
 import {
   SOURCE_CHAIN_META, ARC_TESTNET_CONFIG, CCTS_ADDRESS, EURC_CCTPX_TOKEN_ID,
   type CctpSourceChain,
 } from '@/lib/cctp-chains'
 
 const IRIS_API = 'https://iris-api.circle.com'
+
+// Poll until allowance[owner][spender] >= required on the given chain RPC.
+// Arc RPC nodes can lag slightly after a tx confirms, causing the next tx to see stale state.
+async function waitForAllowance(
+  rpcUrl:   string,
+  token:    string,
+  owner:    string,
+  spender:  string,
+  required: bigint,
+): Promise<void> {
+  const padAddr = (a: string) => '0x' + a.replace('0x', '').padStart(64, '0')
+  const data = `0xdd62ed3e${padAddr(owner).slice(2)}${padAddr(spender).slice(2)}`
+  for (let i = 0; i < 12; i++) {
+    try {
+      const res  = await fetch(rpcUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_call', params: [{ to: token, data }, 'latest'], id: 1 }) })
+      const json = await res.json() as { result?: string }
+      if (json.result && BigInt(json.result) >= required) return
+    } catch { /* retry */ }
+    await new Promise((r) => setTimeout(r, 2_000))
+  }
+  // Proceed anyway — bundler may have a different view but worth trying
+}
 
 const APPROVE_ABI = {
   type:             'function' as const,
@@ -80,7 +102,7 @@ async function getUsdcFee(srcDomain: number, dstDomain: number, amountMicro: big
   const res  = await fetch(url)
   // Arc mainnet (domain 26) is not yet in Circle's fee database — fall back to zero fee
   if (!res.ok) {
-    return { feeAmount: BigInt(0), totalToApprove: amountMicro, finalityThreshold: 1000 }
+    return { feeAmount: BigInt(0), totalToApprove: amountMicro, finalityThreshold: 0 }
   }
 
   const tiers = await res.json() as Array<{ finalityThreshold: number; minimumFee: number }>
@@ -249,12 +271,18 @@ export async function cctpBurn({
 
     const { feeAmount, totalToApprove, finalityThreshold } = await getUsdcFee(srcMeta.cctpDomain, dstDomain, amountMicro)
 
+    const walletAddress = await getChainWalletAddress(sourceWalletId)
+
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+
+    // Wait until the allowance is visible on-chain before submitting depositForBurn.
+    // Arc RPC nodes can lag after a tx confirms, causing the bundler to see stale state.
+    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
 
     const burnTxId = await executeContractCall({
       walletId:        sourceWalletId,
@@ -336,6 +364,8 @@ export async function cctpBurnFast({
 
     const { feeAmount, totalToApprove, finalityThreshold } = await getUsdcFee(srcMeta.cctpDomain, dstDomain, amountMicro)
 
+    const walletAddress = await getChainWalletAddress(sourceWalletId)
+
     // Wait for approve to confirm — depositForBurn requires allowance to be on-chain
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
@@ -343,6 +373,9 @@ export async function cctpBurnFast({
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+
+    // Wait for allowance to be visible on-chain before submitting depositForBurn
+    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
 
     // Submit burn — don't wait, return Circle tx ID immediately
     const burnCircleTxId = await executeContractCall({
