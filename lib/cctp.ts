@@ -10,7 +10,8 @@ import {
 const IRIS_API = 'https://iris-api.circle.com'
 
 // Poll until allowance[owner][spender] >= required on the given chain RPC.
-// Arc RPC nodes can lag slightly after a tx confirms, causing the next tx to see stale state.
+// Requires 3 consecutive confirmations (6-second stable window) before returning,
+// so Circle's bundler nodes have time to sync the allowance before simulation.
 async function waitForAllowance(
   rpcUrl:   string,
   token:    string,
@@ -20,15 +21,21 @@ async function waitForAllowance(
 ): Promise<void> {
   const padAddr = (a: string) => '0x' + a.replace('0x', '').padStart(64, '0')
   const data = `0xdd62ed3e${padAddr(owner).slice(2)}${padAddr(spender).slice(2)}`
-  for (let i = 0; i < 12; i++) {
+  let confirmations = 0
+  for (let i = 0; i < 20; i++) {
     try {
       const res  = await fetch(rpcUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_call', params: [{ to: token, data }, 'latest'], id: 1 }) })
       const json = await res.json() as { result?: string }
-      if (json.result && BigInt(json.result) >= required) return
-    } catch { /* retry */ }
+      if (json.result && BigInt(json.result) >= required) {
+        confirmations++
+        if (confirmations >= 3) return
+      } else {
+        confirmations = 0
+      }
+    } catch { confirmations = 0 }
     await new Promise((r) => setTimeout(r, 2_000))
   }
-  // Proceed anyway — bundler may have a different view but worth trying
+  // Proceed anyway after timeout
 }
 
 const APPROVE_ABI = {
