@@ -84,13 +84,13 @@ export default function Nav() {
                 style={{
                   background: active
                     ? `${color}28`
-                    : L ? `${color}14` : `${color}18`,
+                    : L ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)',
                   boxShadow: active ? `0 0 8px ${color}40` : 'none',
                 }}
               >
                 <Icon
                   className="h-3.5 w-3.5 transition-all duration-200"
-                  style={{ color: active ? color : `${color}bb` }}
+                  style={{ color: active ? color : L ? '#94a3b8' : '#4b6070' }}
                 />
               </span>
               {label}
