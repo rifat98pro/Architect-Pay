@@ -362,7 +362,7 @@ export default function DashboardPage() {
                 <CreditCard className="h-6 w-6 text-brand-400" />
               </div>
             </div>
-            <h3 className="mb-2 text-base font-bold text-white">Coming to Mainnet</h3>
+            <h3 className="mb-2 text-base font-bold text-white">Coming Soon</h3>
             <p className="mb-5 text-sm text-gray-400 leading-relaxed">
               Deposit Funds from Debit card, Apple Pay, or Google Pay will be available on mainnet.
             </p>

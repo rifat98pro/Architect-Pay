@@ -235,6 +235,17 @@ export default function PayrollPage() {
 
   return (
     <div className="max-w-4xl">
+      {/* Arc CCTP notice */}
+      <div className="mb-6 flex items-start gap-3 rounded-xl border border-yellow-800/40 bg-yellow-900/10 px-4 py-3">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+        <div>
+          <p className="text-sm font-medium text-yellow-300">Payroll from Arc temporarily unavailable</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-yellow-400/75">
+            Payroll runs that pull funds <span className="font-semibold text-yellow-300">from Arc</span> will fail due to a known Circle CCTP bundler issue. Payroll funded from other chains (Base, Arbitrum, etc.) is unaffected. This will be resolved once Circle deploys a fix.
+          </p>
+        </div>
+      </div>
+
       {/* Page header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Payroll</h1>
