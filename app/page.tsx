@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, CheckCircle2,
@@ -17,21 +17,126 @@ function XLogo({ size = 20 }: { size?: number }) {
   )
 }
 
-const HERO_LINES = [
-  { text: 'GLOBAL PAYROLL',     size: 'clamp(2rem, 5.5vw, 4.5rem)' },
-  { text: 'STABLECOIN PAYMENTS', size: 'clamp(1.4rem, 3.8vw, 3rem)' },
-  { text: 'EVERY BUSINESS',      size: 'clamp(1.4rem, 3.8vw, 3rem)' },
+const SLIDES = [
+  {
+    id: 'payroll', tag: 'Global Payroll',
+    headline: ['Pay your team', 'across the world.'],
+    sub: 'Automated payroll to any chain, any country. USDC or EURC — instant, on-chain, zero gas.',
+    visual: 'globe',
+  },
+  {
+    id: 'payments', tag: 'Stablecoin Payments',
+    headline: ['One payment.', 'Any chain.'],
+    sub: 'Send USDC & EURC globally with zero gas fees, no wallet setup, no seed phrases.',
+    visual: 'tokens',
+  },
+  {
+    id: 'business', tag: 'Any Business',
+    headline: ['Built for', 'every business.'],
+    sub: 'Freelancers, startups, enterprises — manage payroll and payments from one account.',
+    visual: 'business',
+  },
 ]
 
+function GlobeVisual() {
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: '100%', maxWidth: 400 }}>
+      <div className="absolute" style={{ width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(42,171,171,0.22) 0%, rgba(20,80,200,0.12) 45%, transparent 70%)', filter: 'blur(32px)' }} />
+      <svg viewBox="0 0 320 320" style={{ width: '100%', maxWidth: 340, filter: 'drop-shadow(0 0 28px rgba(42,171,171,0.28))' }}>
+        <defs>
+          <radialGradient id="gg" cx="38%" cy="35%" r="65%">
+            <stop offset="0%"   stopColor="#1c52a0" />
+            <stop offset="55%"  stopColor="#0c2a60" />
+            <stop offset="100%" stopColor="#040f28" />
+          </radialGradient>
+          <clipPath id="gc"><circle cx="160" cy="160" r="148" /></clipPath>
+        </defs>
+        <circle cx="160" cy="160" r="148" fill="url(#gg)" />
+        <g clipPath="url(#gc)" stroke="rgba(42,171,171,0.16)" strokeWidth="0.7" fill="none">
+          {[20,50,80,110,130,160,190,210,240,270,300].map(y => (
+            <ellipse key={y} cx="160" cy="160" rx="148" ry={Math.max(1, Math.abs(y - 160))} />
+          ))}
+          {[0,30,60,90,120,150].map(d => {
+            const r = d * Math.PI / 180
+            return <line key={d} x1={160 + 148 * Math.sin(r)} y1={12} x2={160 - 148 * Math.sin(r)} y2={308} />
+          })}
+        </g>
+        <circle cx="160" cy="160" r="148" fill="none" stroke="rgba(42,171,171,0.32)" strokeWidth="1.5" />
+        <circle cx="118" cy="108" r="44" fill="rgba(255,255,255,0.03)" />
+        {/* Glowing dots — cities */}
+        {[[100,130],[200,110],[240,180],[80,200],[170,220],[300,150]].map(([x,y],i) => (
+          <circle key={i} cx={x} cy={y} r="3" fill="#2aabab" opacity="0.7" />
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+function TokensVisual() {
+  return (
+    <div className="flex items-center justify-center gap-12">
+      {[
+        { symbol: '$', label: 'USDC', from: '#2775ca', to: '#10326e', glow: 'rgba(39,117,202,0.6)'  },
+        { symbol: '€', label: 'EURC', from: '#2aabab', to: '#085858', glow: 'rgba(42,171,171,0.6)'  },
+      ].map(({ symbol, label, from, to, glow }) => (
+        <div key={label} className="flex flex-col items-center gap-4">
+          <div style={{
+            width: 140, height: 140, borderRadius: '50%',
+            background: `radial-gradient(circle at 35% 35%, ${from}, ${to})`,
+            boxShadow: `0 0 50px ${glow}, 0 0 90px ${glow.replace('0.6', '0.18')}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 56, fontWeight: 900, color: '#fff', fontFamily: 'monospace',
+            border: `1.5px solid ${from}66`,
+          }}>
+            {symbol}
+          </div>
+          <span style={{ color: '#2aabab', fontWeight: 700, fontSize: 13, letterSpacing: 3 }}>{label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function BusinessVisual() {
+  const types = [
+    { icon: <Users className="h-6 w-6" />,    label: 'Remote Teams',  color: '#60a5fa' },
+    { icon: <Zap className="h-6 w-6" />,       label: 'Startups',      color: '#2aabab' },
+    { icon: <Building2 className="h-6 w-6" />, label: 'Enterprise',    color: '#a78bfa' },
+    { icon: <Banknote className="h-6 w-6" />,  label: 'Freelancers',   color: '#34d399' },
+    { icon: <Globe className="h-6 w-6" />,     label: 'Global Ops',    color: '#fb923c' },
+    { icon: <Shield className="h-6 w-6" />,    label: 'Finance',       color: '#f472b6' },
+  ]
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {types.map(({ icon, label, color }) => (
+        <div key={label} className="flex flex-col items-center gap-2 rounded-2xl border p-4"
+          style={{ background: `${color}08`, borderColor: `${color}25` }}>
+          <span style={{ color }}>{icon}</span>
+          <span className="text-center text-xs font-medium" style={{ color: '#8faab8' }}>{label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function LandingPage() {
-  const [activeIdx, setActiveIdx] = useState(0)
+  const [slideIdx, setSlideIdx] = useState(0)
+  const [visible,  setVisible]  = useState(true)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  const goTo = (i: number) => {
+    timers.current.forEach(clearTimeout)
+    setVisible(false)
+    const t = setTimeout(() => { setSlideIdx(i); setVisible(true) }, 550)
+    timers.current = [t]
+  }
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setActiveIdx((i) => (i + 1) % HERO_LINES.length)
-    }, 1600)
-    return () => clearInterval(id)
-  }, [])
+    const t1 = setTimeout(() => setVisible(false), 3400)
+    const t2 = setTimeout(() => { setSlideIdx(i => (i + 1) % SLIDES.length); setVisible(true) }, 3950)
+    timers.current = [t1, t2]
+    return () => timers.current.forEach(clearTimeout)
+  }, [slideIdx])
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: '#000', color: '#e2eaf4' }}>
@@ -66,67 +171,63 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[92vh] flex-col items-center justify-center overflow-hidden px-6 text-center">
+      <section className="relative flex min-h-[92vh] items-center overflow-hidden px-6">
+        <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 40%, rgba(42,171,171,0.07) 0%, transparent 70%)' }} />
 
-        <div className="pointer-events-none absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(42,171,171,0.08) 0%, transparent 70%)',
-        }} />
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-16">
 
-        <div className="relative z-10 flex flex-col items-center">
-          <div
-            className="mb-8 select-none text-center font-black uppercase leading-none"
-            style={{ letterSpacing: '-0.03em' }}
-          >
-            {HERO_LINES.map(({ text, size }, i) => {
-              const isActive = i === activeIdx
-              return (
-                <div
-                  key={text}
-                  style={{
-                    fontSize:    size,
-                    lineHeight:  1.05,
-                    color:       isActive ? '#2aabab' : 'rgba(42,171,171,0.2)',
-                    textShadow:  isActive ? '0 0 32px rgba(42,171,171,0.55)' : 'none',
-                    transition:  'color 0.6s ease, text-shadow 0.6s ease',
-                    willChange:  'color',
-                  }}
-                >
-                  {text}
-                </div>
-              )
-            })}
+          {/* Left: text */}
+          <div className="flex-1" style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateX(0)' : 'translateX(72px)', transition: 'opacity 0.5s ease, transform 0.5s ease' }}>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
+              style={{ borderColor: 'rgba(42,171,171,0.3)', color: '#2aabab', background: 'rgba(42,171,171,0.06)' }}>
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
+              {SLIDES[slideIdx].tag}
+            </div>
+
+            <h1 className="mb-6 font-black leading-none" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 5rem)', letterSpacing: '-0.03em', color: '#e2eaf4' }}>
+              {SLIDES[slideIdx].headline[0]}<br />
+              <span style={{ color: '#2aabab', textShadow: '0 0 40px rgba(42,171,171,0.4)' }}>{SLIDES[slideIdx].headline[1]}</span>
+            </h1>
+
+            <p className="mb-8 max-w-md text-base leading-relaxed" style={{ color: '#666' }}>
+              {SLIDES[slideIdx].sub}
+            </p>
+
+            <div className="flex items-center gap-4">
+              <Link href="/signup" className="flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-black transition-all hover:opacity-90"
+                style={{ background: '#2aabab', boxShadow: '0 0 30px rgba(42,171,171,0.35)' }}>
+                Get Started Free
+              </Link>
+              <a href="#how-it-works" className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#666' }}>
+                See how it works →
+              </a>
+            </div>
+
+            <div className="mt-6 flex items-center gap-4">
+              <span className="inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium"
+                style={{ borderColor: 'rgba(42,171,171,0.25)', background: 'rgba(42,171,171,0.06)', color: '#2aabab' }}>
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+                Now Live on Mainnet
+              </span>
+              <div className="flex gap-2">
+                {SLIDES.map((s, i) => (
+                  <button key={s.id} onClick={() => goTo(i)}
+                    className="rounded-full transition-all"
+                    style={{ height: 6, width: i === slideIdx ? 24 : 6, background: i === slideIdx ? '#2aabab' : 'rgba(42,171,171,0.25)' }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
-          <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
-            Global payroll and stablecoin payments for businesses. Manage multiple businesses and pay teams across chains from one account with Web2 simplicity.
-          </p>
-
-          <div className="flex items-center gap-4">
-            <Link
-              href="/signup"
-              className="flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-black transition-all hover:opacity-90"
-              style={{ background: '#2aabab', boxShadow: '0 0 30px rgba(42,171,171,0.35)' }}
-            >
-              Get Started Free
-            </Link>
-            <a
-              href="#how-it-works"
-              className="text-sm font-medium transition-colors hover:text-white"
-              style={{ color: '#666' }}
-            >
-              See how it works →
-            </a>
+          {/* Right: visual */}
+          <div className="hidden flex-1 items-center justify-center lg:flex"
+            style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateX(0)' : 'translateX(72px)', transition: 'opacity 0.5s ease, transform 0.5s ease', transitionDelay: '0.06s' }}>
+            {SLIDES[slideIdx].visual === 'globe'    && <GlobeVisual />}
+            {SLIDES[slideIdx].visual === 'tokens'   && <TokensVisual />}
+            {SLIDES[slideIdx].visual === 'business' && <BusinessVisual />}
           </div>
 
-          <div className="mt-6">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium"
-              style={{ borderColor: 'rgba(42,171,171,0.25)', background: 'rgba(42,171,171,0.06)', color: '#2aabab' }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
-              Now Live on Mainnet
-            </span>
-          </div>
         </div>
       </section>
 
