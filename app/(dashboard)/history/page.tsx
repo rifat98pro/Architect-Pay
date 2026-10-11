@@ -15,7 +15,7 @@ import ChainLogo from '@/components/chain-logo'
 import { useTheme } from '@/context/theme-context'
 
 const EXPLORER: Record<string, string> = {
-  'ARC-TESTNET':  'https://arcscan.app',
+  'ARC-TESTNET':  'https://explorer.arc.io',
   'ETH-SEPOLIA':  'https://etherscan.io',
   'BASE-SEPOLIA': 'https://basescan.org',
   'ARB-SEPOLIA':  'https://arbiscan.io',
