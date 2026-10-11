@@ -42,7 +42,7 @@ export default function Nav() {
       <div className="mb-8 px-3">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="relative">
-            <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
+            <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="rounded-lg object-contain" />
           </div>
           <span className="text-base font-bold tracking-tight">
             <span style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>Architect</span>
