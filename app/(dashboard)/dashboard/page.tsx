@@ -45,7 +45,6 @@ export default function DashboardPage() {
   const [depositOpen,   setDepositOpen]   = useState(false)
   const [onrampOpen,    setOnrampOpen]    = useState(false)
   const [mainnetNotice, setMainnetNotice] = useState(false)
-  const [arcNotice,     setArcNotice]     = useState(true)
   const [welcomeOpen,   setWelcomeOpen]   = useState(false)
   const { theme } = useTheme()
 
@@ -93,22 +92,15 @@ export default function DashboardPage() {
     <div className="max-w-3xl space-y-6">
 
       {/* Arc CCTP notice */}
-      {arcNotice && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-yellow-800/40 bg-yellow-900/10 px-4 py-3">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
-            <div>
-              <p className="text-sm font-medium text-yellow-300">Arc cross-chain transfers temporarily unavailable</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-yellow-400/75">
-                Sending funds <span className="font-semibold text-yellow-300">from Arc</span> to other chains is paused due to a known Circle CCTP bundler issue. Our team has reported it and it will be resolved once Circle deploys a fix. Arc → Arc transfers and deposits are unaffected.
-              </p>
-            </div>
-          </div>
-          <button onClick={() => setArcNotice(false)} className="mt-0.5 shrink-0 text-yellow-600 hover:text-yellow-400 transition">
-            <X className="h-4 w-4" />
-          </button>
+      <div className="flex items-start gap-3 rounded-xl border border-yellow-800/40 bg-yellow-900/10 px-4 py-3">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+        <div>
+          <p className="text-sm font-medium text-yellow-300">Arc cross-chain transfers temporarily unavailable</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-yellow-400/75">
+            Sending funds <span className="font-semibold text-yellow-300">from Arc</span> to other chains is paused due to a known Circle CCTP bundler issue. Our team has reported it and it will be resolved once Circle deploys a fix. Arc → Arc transfers and deposits are unaffected.
+          </p>
         </div>
-      )}
+      </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">
