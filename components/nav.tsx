@@ -42,7 +42,6 @@ export default function Nav() {
       <div className="mb-8 px-3">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="relative">
-            <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-brand-500/30 to-navy-800/30 blur-sm" />
             <Image src="/logo.png" alt="Architect Pay" width={32} height={32} className="relative rounded-lg object-contain" />
           </div>
           <span className="text-base font-bold tracking-tight">
