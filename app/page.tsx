@@ -397,9 +397,6 @@ export default function LandingPage() {
                   { title: 'Arc',             href: 'https://developers.circle.com/arc',                              tag: 'Docs'     },
                   { title: 'ArcScan',         href: 'https://explorer.arc.io',                                        tag: 'Explorer' },
                   { title: 'Circle Docs',     href: 'https://developers.circle.com',                                  tag: 'Docs'     },
-                  { title: 'Onramp Kit',      href: 'https://developers.circle.com/circle-mint/docs/onramp-kit',      tag: 'Docs'     },
-                  { title: 'Unified Balance', href: 'https://developers.circle.com/w3s/docs/unified-balance',         tag: 'Docs'     },
-                  { title: 'Swap Kit',        href: 'https://developers.circle.com/w3s/docs/swap',                    tag: 'Docs'     },
                 ].map((doc) => (
                   <a
                     key={doc.title}
