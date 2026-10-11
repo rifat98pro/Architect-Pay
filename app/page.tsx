@@ -132,11 +132,12 @@ export default function LandingPage() {
 
       {/* ── Stats strip ────────────────────────────────────────────────────── */}
       <section className="border-y px-6 py-10" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-        <div className="mx-auto grid max-w-4xl grid-cols-3 gap-6 text-center">
+        <div className="mx-auto grid max-w-4xl grid-cols-4 gap-6 text-center">
           {[
             { value: 'USDC & EURC', label: 'Stablecoins supported'  },
             { value: '0.01%',       label: 'Platform fee'            },
             { value: 'Instant',     label: 'Same-chain transfers'    },
+            { value: 'Zero',        label: 'Gas fees for users'      },
           ].map((s) => (
             <div key={s.label}>
               <div className="text-2xl font-bold" style={{ color: '#2aabab' }}>{s.value}</div>

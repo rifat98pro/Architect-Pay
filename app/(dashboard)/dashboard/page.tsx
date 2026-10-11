@@ -106,7 +106,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="mt-0.5 text-sm text-gray-500">Your multi-chain wallet overview</p>
+          <p className="mt-0.5 text-sm text-gray-500">Your multi-chain wallet overview · <span className="text-brand-400 font-medium">Zero gas fees</span></p>
         </div>
         <div className="flex gap-2">
           <button

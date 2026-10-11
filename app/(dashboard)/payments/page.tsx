@@ -268,7 +268,7 @@ export default function PaymentsPage() {
     <div className="max-w-xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Send Payment</h1>
-        <p className="mt-0.5 text-sm text-gray-500">Transfer USDC or EURC across any chain</p>
+        <p className="mt-0.5 text-sm text-gray-500">Transfer USDC or EURC across any chain · <span className="text-brand-400 font-medium">Zero gas fees</span></p>
       </div>
 
       <form onSubmit={handleSend} className="space-y-3">
