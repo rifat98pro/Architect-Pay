@@ -344,7 +344,7 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-2 font-mono text-xs" style={{ color: '#555' }}>
                 {[
-                  ['POST', '/api/auth/register'],
+                  ['POST', '/api/auth/signup'],
                   ['GET',  '/api/wallet/balance'],
                   ['POST', '/api/payments/send'],
                   ['POST', '/api/payroll/run'],
