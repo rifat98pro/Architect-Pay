@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, CheckCircle2,
@@ -121,21 +121,22 @@ function BusinessVisual() {
 
 export default function LandingPage() {
   const [slideIdx, setSlideIdx] = useState(0)
-  const [visible,  setVisible]  = useState(true)
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const [prevIdx,  setPrevIdx]  = useState<number | null>(null)
 
   const goTo = (i: number) => {
-    timers.current.forEach(clearTimeout)
-    setVisible(false)
-    const t = setTimeout(() => { setSlideIdx(i); setVisible(true) }, 550)
-    timers.current = [t]
+    if (i === slideIdx) return
+    setPrevIdx(slideIdx)
+    setSlideIdx(i)
+    setTimeout(() => setPrevIdx(null), 680)
   }
 
   useEffect(() => {
-    const t1 = setTimeout(() => setVisible(false), 3400)
-    const t2 = setTimeout(() => { setSlideIdx(i => (i + 1) % SLIDES.length); setVisible(true) }, 3950)
-    timers.current = [t1, t2]
-    return () => timers.current.forEach(clearTimeout)
+    const t = setTimeout(() => {
+      setPrevIdx(slideIdx)
+      setSlideIdx(s => (s + 1) % SLIDES.length)
+      setTimeout(() => setPrevIdx(null), 680)
+    }, 3800)
+    return () => clearTimeout(t)
   }, [slideIdx])
 
   return (
@@ -171,26 +172,52 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[92vh] items-center overflow-hidden px-6">
+      <section className="relative h-[92vh] overflow-hidden">
+        <style>{`
+          @keyframes hExit  { from { transform: translateX(0) } to { transform: translateX(110%) } }
+          @keyframes hEnter { from { transform: translateX(-110%) } to { transform: translateX(0) } }
+          .h-exit  { animation: hExit  0.58s cubic-bezier(0.4,0,0.2,1) forwards; }
+          .h-enter { animation: hEnter 0.58s cubic-bezier(0.4,0,0.2,1) forwards; }
+        `}</style>
+
         <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 40%, rgba(42,171,171,0.07) 0%, transparent 70%)' }} />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-16">
+        <div className="relative z-10 mx-auto flex h-full max-w-6xl items-center gap-16 px-6">
 
-          {/* Left: text */}
-          <div className="flex-1" style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateX(0)' : 'translateX(72px)', transition: 'opacity 0.5s ease, transform 0.5s ease' }}>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
-              style={{ borderColor: 'rgba(42,171,171,0.3)', color: '#2aabab', background: 'rgba(42,171,171,0.06)' }}>
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
-              {SLIDES[slideIdx].tag}
+          {/* LEFT COLUMN */}
+          <div className="flex flex-1 flex-col gap-7">
+
+            {/* SLIDING: tag + headline */}
+            <div className="relative overflow-hidden" style={{ minHeight: 230 }}>
+              {prevIdx !== null && (
+                <div className="h-exit absolute inset-0 flex flex-col justify-center">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
+                    style={{ borderColor: 'rgba(42,171,171,0.3)', color: '#2aabab', background: 'rgba(42,171,171,0.06)' }}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+                    {SLIDES[prevIdx].tag}
+                  </div>
+                  <h1 className="font-black leading-none" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 5rem)', letterSpacing: '-0.03em', color: '#e2eaf4' }}>
+                    {SLIDES[prevIdx].headline[0]}<br />
+                    <span style={{ color: '#2aabab' }}>{SLIDES[prevIdx].headline[1]}</span>
+                  </h1>
+                </div>
+              )}
+              <div className={prevIdx !== null ? 'h-enter absolute inset-0 flex flex-col justify-center' : 'flex flex-col justify-center'}>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
+                  style={{ borderColor: 'rgba(42,171,171,0.3)', color: '#2aabab', background: 'rgba(42,171,171,0.06)' }}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
+                  {SLIDES[slideIdx].tag}
+                </div>
+                <h1 className="font-black leading-none" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 5rem)', letterSpacing: '-0.03em', color: '#e2eaf4' }}>
+                  {SLIDES[slideIdx].headline[0]}<br />
+                  <span style={{ color: '#2aabab', textShadow: '0 0 40px rgba(42,171,171,0.4)' }}>{SLIDES[slideIdx].headline[1]}</span>
+                </h1>
+              </div>
             </div>
 
-            <h1 className="mb-6 font-black leading-none" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 5rem)', letterSpacing: '-0.03em', color: '#e2eaf4' }}>
-              {SLIDES[slideIdx].headline[0]}<br />
-              <span style={{ color: '#2aabab', textShadow: '0 0 40px rgba(42,171,171,0.4)' }}>{SLIDES[slideIdx].headline[1]}</span>
-            </h1>
-
-            <p className="mb-8 max-w-md text-base leading-relaxed" style={{ color: '#666' }}>
-              {SLIDES[slideIdx].sub}
+            {/* STATIC: bio + CTAs */}
+            <p className="max-w-md text-base leading-relaxed" style={{ color: '#666' }}>
+              Global payroll and stablecoin payments for any business. Manage multiple teams across chains — no wallet setup, no gas fees, Web2 simple.
             </p>
 
             <div className="flex items-center gap-4">
@@ -203,7 +230,7 @@ export default function LandingPage() {
               </a>
             </div>
 
-            <div className="mt-6 flex items-center gap-4">
+            <div className="flex items-center gap-4">
               <span className="inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium"
                 style={{ borderColor: 'rgba(42,171,171,0.25)', background: 'rgba(42,171,171,0.06)', color: '#2aabab' }}>
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
@@ -212,7 +239,7 @@ export default function LandingPage() {
               <div className="flex gap-2">
                 {SLIDES.map((s, i) => (
                   <button key={s.id} onClick={() => goTo(i)}
-                    className="rounded-full transition-all"
+                    className="rounded-full transition-all duration-300"
                     style={{ height: 6, width: i === slideIdx ? 24 : 6, background: i === slideIdx ? '#2aabab' : 'rgba(42,171,171,0.25)' }}
                   />
                 ))}
@@ -220,12 +247,20 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right: visual */}
-          <div className="hidden flex-1 items-center justify-center lg:flex"
-            style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateX(0)' : 'translateX(72px)', transition: 'opacity 0.5s ease, transform 0.5s ease', transitionDelay: '0.06s' }}>
-            {SLIDES[slideIdx].visual === 'globe'    && <GlobeVisual />}
-            {SLIDES[slideIdx].visual === 'tokens'   && <TokensVisual />}
-            {SLIDES[slideIdx].visual === 'business' && <BusinessVisual />}
+          {/* RIGHT COLUMN: visual slides */}
+          <div className="relative hidden h-[65vh] flex-1 lg:block">
+            {prevIdx !== null && (
+              <div className="h-exit absolute inset-0 flex items-center justify-center">
+                {SLIDES[prevIdx].visual === 'globe'    && <GlobeVisual />}
+                {SLIDES[prevIdx].visual === 'tokens'   && <TokensVisual />}
+                {SLIDES[prevIdx].visual === 'business' && <BusinessVisual />}
+              </div>
+            )}
+            <div className={prevIdx !== null ? 'h-enter absolute inset-0 flex items-center justify-center' : 'flex h-full items-center justify-center'}>
+              {SLIDES[slideIdx].visual === 'globe'    && <GlobeVisual />}
+              {SLIDES[slideIdx].visual === 'tokens'   && <TokensVisual />}
+              {SLIDES[slideIdx].visual === 'business' && <BusinessVisual />}
+            </div>
           </div>
 
         </div>
