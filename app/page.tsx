@@ -121,20 +121,18 @@ function BusinessVisual() {
 
 export default function LandingPage() {
   const [slideIdx, setSlideIdx] = useState(0)
-  const [prevIdx,  setPrevIdx]  = useState<number | null>(null)
+  const [fading,   setFading]   = useState(false)
 
   const goTo = (i: number) => {
     if (i === slideIdx) return
-    setPrevIdx(slideIdx)
-    setSlideIdx(i)
-    setTimeout(() => setPrevIdx(null), 680)
+    setFading(true)
+    setTimeout(() => { setSlideIdx(i); setFading(false) }, 300)
   }
 
   useEffect(() => {
     const t = setTimeout(() => {
-      setPrevIdx(slideIdx)
-      setSlideIdx(s => (s + 1) % SLIDES.length)
-      setTimeout(() => setPrevIdx(null), 680)
+      setFading(true)
+      setTimeout(() => { setSlideIdx(s => (s + 1) % SLIDES.length); setFading(false) }, 300)
     }, 3800)
     return () => clearTimeout(t)
   }, [slideIdx])
@@ -172,47 +170,25 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative h-[92vh] overflow-hidden">
-        <style>{`
-          @keyframes hExit  { from { transform: translateX(0) } to { transform: translateX(110%) } }
-          @keyframes hEnter { from { transform: translateX(-110%) } to { transform: translateX(0) } }
-          .h-exit  { animation: hExit  0.58s cubic-bezier(0.4,0,0.2,1) forwards; }
-          .h-enter { animation: hEnter 0.58s cubic-bezier(0.4,0,0.2,1) forwards; }
-        `}</style>
-
+      <section className="relative flex min-h-[92vh] items-center px-6">
         <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 40%, rgba(42,171,171,0.07) 0%, transparent 70%)' }} />
 
-        <div className="relative z-10 mx-auto flex h-full max-w-6xl items-center gap-16 px-6">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center gap-16">
 
-          {/* LEFT COLUMN */}
+          {/* LEFT */}
           <div className="flex flex-1 flex-col gap-7">
 
-            {/* SLIDING: tag + headline */}
-            <div className="relative overflow-hidden" style={{ minHeight: 230 }}>
-              {prevIdx !== null && (
-                <div className="h-exit absolute inset-0 flex flex-col justify-center">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
-                    style={{ borderColor: 'rgba(42,171,171,0.3)', color: '#2aabab', background: 'rgba(42,171,171,0.06)' }}>
-                    <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
-                    {SLIDES[prevIdx].tag}
-                  </div>
-                  <h1 className="font-black leading-none" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 5rem)', letterSpacing: '-0.03em', color: '#e2eaf4' }}>
-                    {SLIDES[prevIdx].headline[0]}<br />
-                    <span style={{ color: '#2aabab' }}>{SLIDES[prevIdx].headline[1]}</span>
-                  </h1>
-                </div>
-              )}
-              <div className={prevIdx !== null ? 'h-enter absolute inset-0 flex flex-col justify-center' : 'flex flex-col justify-center'}>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
-                  style={{ borderColor: 'rgba(42,171,171,0.3)', color: '#2aabab', background: 'rgba(42,171,171,0.06)' }}>
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
-                  {SLIDES[slideIdx].tag}
-                </div>
-                <h1 className="font-black leading-none" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 5rem)', letterSpacing: '-0.03em', color: '#e2eaf4' }}>
-                  {SLIDES[slideIdx].headline[0]}<br />
-                  <span style={{ color: '#2aabab', textShadow: '0 0 40px rgba(42,171,171,0.4)' }}>{SLIDES[slideIdx].headline[1]}</span>
-                </h1>
+            {/* FADES: tag + headline */}
+            <div style={{ opacity: fading ? 0 : 1, transition: 'opacity 0.28s ease' }}>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
+                style={{ borderColor: 'rgba(42,171,171,0.3)', color: '#2aabab', background: 'rgba(42,171,171,0.06)' }}>
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
+                {SLIDES[slideIdx].tag}
               </div>
+              <h1 className="font-black leading-none" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 5rem)', letterSpacing: '-0.03em', color: '#e2eaf4' }}>
+                {SLIDES[slideIdx].headline[0]}<br />
+                <span style={{ color: '#2aabab', textShadow: '0 0 40px rgba(42,171,171,0.4)' }}>{SLIDES[slideIdx].headline[1]}</span>
+              </h1>
             </div>
 
             {/* STATIC: bio + CTAs */}
@@ -247,20 +223,12 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: visual slides */}
-          <div className="relative hidden h-[65vh] flex-1 lg:block">
-            {prevIdx !== null && (
-              <div className="h-exit absolute inset-0 flex items-center justify-center">
-                {SLIDES[prevIdx].visual === 'globe'    && <GlobeVisual />}
-                {SLIDES[prevIdx].visual === 'tokens'   && <TokensVisual />}
-                {SLIDES[prevIdx].visual === 'business' && <BusinessVisual />}
-              </div>
-            )}
-            <div className={prevIdx !== null ? 'h-enter absolute inset-0 flex items-center justify-center' : 'flex h-full items-center justify-center'}>
-              {SLIDES[slideIdx].visual === 'globe'    && <GlobeVisual />}
-              {SLIDES[slideIdx].visual === 'tokens'   && <TokensVisual />}
-              {SLIDES[slideIdx].visual === 'business' && <BusinessVisual />}
-            </div>
+          {/* RIGHT: visual fades */}
+          <div className="hidden flex-1 items-center justify-center lg:flex"
+            style={{ opacity: fading ? 0 : 1, transition: 'opacity 0.28s ease' }}>
+            {SLIDES[slideIdx].visual === 'globe'    && <GlobeVisual />}
+            {SLIDES[slideIdx].visual === 'tokens'   && <TokensVisual />}
+            {SLIDES[slideIdx].visual === 'business' && <BusinessVisual />}
           </div>
 
         </div>
