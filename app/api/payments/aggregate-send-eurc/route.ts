@@ -13,7 +13,7 @@ export const maxDuration = 300
 const schema = z.object({
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   amount:           z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
-  destChain:        z.enum(EURC_CCTP_CHAINS).default('ARC-TESTNET'),
+  destChain:        z.enum(EURC_CCTP_CHAINS).default('BASE-SEPOLIA'),
   label:            z.string().max(100).optional(),
 })
 
