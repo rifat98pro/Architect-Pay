@@ -182,8 +182,9 @@ function HistoryPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [payments,  setPayments]  = useState<Payment[]>(() => historyCache.payments)
-  const [received,  setReceived]  = useState<Payment[]>(() => historyCache.received)
+  const [payments,         setPayments]         = useState<Payment[]>(() => historyCache.payments)
+  const [received,         setReceived]         = useState<Payment[]>(() => historyCache.received)
+  const [externalInbound,  setExternalInbound]  = useState<Array<{ id: string; txHash: string | null; amount: string; token: string; chain: string; fromAddress: string; createdAt: string }>>([])
   const [runs,      setRuns]      = useState<PayrollRun[]>(() => historyCache.runs)
   const [swaps,     setSwaps]     = useState<SwapRecord[]>(() => historyCache.swaps)
   const [loading,   setLoading]   = useState(() => historyCache.fetchedAt === 0)
@@ -285,9 +286,10 @@ function HistoryPage() {
     ]).then(([payData, recData, runData, swapData]) => {
       const p = payData.payments ?? []
       const r = recData.received ?? []
+      const e = recData.externalInbound ?? []
       const u = runData.runs ?? []
       const s = swapData.swaps ?? []
-      setPayments(p); setReceived(r); setRuns(u); setSwaps(s)
+      setPayments(p); setReceived(r); setExternalInbound(e); setRuns(u); setSwaps(s)
       setHistoryCache({ payments: p, received: r, runs: u, swaps: s, fetchedAt: Date.now() })
     }).finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -459,12 +461,13 @@ function HistoryPage() {
           )
         })()
       ) : tab === 'received' ? (
-        received.length === 0 ? (
+        received.length === 0 && externalInbound.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-700 text-sm text-gray-500">
             <ArrowDownCircle className="h-8 w-8 text-gray-700" />
             No received payments yet
           </div>
         ) : (
+          <>
           <div className="overflow-hidden rounded-2xl border border-gray-700/50 bg-gray-900/60">
             <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-gray-800 px-5 py-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Sender</span>
@@ -472,7 +475,7 @@ function HistoryPage() {
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</span>
             </div>
             <div className="divide-y divide-gray-800/60">
-              {received.map((p) => {
+              {[...received].map((p) => {
                 const s          = p.sender
                 const isArchUser = !!s
                 const senderName = s?.displayName ?? s?.name ?? s?.username ?? null
@@ -541,6 +544,46 @@ function HistoryPage() {
               })}
             </div>
           </div>
+          {/* External inbound transfers (from non-Architect Pay wallets) */}
+          {externalInbound.length > 0 && (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-gray-700/50 bg-gray-900/60">
+              <div className="border-b border-gray-800 px-5 py-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">External Deposits</span>
+              </div>
+              <div className="divide-y divide-gray-800/60">
+                {externalInbound.map((tx) => (
+                  <div key={tx.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
+                    <div className="min-w-0 flex items-center gap-3">
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#666' }}>
+                        {tx.fromAddress ? tx.fromAddress[2].toUpperCase() : '?'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-mono text-sm font-medium text-white truncate">
+                          {tx.fromAddress ? `${tx.fromAddress.slice(0, 6)}…${tx.fromAddress.slice(-4)}` : 'Unknown'}
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs text-gray-500">{tx.chain}</span>
+                          <span className="text-gray-700">·</span>
+                          <span className="text-xs text-gray-600">{new Date(tx.createdAt).toLocaleDateString()}</span>
+                          {tx.txHash && (
+                            <a href={`https://etherscan.io/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
+                              {tx.txHash.slice(0, 8)}… <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-green-400">+{tx.token === 'EURC' ? '€' : '$'}{parseFloat(tx.amount).toFixed(2)}</div>
+                      <div className="flex items-center justify-end gap-1 text-xs text-gray-500"><TokenLogo token={(tx.token as 'USDC' | 'EURC')} size={12} />{tx.token}</div>
+                    </div>
+                    <div className="rounded-full px-2.5 py-1 text-xs font-medium bg-green-500/10 text-green-400">Received</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          </>
         )
       ) : tab === 'swaps' ? (
         swaps.length === 0 ? (

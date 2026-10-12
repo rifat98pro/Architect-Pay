@@ -247,6 +247,7 @@ export async function cctpBurn({
       walletId:        sourceWalletId,
       contractAddress: eurcAddress,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
+      feeLevel:        'MEDIUM',
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
@@ -266,6 +267,7 @@ export async function cctpBurn({
           false, '0x',
         ],
       }),
+      feeLevel: 'MEDIUM',
     })
     const burnTxHash = await waitForTransaction(transferTxId).catch((e: Error) => { throw new Error(`[step2-crossChainTransfer] ${e.message}`) })
     console.log(`[cctp/eurc] burn confirmed: ${burnTxHash}`)
@@ -285,6 +287,7 @@ export async function cctpBurn({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
+      feeLevel:        'MEDIUM',
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
@@ -296,6 +299,7 @@ export async function cctpBurn({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
       callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
+      feeLevel:        'MEDIUM',
     })
     const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => { throw new Error(`[step2-depositForBurn] ${e.message}`) })
     console.log(`[cctp/usdc] burn confirmed: ${burnTxHash}`)
@@ -343,6 +347,7 @@ export async function cctpBurnFast({
       walletId:        sourceWalletId,
       contractAddress: eurcAddress,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
+      feeLevel:        'MEDIUM',
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
@@ -361,6 +366,7 @@ export async function cctpBurnFast({
           false, '0x',
         ],
       }),
+      feeLevel: 'MEDIUM',
     })
 
     console.log(`[cctp/eurc] burn submitted (no-wait): circleId=${burnCircleTxId}`)
@@ -379,6 +385,7 @@ export async function cctpBurnFast({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
+      feeLevel:        'MEDIUM',
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
@@ -390,6 +397,7 @@ export async function cctpBurnFast({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
       callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
+      feeLevel:        'MEDIUM',
     })
 
     console.log(`[cctp/usdc] burn submitted (no-wait): circleId=${burnCircleTxId}`)
@@ -417,6 +425,7 @@ export async function cctpMint({
     walletId:        receiverWalletId,
     contractAddress: destTransmitter,
     callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
+    feeLevel:        'MEDIUM',
   })
   const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[mint-receiveMessage] ${e.message}`) })
   console.log(`[cctp] mint confirmed: ${mintTxHash}`)

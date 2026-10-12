@@ -252,10 +252,12 @@ export async function executeContractCall({
   walletId,
   contractAddress,
   callData,
+  feeLevel = 'HIGH',
 }: {
   walletId:        string
   contractAddress: string
   callData:        string
+  feeLevel?:       'LOW' | 'MEDIUM' | 'HIGH'
 }): Promise<string> {
   const client = getClient()
 
@@ -263,7 +265,7 @@ export async function executeContractCall({
     walletId,
     contractAddress,
     callData: callData as `0x${string}`,
-    fee: { type: 'level', config: { feeLevel: 'HIGH' } },
+    fee: { type: 'level', config: { feeLevel } },
   })
 
   const raw = res.data as unknown as Record<string, unknown>
