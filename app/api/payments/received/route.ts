@@ -56,22 +56,13 @@ export async function GET() {
 
   try {
     const client = getClient()
-    const res    = await client.listTransactions(
-      undefined,       // blockchain
-      undefined,       // custodyType
-      undefined,       // destinationAddress
-      undefined,       // includeAll
-      'TRANSFER',      // operation
-      undefined,       // state
-      undefined,       // txHash
-      'INBOUND',       // txType
-      allWalletIds.join(','), // walletIds
-      undefined,       // from
-      undefined,       // to
-      undefined,       // pageBefore
-      undefined,       // pageAfter
-      50,              // pageSize
-    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res    = await client.listTransactions({
+      operation: 'TRANSFER',
+      txType:    'INBOUND',
+      walletIds: allWalletIds,
+      pageSize:  50,
+    } as any)
 
     const txs = (res.data?.transactions ?? []) as Array<Record<string, unknown>>
 
