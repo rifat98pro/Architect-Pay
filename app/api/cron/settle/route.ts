@@ -35,6 +35,8 @@ export async function GET(req: Request) {
         if ((state === 'CONFIRMED' || state === 'COMPLETE') && txHash) {
           burnTxHash = txHash
           await db.payrollEntry.update({ where: { id: entry.id }, data: { burnTxHash: txHash } })
+        } else if (state === 'FAILED' || state === 'CANCELLED') {
+          throw new Error(`CCTP burn transaction ${state} — please retry this employee`)
         }
       }
 
