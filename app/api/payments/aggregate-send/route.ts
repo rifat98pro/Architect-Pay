@@ -134,7 +134,10 @@ export async function POST(req: NextRequest) {
       amount,
     })
 
-    const txHash = result.txHash ?? await waitForTransaction(result.id)
+    let txHash: string | null = result.txHash
+    if (!txHash) {
+      try { txHash = await waitForTransaction(result.id) } catch { /* send submitted — txHash lookup timed out */ }
+    }
 
     await db.payment.update({
       where: { id: payment.id },
