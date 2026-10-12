@@ -115,15 +115,24 @@ export async function POST(req: NextRequest) {
     } else if (destChain !== 'BASE-SEPOLIA') {
       // CCTP from Base → destChain
       const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain)
-      await cctpTransfer({
-        sourceChain:      'BASE-SEPOLIA',
-        sourceWalletId:   baseWalletId!,
-        destChain,
-        destWalletId,
-        arcWalletId:      wallet.circleWalletId,
-        recipientAddress: wallet.walletAddress,
-        amount,
-      })
+      try {
+        await cctpTransfer({
+          sourceChain:      'BASE-SEPOLIA',
+          sourceWalletId:   baseWalletId!,
+          destChain,
+          destWalletId,
+          arcWalletId:      wallet.circleWalletId,
+          recipientAddress: wallet.walletAddress,
+          amount,
+        })
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        if (!msg.includes('[mint-receiveMessage]')) throw e
+        // Circle bundler failed for receiveMessage but the CCTP V2 relay (destinationCaller=0x0)
+        // auto-delivers the mint on-chain. Wait 20s for relay to settle before proceeding.
+        console.warn('[aggregate-send] mint bundler failed, waiting for auto-relay:', msg)
+        await new Promise((r) => setTimeout(r, 20_000))
+      }
       sendFromWalletId = destWalletId
     }
 
