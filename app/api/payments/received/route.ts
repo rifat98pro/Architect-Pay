@@ -64,7 +64,7 @@ export async function GET() {
       pageSize:  50,
     } as any)
 
-    const txs = (res.data?.transactions ?? []) as Array<Record<string, unknown>>
+    const txs = (res.data?.transactions ?? []) as unknown as Array<Record<string, unknown>>
 
     circleInbound = txs
       .filter((tx) => {
