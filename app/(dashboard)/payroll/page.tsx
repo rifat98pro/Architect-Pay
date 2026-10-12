@@ -198,14 +198,14 @@ export default function PayrollPage() {
   const totalEurcSalary = eurcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalSalary    = totalUsdcSalary + totalEurcSalary
   const totalUsdcBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  const arcEurcBalance   = parseFloat(eurcChainBalances['ARC-TESTNET'] ?? '0')
-  const arcBalance       = parseFloat(chainBalances['ARC-TESTNET'] ?? '0')
+  const baseEurcBalance  = parseFloat(eurcChainBalances['BASE-SEPOLIA'] ?? '0')
+  const baseBalance      = parseFloat(chainBalances['BASE-SEPOLIA'] ?? '0')
   const usdcOk           = totalUsdcSalary === 0 || totalUsdcBalance >= totalUsdcSalary
-  const eurcOk           = totalEurcSalary === 0 || arcEurcBalance >= totalEurcSalary
+  const eurcOk           = totalEurcSalary === 0 || baseEurcBalance >= totalEurcSalary
   const canRun         = !!businessId && employees.length > 0 && usdcOk && eurcOk
-  const needsCctp      = !!businessId && totalUsdcSalary > 0 && arcBalance < totalUsdcSalary && totalUsdcBalance >= totalUsdcSalary
+  const needsCctp      = !!businessId && totalUsdcSalary > 0 && baseBalance < totalUsdcSalary && totalUsdcBalance >= totalUsdcSalary
   const usdcShortfall  = Math.max(0, totalUsdcSalary - totalUsdcBalance)
-  const eurcShortfall  = Math.max(0, totalEurcSalary - arcEurcBalance)
+  const eurcShortfall  = Math.max(0, totalEurcSalary - baseEurcBalance)
 
   async function handleRun() {
     setConfirming(false)
@@ -302,7 +302,7 @@ export default function PayrollPage() {
             ${totalUsdcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">USDC</span>
           </div>
           <div className={`text-xl font-bold ${eurcOk ? 'text-white' : 'text-red-400'}`}>
-            €{arcEurcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span>
+            €{baseEurcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span>
           </div>
         </div>
       </div>
@@ -326,7 +326,7 @@ export default function PayrollPage() {
       {needsCctp && (
         <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-900/40 bg-amber-900/10 px-5 py-3.5">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
-          <p className="text-sm text-amber-400">Arc USDC balance (${arcBalance.toFixed(2)}) is lower than payout. Funds will be aggregated via Circle CCTP from your other chains — adds ~2–3 min.</p>
+          <p className="text-sm text-amber-400">Base USDC balance (${baseBalance.toFixed(2)}) is lower than payout. Funds will be aggregated via Circle CCTP from your other chains — adds ~2–3 min.</p>
         </div>
       )}
 
