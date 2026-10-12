@@ -35,9 +35,9 @@ export function computeAggregatePlan(
   let remaining = targetAmount
   let totalFee  = 0
 
-  // Funds already on destChain are instant — no CCTP needed
+  // Funds already on destChain are instant — no CCTP needed (ignore dust < $0.01)
   const destBal = chainBalances[destChain] ?? 0
-  if (destBal > 0 && remaining > 0) {
+  if (destBal >= 0.01 && remaining > 0) {
     const use = parseFloat(Math.min(destBal, remaining).toFixed(6))
     plan.push({ chain: destChain, label: CHAIN_LABEL[destChain] ?? destChain, amount: use.toFixed(6), fee: '0', isCctp: false })
     remaining -= use
