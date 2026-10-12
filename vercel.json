@@ -6,7 +6,7 @@
     },
     {
       "path":     "/api/cron/settle",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
