@@ -48,12 +48,20 @@ export async function POST(req: Request) {
       if (burnTxHash && entry.srcDomain && entry.receiverWalletId && entry.destTransmitter) {
         const att = await checkAttestationOnce(entry.srcDomain, burnTxHash)
         if (att) {
-          await mintFromAttestation({
-            message:          att.message,
-            attestation:      att.attestation,
-            receiverWalletId: entry.receiverWalletId,
-            destTransmitter:  entry.destTransmitter,
-          })
+          try {
+            await mintFromAttestation({
+              message:          att.message,
+              attestation:      att.attestation,
+              receiverWalletId: entry.receiverWalletId,
+              destTransmitter:  entry.destTransmitter,
+            })
+          } catch (mintErr) {
+            const mintMsg = mintErr instanceof Error ? mintErr.message : String(mintErr)
+            // FAILED_ON_ONCHAIN means Circle's CCTP relay already processed receiveMessage.
+            // Funds are on the destChain wallet — proceed to sendUsdcPayment.
+            if (!mintMsg.includes('FAILED_ON_ONCHAIN')) throw mintErr
+            console.warn('[payroll/settle] mint already relayed by Circle:', mintMsg)
+          }
           const result = await sendUsdcPayment({
             fromWalletId: entry.receiverWalletId,
             toAddress:    entry.employee.walletAddress,
