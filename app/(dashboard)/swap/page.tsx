@@ -83,8 +83,8 @@ export default function SwapPage() {
   const { user, loading: authLoading } = useAuth()
 
   const [swapForm, setSwapForm, clearSwapAmount] = useFeatureState('swap-form', {
-    srcChain:  'ARC-TESTNET' as Chain,
-    destChain: 'ARC-TESTNET' as Chain,
+    srcChain:  'BASE-SEPOLIA' as Chain,
+    destChain: 'BASE-SEPOLIA' as Chain,
     direction: 'eurc-to-usdc' as Direction,
     amount:    '',
   })

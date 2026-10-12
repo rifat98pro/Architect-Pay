@@ -50,7 +50,7 @@ export default function WithdrawPage() {
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
 
   const [token,     setToken]     = useState<'USDC' | 'EURC'>('USDC')
-  const [destChain, setDestChain] = useState('ARC-TESTNET')
+  const [destChain, setDestChain] = useState('BASE-SEPOLIA')
   const [amount,    setAmount]    = useState('')
   const [address,   setAddress]   = useState('')
   const [note,      setNote]      = useState('')

@@ -29,25 +29,23 @@ const CHAIN_LABEL: Record<string, string> = {
 export function computeAggregatePlan(
   chainBalances: Record<string, number>,
   targetAmount: number,
-  destChain = 'ARC-TESTNET',
+  destChain = 'BASE-SEPOLIA',
 ): AggregatePlan {
   const plan: AggregatePlanEntry[] = []
   let remaining = targetAmount
   let totalFee  = 0
 
-  // Arc funds are "instant" only when dest is also Arc; otherwise they bridge via CCTP (zero fee on Arc mainnet)
-  const arcIsCctp = destChain !== 'ARC-TESTNET'
-
-  const arcBal = chainBalances['ARC-TESTNET'] ?? 0
-  if (arcBal > 0 && remaining > 0) {
-    const use = parseFloat(Math.min(arcBal, remaining).toFixed(6))
-    plan.push({ chain: 'ARC-TESTNET', label: 'Arc', amount: use.toFixed(6), fee: '0', isCctp: arcIsCctp })
+  // Funds already on destChain are instant — no CCTP needed
+  const destBal = chainBalances[destChain] ?? 0
+  if (destBal > 0 && remaining > 0) {
+    const use = parseFloat(Math.min(destBal, remaining).toFixed(6))
+    plan.push({ chain: destChain, label: CHAIN_LABEL[destChain] ?? destChain, amount: use.toFixed(6), fee: '0', isCctp: false })
     remaining -= use
   }
 
   if (remaining > 0.001) {
     const others = CCTP_SOURCE_CHAINS
-      .filter((c) => c !== 'ARC-TESTNET')
+      .filter((c) => c !== destChain && c !== 'ARC-TESTNET')
       .map((c) => ({ chain: c, bal: chainBalances[c] ?? 0 }))
       .filter((x) => x.bal > 0)
       .sort((a, b) => b.bal - a.bal)

@@ -48,7 +48,7 @@ export default function PaymentsPage() {
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
   const [payForm, setPayForm, clearPayForm] = useFeatureState('payment-form', {
     sourceChain:        'ALL_CHAINS',
-    destChain:          'ARC-TESTNET',
+    destChain:          'BASE-SEPOLIA',
     token:              'USDC' as 'USDC' | 'EURC',
     amount:             '',
     label:              '',
@@ -168,7 +168,7 @@ export default function PaymentsPage() {
 
 
   useEffect(() => {
-    if (token === 'EURC' && !EURC_CHAINS.includes(destChain)) setDestChain('ARC-TESTNET')
+    if (token === 'EURC' && !EURC_CHAINS.includes(destChain)) setDestChain('BASE-SEPOLIA')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 

@@ -49,7 +49,7 @@ export default function BusinessEmployeesPage() {
   type LookupState = 'idle' | 'loading' | 'found' | 'notfound'
 
   const [addForm, setAddForm, clearAddForm] = useFeatureState(`biz-${bizId}-add-emp`, {
-    showForm: false, name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '', preferredChain: 'ARC-TESTNET', preferredToken: 'USDC',
+    showForm: false, name: '', address: '', salary: '', role: '', walletMode: 'address' as WalletMode, usernameInput: '', preferredChain: 'BASE-SEPOLIA', preferredToken: 'USDC',
   })
   const showForm    = addForm.showForm
   const setShowForm = (v: boolean) => setAddForm({ showForm: v })
@@ -61,7 +61,7 @@ export default function BusinessEmployeesPage() {
   const setWalletMode     = (v: WalletMode) => setAddForm({ walletMode: v, usernameInput: '', address: '' })
   const setUsernameInput  = (v: string)     => setAddForm({ usernameInput: v })
   const setPreferredChain = (v: string)     => setAddForm({ preferredChain: v })
-  const setPreferredToken = (v: string)     => setAddForm({ preferredToken: v, ...(v === 'EURC' ? { preferredChain: 'ARC-TESTNET' } : {}) })
+  const setPreferredToken = (v: string)     => setAddForm({ preferredToken: v, ...(v === 'EURC' ? { preferredChain: 'BASE-SEPOLIA' } : {}) })
 
   const [lookupState,      setLookupState]      = useState<LookupState>('idle')
   const [resolvedAddress,  setResolvedAddress]  = useState('')

@@ -91,14 +91,16 @@ export default function DashboardPage() {
   return (
     <div className="max-w-3xl space-y-6">
 
-      {/* Arc CCTP notice */}
-      <div className="flex items-start gap-3 rounded-xl border border-yellow-800/40 bg-yellow-900/10 px-4 py-3">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
-        <div>
-          <p className="text-sm font-medium text-yellow-300">Arc cross-chain transfers temporarily unavailable</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-yellow-400/75">
-            Sending funds <span className="font-semibold text-yellow-300">from Arc</span> to other chains is paused due to a known Circle CCTP bundler issue. Our team has reported it and it will be resolved once Circle deploys a fix. Arc → Arc transfers and deposits are unaffected.
-          </p>
+      {/* Base migration notice */}
+      <div className="rounded-xl border border-yellow-800/40 bg-yellow-900/10 px-4 py-3">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-yellow-300">Payments &amp; payroll are temporarily running on Base</p>
+            <p className="mt-1 text-xs leading-relaxed text-yellow-400/75">
+              We have temporarily switched the primary chain from <span className="font-semibold text-yellow-300">Arc</span> to <span className="font-semibold text-yellow-300">Base</span> due to a known issue with Circle&apos;s CCTP bundler on Arc mainnet. All cross-chain payments and payroll now settle through Base. Arc → Arc transfers and deposits remain fully operational. We will migrate back to Arc mainnet as the primary chain once Circle resolves the bundler issue.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -224,7 +226,7 @@ export default function DashboardPage() {
                 <ChainLogo chain={chain} size={28} />
                 <div>
                   <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#0b1e47' : '#c5d3ed' }}>{CHAIN_LABEL[chain] ?? chain}</div>
-                  {chain === 'ARC-TESTNET' && (
+                  {chain === 'BASE-SEPOLIA' && (
                     <div className="text-xs text-brand-500">Primary</div>
                   )}
                 </div>

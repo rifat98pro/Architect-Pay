@@ -14,7 +14,7 @@ export const maxDuration = 300
 const schema = z.object({
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   amount: z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
-  destChain: z.enum(CCTP_SOURCE_CHAINS).default('ARC-TESTNET'),
+  destChain: z.enum(CCTP_SOURCE_CHAINS).default('BASE-SEPOLIA'),
   label: z.string().max(100).optional(),
 })
 
@@ -74,8 +74,14 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    // Step 1: Run CCTP pulls in parallel (non-Arc chains → user's own Arc wallet)
+    // Step 1: Run CCTP pulls in parallel (non-Base chains → user's own Base wallet)
     const cctpEntries = plan.plan.filter((e) => e.isCctp)
+
+    let baseWalletId = chainWalletIds['BASE-SEPOLIA']
+    if (!baseWalletId) {
+      if (!wallet.walletSetId) throw new Error('No wallet set ID for Base chain')
+      baseWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId, 'BASE-SEPOLIA')
+    }
 
     if (cctpEntries.length > 0) {
       await Promise.all(
@@ -91,6 +97,8 @@ export async function POST(req: NextRequest) {
           await cctpTransfer({
             sourceChain:      chain,
             sourceWalletId,
+            destChain:        'BASE-SEPOLIA',
+            destWalletId:     baseWalletId!,
             arcWalletId:      wallet.circleWalletId,
             recipientAddress: wallet.walletAddress,
             amount:           entry.amount,
@@ -99,13 +107,17 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 2a: If destination is non-Arc, CCTP from Arc → destChain first
-    let sendFromWalletId = wallet.circleWalletId
-    if (destChain !== 'ARC-TESTNET') {
+    // Step 2a: Route to destination wallet
+    let sendFromWalletId = baseWalletId
+    if (destChain === 'ARC-TESTNET') {
+      // Arc-to-Arc: use Arc wallet directly (cross-chain to Arc is unavailable)
+      sendFromWalletId = wallet.circleWalletId
+    } else if (destChain !== 'BASE-SEPOLIA') {
+      // CCTP from Base → destChain
       const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain)
       await cctpTransfer({
-        sourceChain:      'ARC-TESTNET',
-        sourceWalletId:   wallet.circleWalletId,
+        sourceChain:      'BASE-SEPOLIA',
+        sourceWalletId:   baseWalletId!,
         destChain,
         destWalletId,
         arcWalletId:      wallet.circleWalletId,
