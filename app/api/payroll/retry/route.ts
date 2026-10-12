@@ -53,6 +53,22 @@ export async function POST(req: Request) {
       const empToken = (emp.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
       const empChain = (emp.preferredChain ?? 'BASE-SEPOLIA') as CctpSourceChain
 
+      // Relay already minted: FAILED_ON_ONCHAIN means Circle's relay processed receiveMessage
+      // before our bundler did. Funds are on receiverWalletId — skip re-burn, just send.
+      if (entry.errorMessage?.includes('FAILED_ON_ONCHAIN') && entry.receiverWalletId) {
+        const result = await sendUsdcPayment({
+          fromWalletId: entry.receiverWalletId,
+          toAddress:    emp.walletAddress,
+          amount:       entry.amount,
+          token:        empToken,
+        })
+        await db.payrollEntry.update({
+          where: { id: entry.id },
+          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
+        })
+        return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
+      }
+
       // Double-pay check: if a Circle tx was already submitted and confirmed, mark complete
       if (entry.circleTxId && !entry.cctpBurnCircleId) {
         const { state, txHash } = await checkTransaction(entry.circleTxId)
