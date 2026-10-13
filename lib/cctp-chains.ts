@@ -95,6 +95,14 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
   },
 }
 
+// Circle's paymaster reserves maxFeePerGas × gasLimit upfront and checks that
+// reservation against the policy cap — not the actual gas burned. On cheap L2s a
+// MEDIUM/HIGH quote reserves dollars for a transaction that costs fractions of a
+// cent, tripping the cap. Only Ethereum mainnet has a mempool worth bidding into.
+export function feeLevelFor(chain: CctpSourceChain): 'LOW' | 'MEDIUM' | 'HIGH' {
+  return chain === 'ETH-SEPOLIA' ? 'MEDIUM' : 'LOW'
+}
+
 // Kept for backward compatibility
 export const ARC_TESTNET_CONFIG = SOURCE_CHAIN_META['ARC-TESTNET']
 

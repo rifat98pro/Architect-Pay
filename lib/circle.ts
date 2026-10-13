@@ -228,12 +228,18 @@ export async function sendUsdcPayment({
   const usdc = (balRes.data?.tokenBalances ?? []).find((b) => b.token?.symbol === token)
   if (!usdc?.token?.id) throw new Error(`${token} not found in wallet — fund it via the Circle faucet first`)
 
+  // The paymaster reserves maxFeePerGas × gasLimit against the policy cap, so a
+  // MEDIUM quote on a cheap L2 reserves dollars for a cents transaction. Only
+  // Ethereum mainnet has a mempool worth bidding into.
+  const chain    = (usdc.token as { blockchain?: string }).blockchain ?? ''
+  const feeLevel = chain === 'ETH' ? 'MEDIUM' : 'LOW'
+
   const txRes = await client.createTransaction({
     walletId:           fromWalletId,
     tokenId:            usdc.token.id,
     destinationAddress: toAddress,
     amount:             [amount],
-    fee: { type: 'level', config: { feeLevel: 'MEDIUM' } },
+    fee: { type: 'level', config: { feeLevel } },
   })
 
   const raw    = txRes.data as unknown as Record<string, unknown>
@@ -261,12 +267,24 @@ export async function executeContractCall({
 }): Promise<string> {
   const client = getClient()
 
-  const res = await client.createContractExecutionTransaction({
-    walletId,
-    contractAddress,
-    callData: callData as `0x${string}`,
-    fee: { type: 'level', config: { feeLevel } },
-  })
+  // Parallel payroll burns can trip Circle's API rate limit — back off and retry.
+  let res
+  for (let attempt = 0; ; attempt++) {
+    try {
+      res = await client.createContractExecutionTransaction({
+        walletId,
+        contractAddress,
+        callData: callData as `0x${string}`,
+        fee: { type: 'level', config: { feeLevel } },
+      })
+      break
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      const isRateLimit = msg.includes('rate limit') || msg.includes('429')
+      if (!isRateLimit || attempt >= 4) throw e
+      await new Promise((r) => setTimeout(r, 2_000 * 2 ** attempt))
+    }
+  }
 
   const raw = res.data as unknown as Record<string, unknown>
   const tx  = raw?.transaction ?? (raw?.transactions as unknown[])?.[0] ?? raw

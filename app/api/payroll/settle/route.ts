@@ -3,6 +3,7 @@ import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { checkTransaction, sendUsdcPayment, getWalletBalances } from '@/lib/circle'
 import { checkAttestationOnce, mintFromAttestation } from '@/lib/cctp'
+import { type CctpSourceChain } from '@/lib/cctp-chains'
 import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 
 export const maxDuration = 60
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
               attestation:      att.attestation,
               receiverWalletId: entry.receiverWalletId,
               destTransmitter:  entry.destTransmitter,
+              destChain:        (entry.employee.preferredChain ?? undefined) as CctpSourceChain | undefined,
             })
           } catch (mintErr) {
             const mintMsg = mintErr instanceof Error ? mintErr.message : String(mintErr)

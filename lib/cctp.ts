@@ -4,10 +4,28 @@ import { encodeFunctionData, encodePacked, pad } from 'viem'
 import { executeContractCall, waitForTransaction, getChainWalletAddress } from '@/lib/circle'
 import {
   SOURCE_CHAIN_META, ARC_TESTNET_CONFIG, CCTS_ADDRESS, EURC_CCTPX_TOKEN_ID,
-  type CctpSourceChain,
+  feeLevelFor, type CctpSourceChain,
 } from '@/lib/cctp-chains'
 
 const IRIS_API = 'https://iris-api.circle.com'
+
+// Read allowance[owner][spender] once. Returns null if the RPC call fails.
+async function readAllowance(
+  rpcUrl:  string,
+  token:   string,
+  owner:   string,
+  spender: string,
+): Promise<bigint | null> {
+  const padAddr = (a: string) => '0x' + a.replace('0x', '').padStart(64, '0')
+  const data = `0xdd62ed3e${padAddr(owner).slice(2)}${padAddr(spender).slice(2)}`
+  try {
+    const res  = await fetch(rpcUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_call', params: [{ to: token, data }, 'latest'], id: 1 }) })
+    const json = await res.json() as { result?: string }
+    return json.result ? BigInt(json.result) : null
+  } catch {
+    return null
+  }
+}
 
 // Poll until allowance[owner][spender] >= required on the given chain RPC.
 // Requires 3 consecutive confirmations (6-second stable window) before returning,
@@ -174,17 +192,19 @@ export async function mintFromAttestation({
   attestation,
   receiverWalletId,
   destTransmitter,
+  destChain,
 }: {
   message:          string
   attestation:      string
   receiverWalletId: string
   destTransmitter:  string
+  destChain?:       CctpSourceChain
 }): Promise<string> {
   const mintTxId = await executeContractCall({
     walletId:        receiverWalletId,
     contractAddress: destTransmitter,
     callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
-    feeLevel:        'MEDIUM',
+    feeLevel:        destChain ? feeLevelFor(destChain) : 'MEDIUM',
   })
   const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[mint-receiveMessage] ${e.message}`) })
   console.log(`[cctp] mint confirmed: ${mintTxHash}`)
@@ -249,11 +269,12 @@ export async function cctpBurn({
 
     console.log(`[cctp/eurc] burn phase: ${sourceChain} → ${destChain ?? 'ARC-TESTNET'}`)
 
-    const approveTxId = await executeContractCall({
+    const eurcFeeLevel = feeLevelFor(sourceChain)
+    const approveTxId  = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: eurcAddress,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
-      feeLevel:        'MEDIUM',
+      feeLevel:        eurcFeeLevel,
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
@@ -273,7 +294,7 @@ export async function cctpBurn({
           false, '0x',
         ],
       }),
-      feeLevel: 'MEDIUM',
+      feeLevel: eurcFeeLevel,
     })
     const burnTxHash = await waitForTransaction(transferTxId).catch((e: Error) => { throw new Error(`[step2-crossChainTransfer] ${e.message}`) })
     console.log(`[cctp/eurc] burn confirmed: ${burnTxHash}`)
@@ -289,23 +310,27 @@ export async function cctpBurn({
 
     const walletAddress = await getChainWalletAddress(sourceWalletId)
 
-    const approveTxId = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, MAX_UINT256] }),
-      feeLevel:        'MEDIUM',
-    })
-    await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+    // Skip the approve when the wallet already has a sufficient (uint256.max) allowance.
+    const srcFeeLevel = feeLevelFor(sourceChain)
+    const existing = await readAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2)
+    if (existing === null || existing < totalToApprove) {
+      const approveTxId = await executeContractCall({
+        walletId:        sourceWalletId,
+        contractAddress: burnToken,
+        callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, MAX_UINT256] }),
+        feeLevel:        srcFeeLevel,
+      })
+      await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
-    // Wait until the allowance is visible on-chain before submitting depositForBurn.
-    // Arc RPC nodes can lag after a tx confirms, causing the bundler to see stale state.
-    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
+      // Arc RPC nodes can lag after a tx confirms, causing the bundler to see stale state.
+      await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
+    }
 
     const burnTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
       callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
-      feeLevel:        'MEDIUM',
+      feeLevel:        srcFeeLevel,
     })
     const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => { throw new Error(`[step2-depositForBurn] ${e.message}`) })
     console.log(`[cctp/usdc] burn confirmed: ${burnTxHash}`)
@@ -349,11 +374,12 @@ export async function cctpBurnFast({
     const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
     // Wait for approve to confirm — burn requires the allowance to be set on-chain
-    const approveTxId = await executeContractCall({
+    const eurcFeeLevel = feeLevelFor(sourceChain)
+    const approveTxId  = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: eurcAddress,
       callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
-      feeLevel:        'MEDIUM',
+      feeLevel:        eurcFeeLevel,
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
 
@@ -372,7 +398,7 @@ export async function cctpBurnFast({
           false, '0x',
         ],
       }),
-      feeLevel: 'MEDIUM',
+      feeLevel: eurcFeeLevel,
     })
 
     console.log(`[cctp/eurc] burn submitted (no-wait): circleId=${burnCircleTxId}`)
@@ -386,23 +412,27 @@ export async function cctpBurnFast({
 
     const walletAddress = await getChainWalletAddress(sourceWalletId)
 
-    // Wait for approve to confirm — depositForBurn requires allowance to be on-chain
-    const approveTxId = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, MAX_UINT256] }),
-      feeLevel:        'MEDIUM',
-    })
-    await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
-
-    // Wait for allowance to be visible on-chain before submitting depositForBurn
-    await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
+    // We approve uint256.max, so after the first burn from this wallet the allowance
+    // is already effectively infinite. Skipping the redundant approve halves both the
+    // Circle API calls (rate limits) and the sponsored gas spend (paymaster daily cap).
+    const srcFeeLevel = feeLevelFor(sourceChain)
+    const existing = await readAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2)
+    if (existing === null || existing < totalToApprove) {
+      const approveTxId = await executeContractCall({
+        walletId:        sourceWalletId,
+        contractAddress: burnToken,
+        callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, MAX_UINT256] }),
+        feeLevel:        srcFeeLevel,
+      })
+      await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+      await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
+    }
 
     const burnCircleTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
       callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
-      feeLevel:        'MEDIUM',
+      feeLevel:        srcFeeLevel,
     })
 
     console.log(`[cctp/usdc] burn submitted (no-wait): circleId=${burnCircleTxId}`)
@@ -418,11 +448,13 @@ export async function cctpMint({
   srcDomain,
   receiverWalletId,
   destTransmitter,
+  destChain,
 }: {
   burnTxHash:       string
   srcDomain:        number
   receiverWalletId: string
   destTransmitter:  string
+  destChain?:       CctpSourceChain
 }): Promise<string> {
   const { message, attestation } = await pollAttestationByTxHash(srcDomain, burnTxHash)
 
@@ -430,7 +462,7 @@ export async function cctpMint({
     walletId:        receiverWalletId,
     contractAddress: destTransmitter,
     callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
-    feeLevel:        'MEDIUM',
+    feeLevel:        destChain ? feeLevelFor(destChain) : 'MEDIUM',
   })
   const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[mint-receiveMessage] ${e.message}`) })
   console.log(`[cctp] mint confirmed: ${mintTxHash}`)
@@ -442,6 +474,6 @@ export async function cctpMint({
 
 export async function cctpTransfer(params: Parameters<typeof cctpBurn>[0]): Promise<{ burnTxHash: string; mintTxHash: string }> {
   const burn = await cctpBurn(params)
-  const mintTxHash = await cctpMint(burn)
+  const mintTxHash = await cctpMint({ ...burn, destChain: params.destChain })
   return { burnTxHash: burn.burnTxHash, mintTxHash }
 }
