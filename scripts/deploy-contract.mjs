@@ -1,10 +1,16 @@
+import 'dotenv/config'
 import { initiateSmartContractPlatformClient } from '@circle-fin/smart-contract-platform'
 import { initiateDeveloperControlledWalletsClient } from '@circle-fin/developer-controlled-wallets'
 
-const CIRCLE_API_KEY     = 'TEST_API_KEY:ef60fd64b6f1a2737ba2a2ba6952ea9c:a9e385105d3dddba25cb61733b2418be'
-const CIRCLE_ENTITY_SECRET = '9bcaf434c428c1ca4d1b1a742cdcf0877d2ee6a5ec40b2c014e1654fcc951004'
-const WALLET_ID          = 'cfdc79f4-9f3a-5357-ad36-684df0e41cc8'
-const WALLET_ADDRESS     = '0x81fbc79b36aa64ccea8624864e94f22c68ce2326'
+const CIRCLE_API_KEY       = process.env.CIRCLE_API_KEY
+const CIRCLE_ENTITY_SECRET = process.env.CIRCLE_ENTITY_SECRET
+const WALLET_ID            = process.env.DEPLOYER_WALLET_ID
+const WALLET_ADDRESS       = process.env.DEPLOYER_WALLET_ADDRESS
+
+if (!CIRCLE_API_KEY || !CIRCLE_ENTITY_SECRET || !WALLET_ID || !WALLET_ADDRESS) {
+  console.error('Set CIRCLE_API_KEY, CIRCLE_ENTITY_SECRET, DEPLOYER_WALLET_ID and DEPLOYER_WALLET_ADDRESS in your environment')
+  process.exit(1)
+}
 
 const contractSdk = initiateSmartContractPlatformClient({
   apiKey:       CIRCLE_API_KEY,

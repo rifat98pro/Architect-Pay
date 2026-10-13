@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { createRequire } from 'module'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
@@ -8,9 +9,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const require   = createRequire(import.meta.url)
 const solc      = require('solc')
 
-const CIRCLE_API_KEY       = 'TEST_API_KEY:ef60fd64b6f1a2737ba2a2ba6952ea9c:a9e385105d3dddba25cb61733b2418be'
-const CIRCLE_ENTITY_SECRET = '9bcaf434c428c1ca4d1b1a742cdcf0877d2ee6a5ec40b2c014e1654fcc951004'
-const WALLET_ID            = 'cfdc79f4-9f3a-5357-ad36-684df0e41cc8'
+const CIRCLE_API_KEY       = process.env.CIRCLE_API_KEY
+const CIRCLE_ENTITY_SECRET = process.env.CIRCLE_ENTITY_SECRET
+const WALLET_ID            = process.env.DEPLOYER_WALLET_ID
+
+if (!CIRCLE_API_KEY || !CIRCLE_ENTITY_SECRET || !WALLET_ID) {
+  console.error('Set CIRCLE_API_KEY, CIRCLE_ENTITY_SECRET and DEPLOYER_WALLET_ID in your environment')
+  process.exit(1)
+}
 
 // Compile
 const source = readFileSync(join(__dirname, '../contracts/ArchitectPay.sol'), 'utf8')
@@ -37,10 +43,13 @@ const sdk = new CircleSmartContractPlatformClient({
 })
 
 console.log('\nDeploying contract...')
+// Circle's identifier for Arc mainnet is 'ARC'; 'ARC-TESTNET' is the testnet.
+const BLOCKCHAIN = process.env.DEPLOY_BLOCKCHAIN ?? 'ARC'
+
 const res = await sdk.deployContract({
   name:       'ArchitectPayRegistry',
   walletId:   WALLET_ID,
-  blockchain: 'ARC-TESTNET',
+  blockchain: BLOCKCHAIN,
   bytecode,
   abiJson,
   constructorParameters: [],
@@ -66,10 +75,12 @@ for (let i = 0; i < 30; i++) {
   console.log(`[${i*5}s] Status: ${status}  Address: ${addr ?? 'pending'}`)
 
   if (status === 'COMPLETE') {
+    const explorer = BLOCKCHAIN === 'ARC' ? 'https://explorer.arc.io' : 'https://testnet.arcscan.app'
     console.log('\n✅ ArchitectPay contract deployed!')
     console.log('Contract address:', addr)
     console.log('Contract ID:     ', contractId)
-    console.log('ArcScan:', `https://testnet.arcscan.app/address/${addr}`)
+    console.log('ArcScan:', `${explorer}/address/${addr}`)
+    console.log('\nNow set CONTRACT_ADDRESS in lib/architect-pay-contract.ts to this address.')
     process.exit(0)
   }
   if (status === 'FAILED') {
