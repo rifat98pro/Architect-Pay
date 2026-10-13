@@ -1,11 +1,11 @@
 # ⬡ Architect Pay
 
-> **Gasless multi-chain USDC payroll built on Arc Testnet.**
-> Pay employees across chains instantly — zero gas, on-chain records, one click.
+> **Gasless multi-chain stablecoin payroll on Arc mainnet.**
+> Pay your team in USDC or EURC across seven chains — each employee picks their own chain and token, one run pays everyone.
 
-![Network](https://img.shields.io/badge/Network-Arc%20Testnet-00e5a0?style=for-the-badge)
+![Network](https://img.shields.io/badge/Network-Arc%20Mainnet-00e5a0?style=for-the-badge)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636?style=for-the-badge&logo=solidity)
-![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)
 ![Circle](https://img.shields.io/badge/Circle-SCA%20Wallets-0099ff?style=for-the-badge)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)
@@ -14,29 +14,39 @@
 
 ## What is Architect Pay?
 
-Architect Pay is a USDC payroll platform that lets businesses pay employees across multiple chains from a single dashboard — no manual bridging, no gas fees, no complexity.
+Paying a distributed team in stablecoins normally means juggling a separate wallet, gas token and bridge for every chain your people want to be paid on. Architect Pay removes that entirely.
 
-Add your employees, set their salaries, hit **Run Payroll** — Architect Pay automatically pulls USDC from whichever chains you have balance on, bridges it to Arc via CCTP V2, and pays everyone in parallel. Every run is permanently recorded on-chain.
+Add your employees, let each one choose the chain and token they want to be paid in, then hit **Run Payroll**. Architect Pay aggregates your balance across chains, bridges what it needs over CCTP V2, and delivers to everyone in parallel — in USDC or EURC, across Arc, Ethereum, Base, Arbitrum, Optimism, Polygon and Avalanche.
 
-Built for the **Circle × Arc Stablecoins Commerce Stack Challenge**.
+Nobody — not you, not your employees — ever holds a native gas token. Every transaction is sponsored through Circle Gas Station.
 
 ---
 
 ## Live Demo
 
-🌐 **[architect.pay.98pro.xyz](https://architect.pay.98pro.xyz)**
+🌐 **[architectpay.website](https://architectpay.website)**
+
+Running on **Arc mainnet**. Example settlements:
+
+| Amount | Transaction |
+|--------|-------------|
+| 10.79 USDC | [`0xe18571b2…6e3cc52d`](https://explorer.arc.io/tx/0xe18571b2e38a7baa0bc33a315608dcd603f50b0cbd52e72b8cd062916e3cc52d) |
+| 1.00 USDC | [`0xb099f312…b9d72ddf`](https://explorer.arc.io/tx/0xb099f31224ffe8450b953e6f3f787985c722a1384817d0ba06490d1ab9d72ddf) |
 
 ---
 
 ## Features
 
-- **Gasless Deposits** — Zero gas fees for users, sponsored by Circle Gas Station
-- **One-Click Payroll** — Pay all active employees in parallel with a single button
-- **Cross-Chain Funding** — Automatically pulls USDC from ETH, Polygon, Avalanche, and more into Arc via CCTP V2
-- **Aggregate Send** — Send to any address by sweeping balance across all chains at once
-- **On-Chain Payroll Records** — Every payment and payroll run emits events on the ArchitectPay smart contract
-- **Employee Management** — Add employees with wallet addresses and USDC salaries
-- **Transaction History** — Full payment history with on-chain tx hashes and ArcScan links
+- **Per-Employee Chain & Token** — Each person picks where and in what they get paid; one run settles all of it
+- **USDC and EURC** — Full support for both, including EURC bridging through Arc's CrossChainTokenService
+- **Gasless Everywhere** — Circle Gas Station sponsors every transaction on every chain
+- **Seven Chains** — Arc, Ethereum, Base, Arbitrum, Optimism, Polygon, Avalanche
+- **Multi-Chain Aggregation** — Automatically pulls from whichever chains hold your balance to cover a run
+- **Self-Healing Settlement** — Payments survive bundler and paymaster failures without manual retry
+- **Stablecoin Swaps** — Convert between USDC and EURC in-app
+- **Username Payments** — Send to `@handle` instead of a 42-character address
+- **Businesses & Scheduling** — Group employees by business, set a recurring payday
+- **Full History** — Payments, withdrawals, received funds, payroll runs and swaps, with explorer links
 - **SCA Wallets** — Every user gets a Circle smart contract wallet (ERC-4337), no seed phrases
 
 ---
@@ -52,31 +62,25 @@ Built for the **Circle × Arc Stablecoins Commerce Stack Challenge**.
                 │
                 ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  ARC TESTNET — CIRCLE L1                    │
-│       Chain ID: 5042002 · Sub-second finality               │
-│            Dollar-denominated fees · USDC native            │
+│                    ARC MAINNET — CIRCLE L1                  │
+│         Chain ID: 5042 · Sub-second finality                │
+│         Dollar-denominated fees · USDC & EURC native        │
 └─────────────────────────┬───────────────────────────────────┘
                           │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│            ARCHITECTPAY SMART CONTRACT                      │
-│       0xfb7c98226faa83f3fec2ef6e32ee8860f991ac4d           │
-│                                                             │
-│  ┌──────────────────────┐  ┌──────────────────────────┐    │
-│  │  recordPayment()     │  │  recordPayrollRun()      │    │
-│  │  Emits PaymentSent   │  │  Emits PayrollRun        │    │
-│  └──────────────────────┘  └──────────────────────────┘    │
-└──────────┬──────────────────────────────────────────────────┘
-           │
-    ┌──────┴──────────────────────────────────────┐
-    │                     │                       │
-    ▼                     ▼                       ▼
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+        ▼                 ▼                 ▼
 ┌───────────────┐  ┌──────────────────┐  ┌──────────────────┐
 │  Circle SCA   │  │  Circle CCTP V2  │  │  Neon PostgreSQL │
-│  Wallets      │  │  Cross-chain     │  │  Users, wallets  │
-│  ERC-4337     │  │  USDC bridging   │  │  employees, runs │
-│  Gas Station  │  │  ETH/Polygon/Avax│  │  Prisma ORM      │
+│  Wallets      │  │  7-chain USDC    │  │  Users, wallets  │
+│  ERC-4337     │  │  + Arc CCTPx     │  │  employees, runs │
+│  Gas Station  │  │  for EURC        │  │  Prisma ORM      │
 └───────────────┘  └──────────────────┘  └──────────────────┘
+                          │
+   ┌──────────┬───────────┼───────────┬──────────┬──────────┐
+   ▼          ▼           ▼           ▼          ▼          ▼
+  Arc    Ethereum      Base      Arbitrum   Optimism   Polygon
+                                                       Avalanche
 ```
 
 ---
@@ -86,10 +90,10 @@ Built for the **Circle × Arc Stablecoins Commerce Stack Challenge**.
 | Product | Usage |
 |---------|-------|
 | **Developer-Controlled SCA Wallets** | Every user gets a smart contract wallet — gasless, no seed phrase |
-| **Gas Station** | Sponsors all transaction fees so users never need native tokens |
-| **CCTP V2** | Pulls USDC from Ethereum, Polygon, Avalanche into Arc automatically |
-| **Smart Contract Platform** | Deployed the custom ArchitectPay contract on Arc Testnet |
-| **USDC on Arc** | Primary settlement token for all payroll and payments |
+| **Gas Station** | Sponsors transaction fees on all seven chains so nobody holds native tokens |
+| **CCTP V2** | Cross-chain USDC settlement, with Arc as domain 26 in both directions |
+| **Arc CrossChainTokenService (CCTPx)** | EURC bridging to and from Arc |
+| **USDC & EURC on Arc** | Primary settlement assets |
 
 ---
 
@@ -99,49 +103,32 @@ Built for the **Circle × Arc Stablecoins Commerce Stack Challenge**.
 User clicks "Run Payroll"
         │
         ▼
-1. Fetch balances across all chains (Arc + CCTP chains)
+1. Pre-flight — verify balances cover payroll + fees before spending gas
         │
         ▼
-2. Compute funding plan — which chains to pull from
-        │
-        ├── If CCTP chains needed:
-        │   └── Pull USDC → user's Arc wallet via CCTP V2
+2. Aggregate — pull USDC from other chains into the hub wallet via CCTP V2
         │
         ▼
-3. Pay all employees in parallel from Arc wallet
+3. Fan out — for each employee, by their chosen chain and token:
+        │
+        ├── Same chain as hub  → direct transfer
+        └── Different chain    → CCTP burn, settled asynchronously
         │
         ▼
-4. Record results in database
+4. Settle — poll Iris for attestation, mint on the destination, pay the employee
         │
         ▼
-5. Emit PayrollRun event on ArchitectPay contract (fire-and-forget)
+5. Reconcile — update run status; retry anything still in flight
 ```
 
----
+### Settlement Reliability
 
-## Smart Contract
+Cross-chain payroll fails in ways single-chain payroll does not, so settlement is built to survive them:
 
-**Deployed on Arc Testnet:**
-```
-0xfb7c98226faa83f3fec2ef6e32ee8860f991ac4d
-```
-
-**View on Explorer:**
-[testnet.arcscan.app](https://testnet.arcscan.app/address/0xfb7c98226faa83f3fec2ef6e32ee8860f991ac4d)
-
-### Contract Functions
-
-| Function | Description |
-|----------|-------------|
-| `recordPayment(address, uint256, string)` | Emits `PaymentSent` event for every USDC transfer |
-| `recordPayrollRun(uint256, uint256)` | Emits `PayrollRun` event with total amount and employee count |
-
-### Contract Events
-
-| Event | Parameters |
-|-------|------------|
-| `PaymentSent` | sender, recipient, amount (micro USDC), label |
-| `PayrollRun` | sender, totalAmount, employeeCount, timestamp |
+- **Non-blocking burns** — a payroll run submits burns and returns immediately; settlement is polled rather than held open
+- **Relay fallback** — if Circle's bundler cannot execute the mint (gas estimation failure, paymaster policy limit), the system detects Circle's own CCTP relay completing it and pays out from the resulting balance, so a payment is never lost to a transient failure
+- **Atomic claims** — concurrent settlement workers claim each entry with a conditional update, so an employee can never be paid twice
+- **Stale-claim recovery** — a claim abandoned by a crashed process is reclaimed, and a drained receiver wallet is recognised as already-paid rather than paid again
 
 ---
 
@@ -149,31 +136,31 @@ User clicks "Run Payroll"
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 14 App Router + React |
+| Frontend | Next.js 16 App Router + React |
 | Styling | Tailwind CSS |
 | Language | TypeScript |
 | Wallets | Circle Developer-Controlled SCA Wallets (ERC-4337) |
-| Cross-chain | Circle CCTP V2 |
+| Cross-chain | Circle CCTP V2 + Arc CrossChainTokenService |
 | Gas | Circle Gas Station |
-| Smart Contract | Solidity 0.8.20 |
-| Contract Deploy | Circle Smart Contract Platform SDK |
 | Database | Neon PostgreSQL + Prisma ORM |
 | Auth | JWT (jose) + bcryptjs |
 | Hosting | Vercel |
-| Network | Arc Testnet (Circle L1) |
+| Network | Arc mainnet (Circle L1) |
 
 ---
 
-## Arc Testnet Details
+## Arc Mainnet Details
 
 | Property | Value |
 |----------|-------|
-| Network Name | Arc Testnet |
-| Chain ID | `5042002` (0x4cef52) |
-| RPC URL | `https://rpc.testnet.arc.io` |
-| Block Explorer | `https://testnet.arcscan.app` |
+| Network Name | Arc |
+| Chain ID | `5042` (0x13b2) |
+| RPC URL | `https://rpc.mainnet.arc.io` |
+| Block Explorer | `https://explorer.arc.io` |
 | Gas Token | USDC |
-| Faucet | [faucet.circle.com](https://faucet.circle.com) |
+| USDC | `0x3600000000000000000000000000000000000000` |
+| EURC | `0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1` |
+| CCTP Domain | `26` |
 
 ---
 
@@ -217,6 +204,8 @@ CIRCLE_ENTITY_SECRET=your_entity_secret
 JWT_SECRET=your_jwt_secret
 ```
 
+> Credentials are read from the environment only — never commit them.
+
 ---
 
 ## Project Structure
@@ -225,16 +214,16 @@ JWT_SECRET=your_jwt_secret
 architect-pay/
 ├── app/
 │   ├── (auth)/              ← Login and signup pages
-│   ├── (dashboard)/         ← Dashboard, payments, payroll, employees, history
-│   ├── api/                 ← API routes (payments, payroll, wallets, auth)
+│   ├── (dashboard)/         ← Dashboard, payments, payroll, employees, history, swap
+│   ├── api/                 ← API routes (payments, payroll, wallets, swap, auth)
 │   └── page.tsx             ← Landing page
-├── components/              ← Nav, deposit modal
+├── components/              ← Nav, logos, deposit modal
 ├── contracts/
-│   └── ArchitectPay.sol     ← On-chain event registry
+│   └── ArchitectPay.sol     ← Event registry (see note below)
 ├── lib/
 │   ├── circle.ts            ← Circle SDK wrapper
-│   ├── cctp.ts              ← CCTP V2 cross-chain transfers
-│   ├── architect-pay-contract.ts ← On-chain logging
+│   ├── cctp.ts              ← CCTP V2 burn/mint + EURC CCTPx
+│   ├── cctp-chains.ts       ← Per-chain config: domains, tokens, fee levels
 │   └── db.ts                ← Prisma client
 ├── prisma/
 │   └── schema.prisma        ← Database schema
@@ -242,13 +231,15 @@ architect-pay/
     └── deploy-custom-contract.mjs ← Contract deployment script
 ```
 
+> `contracts/ArchitectPay.sol` is an optional event registry from an earlier build. It is currently deployed on Arc testnet only; on-chain event logging is not active on mainnet. All payments settle as real USDC/EURC transfers regardless.
+
 ---
 
 ## Security Notes
 
-- ⚠️ This is a **testnet** deployment — do not use real funds
-- Entity secrets and API keys are stored server-side only, never exposed to the browser
+- Entity secrets and API keys are read from server-side environment variables only, never exposed to the browser
 - Passwords are hashed with bcrypt before storing
+- Payroll settlement uses atomic database claims to make duplicate payouts impossible under concurrency
 
 ---
 
@@ -258,4 +249,4 @@ MIT — feel free to fork and build on top of Architect Pay.
 
 ---
 
-Built with ⬡ on Arc Testnet · Circle SCA Wallets · CCTP V2 · Gas Station
+Built with ⬡ on Arc mainnet · Circle SCA Wallets · CCTP V2 · Gas Station
