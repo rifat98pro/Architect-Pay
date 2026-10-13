@@ -128,7 +128,20 @@ export async function POST(req: Request) {
         ? (EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA')
         : empChain) as CctpSourceChain
 
-      // Clear stale CCTP metadata from previous failed attempt
+      // If a burn already exists and went through, don't re-burn — just reset to PENDING
+      // so the settle route retries the mint (handles PAYMASTER / ESTIMATION_ERROR cases).
+      if (entry.cctpBurnCircleId) {
+        const { state } = await checkTransaction(entry.cctpBurnCircleId)
+        if (state !== 'FAILED' && state !== 'CANCELLED') {
+          await db.payrollEntry.update({
+            where: { id: entry.id },
+            data:  { status: 'PENDING', errorMessage: null },
+          })
+          return { entryId: entry.id, txHash: null, asyncCctp: true as const }
+        }
+      }
+
+      // Clear stale CCTP metadata from previous failed attempt before fresh burn
       await db.payrollEntry.update({
         where: { id: entry.id },
         data:  { cctpBurnCircleId: null, burnTxHash: null, srcDomain: null, receiverWalletId: null, destTransmitter: null, errorMessage: null },

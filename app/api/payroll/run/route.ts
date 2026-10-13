@@ -30,12 +30,18 @@ export async function POST(req: Request) {
   })
   if (!wallet) return NextResponse.json({ error: 'Wallet not found' }, { status: 404 })
 
-  // Block duplicate concurrent runs
+  // Block duplicate concurrent runs — but allow a new run if the existing one's
+  // only pending entries are async CCTP burns (they have isolated receiver wallets
+  // and won't interfere with a fresh run; cron/settle handles them independently).
   const activeRun = await db.payrollRun.findFirst({
-    where: { userId: user.id, status: 'PROCESSING', ...(businessId ? { businessId } : {}) },
+    where:   { userId: user.id, status: 'PROCESSING', ...(businessId ? { businessId } : {}) },
+    include: { entries: { where: { status: 'PENDING' } } },
   })
   if (activeRun) {
-    return NextResponse.json({ error: 'A payroll run is already in progress. Please wait for it to complete.' }, { status: 409 })
+    const hasBlockingEntry = activeRun.entries.some((e) => !e.cctpBurnCircleId)
+    if (hasBlockingEntry) {
+      return NextResponse.json({ error: 'A payroll run is already in progress. Please wait for it to complete.' }, { status: 409 })
+    }
   }
 
   const employees = await db.employee.findMany({
@@ -73,13 +79,29 @@ export async function POST(req: Request) {
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
 
-  // Check USDC feasibility (only if there are USDC employees)
+  // Check USDC feasibility with correct per-wallet accounting:
+  // Arc employees are paid directly from Arc wallet (Arc can't be a CCTP source).
+  // All other employees are burned from Base (funded by Base + pullable chain wallets).
   if (usdcEmps.length > 0) {
-    const plan = computeAggregatePlan(numericBals, totalWithFee)
-    if (!plan.feasible) {
-      const totalAvail = Object.values(numericBals).reduce((s, v) => s + v, 0)
+    const arcUsdcEmps  = usdcEmps.filter((e) => (e.preferredChain ?? 'ARC-TESTNET') === 'ARC-TESTNET')
+    const hubUsdcEmps  = usdcEmps.filter((e) => (e.preferredChain ?? 'ARC-TESTNET') !== 'ARC-TESTNET')
+    const arcNeeded    = arcUsdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
+    const baseNeeded   = hubUsdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0) + platformFee
+    const arcBalance   = numericBals['ARC-TESTNET'] ?? 0
+    // Base + any CCTP-pullable chain (everything except Arc)
+    const pullable     = Object.entries(numericBals)
+      .filter(([k]) => k !== 'ARC-TESTNET')
+      .reduce((s, [, v]) => s + v, 0)
+
+    if (arcBalance < arcNeeded) {
       return NextResponse.json(
-        { error: `Insufficient USDC. Need $${totalUsdcAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee = $${totalWithFee.toFixed(2)}, have $${totalAvail.toFixed(2)} USDC total.` },
+        { error: `Insufficient USDC on Arc for Arc employees. Need $${arcNeeded.toFixed(2)}, have $${arcBalance.toFixed(2)} on Arc.` },
+        { status: 400 },
+      )
+    }
+    if (pullable < baseNeeded) {
+      return NextResponse.json(
+        { error: `Insufficient USDC for cross-chain payroll. Need $${baseNeeded.toFixed(2)} (payroll + fee), have $${pullable.toFixed(2)} across Base and other chains.` },
         { status: 400 },
       )
     }

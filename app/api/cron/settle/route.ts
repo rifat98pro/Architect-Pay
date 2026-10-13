@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { checkTransaction, sendUsdcPayment } from '@/lib/circle'
+import { checkTransaction, sendUsdcPayment, getWalletBalances } from '@/lib/circle'
 import { checkAttestationOnce, mintFromAttestation } from '@/lib/cctp'
 import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
       if (burnTxHash && entry.srcDomain && entry.receiverWalletId && entry.destTransmitter) {
         const att = await checkAttestationOnce(entry.srcDomain, burnTxHash)
         if (att) {
-          let mintSkipped = false
+          let receiverFunded = false
           try {
             await mintFromAttestation({
               message:          att.message,
@@ -52,18 +52,30 @@ export async function GET(req: Request) {
               receiverWalletId: entry.receiverWalletId,
               destTransmitter:  entry.destTransmitter,
             })
+            receiverFunded = true
           } catch (mintErr) {
             const mintMsg = mintErr instanceof Error ? mintErr.message : String(mintErr)
             if (mintMsg.includes('FAILED_ON_ONCHAIN')) {
               console.warn('[cron/settle] mint already relayed by Circle:', mintMsg)
-            } else if (mintMsg.includes('ESTIMATION_ERROR')) {
-              console.warn('[cron/settle] mint estimation error, retrying next poll:', mintMsg)
-              mintSkipped = true
+              receiverFunded = true
             } else {
-              throw mintErr
+              console.warn('[cron/settle] mint bundler error, checking receiver balance:', mintMsg)
+              try {
+                const empToken = (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
+                const bals     = await getWalletBalances(entry.receiverWalletId!)
+                const bal      = parseFloat(empToken === 'EURC' ? bals.eurc : bals.usdc)
+                if (bal >= parseFloat(entry.amount)) {
+                  console.log('[cron/settle] receiver wallet funded by Circle relay, proceeding to send')
+                  receiverFunded = true
+                } else {
+                  console.warn('[cron/settle] receiver wallet not yet funded, retrying next poll')
+                }
+              } catch {
+                console.warn('[cron/settle] could not check receiver balance, retrying next poll')
+              }
             }
           }
-          if (mintSkipped) continue
+          if (!receiverFunded) continue
           const result = await sendUsdcPayment({
             fromWalletId: entry.receiverWalletId,
             toAddress:    entry.employee.walletAddress,

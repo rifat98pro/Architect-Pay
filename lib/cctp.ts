@@ -184,6 +184,7 @@ export async function mintFromAttestation({
     walletId:        receiverWalletId,
     contractAddress: destTransmitter,
     callData:        encodeFunctionData({ abi: [RECEIVE_MESSAGE_ABI], functionName: 'receiveMessage', args: [message as `0x${string}`, attestation as `0x${string}`] }),
+    feeLevel:        'MEDIUM',
   })
   const mintTxHash = await waitForTransaction(mintTxId).catch((e: Error) => { throw new Error(`[mint-receiveMessage] ${e.message}`) })
   console.log(`[cctp] mint confirmed: ${mintTxHash}`)
