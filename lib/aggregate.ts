@@ -16,6 +16,15 @@ export interface AggregatePlan {
   reason?:     string
 }
 
+// CCTP V2 fast transfers cost roughly 1 basis point. Budget 0.1% so a slightly
+// larger actual fee can't leave the plan short, without inventing a shortfall
+// big enough to drag in an extra chain.
+const CCTP_FEE_RATE = 0.001
+
+// Amounts round to 6 decimals, and a burn that rounds to zero is rejected on-chain.
+// Anything under a cent isn't worth a cross-chain transfer anyway.
+const MIN_BURN = 0.01
+
 const CHAIN_LABEL: Record<string, string> = {
   'ARC-TESTNET':  'Arc',
   'ETH-SEPOLIA':  'Ethereum',
@@ -47,13 +56,15 @@ export function computeAggregatePlan(
     const others = CCTP_SOURCE_CHAINS
       .filter((c) => c !== destChain && c !== 'ARC-TESTNET')
       .map((c) => ({ chain: c, bal: chainBalances[c] ?? 0 }))
-      .filter((x) => x.bal > 0)
+      // Below a cent the burn rounds to zero and the chain rejects it, so skip dust.
+      .filter((x) => x.bal >= MIN_BURN)
       .sort((a, b) => b.bal - a.bal)
 
     for (const { chain, bal } of others) {
       if (remaining <= 0.001) break
-      const burnAmount   = parseFloat(Math.min(bal, remaining / 0.99).toFixed(6))
-      const estimatedFee = parseFloat((burnAmount * 0.01).toFixed(6))
+      const burnAmount   = parseFloat(Math.min(bal, remaining / (1 - CCTP_FEE_RATE)).toFixed(6))
+      if (burnAmount < MIN_BURN) continue
+      const estimatedFee = parseFloat((burnAmount * CCTP_FEE_RATE).toFixed(6))
       const netReceived  = burnAmount - estimatedFee
       plan.push({ chain, label: CHAIN_LABEL[chain] ?? chain, amount: burnAmount.toFixed(6), fee: estimatedFee.toFixed(6), isCctp: true })
       totalFee  += estimatedFee
@@ -94,12 +105,13 @@ export function computeEurcAggregatePlan(
     const others = [...EURC_CCTP_CHAINS]
       .filter((c) => c !== destChain)
       .map((c) => ({ chain: c as string, bal: eurcBalances[c] ?? 0 }))
-      .filter((x) => x.bal > 0)
+      .filter((x) => x.bal >= MIN_BURN)
       .sort((a, b) => b.bal - a.bal)
 
     for (const { chain, bal } of others) {
       if (remaining <= 0.001) break
       const burnAmount = parseFloat(Math.min(bal, remaining).toFixed(6))
+      if (burnAmount < MIN_BURN) continue
       // CCTPx EURC protocol fee is 0; no platform fee on aggregate withdraw
       plan.push({ chain, label: CHAIN_LABEL[chain] ?? chain, amount: burnAmount.toFixed(6), fee: '0', isCctp: true })
       remaining -= burnAmount
