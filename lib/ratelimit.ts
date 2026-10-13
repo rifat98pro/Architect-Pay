@@ -29,6 +29,10 @@ export const authLimiter    = makeLimiter('rl:auth',    '1 m', 5)   // 5 per min
 export const otpLimiter     = makeLimiter('rl:otp',     '1 h', 3)   // 3 per hour per email
 export const paymentLimiter = makeLimiter('rl:payment', '1 m', 10)  // 10 per minute per user
 
+// Username lookup is public and returns a wallet address, so it is a scraping
+// target. Generous enough for typing in the recipient field, useless for a wordlist.
+export const lookupLimiter  = makeLimiter('rl:lookup',  '1 m', 30)  // 30 per minute per IP
+
 /** Returns a 429 response if rate limited, otherwise null. */
 export async function checkRateLimit(
   limiter:    Ratelimit | null,

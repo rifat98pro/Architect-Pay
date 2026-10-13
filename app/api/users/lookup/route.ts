@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { lookupLimiter, checkRateLimit, getIP } from '@/lib/ratelimit'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const limited = await checkRateLimit(lookupLimiter, getIP(request))
+  if (limited) return limited
+
   const { searchParams } = new URL(request.url)
   const raw = searchParams.get('username')?.trim().replace(/^@/, '').toLowerCase()
   if (!raw) return NextResponse.json({ error: 'username required' }, { status: 400 })
