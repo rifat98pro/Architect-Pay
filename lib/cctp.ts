@@ -49,7 +49,7 @@ const APPROVE_ABI = {
 // Approve uint256.max so parallel burns from the same wallet don't race each other.
 // USDC (FiatToken) skips allowance reduction when allowance == uint256.max, so
 // multiple concurrent depositForBurn calls all succeed from the same shared allowance.
-const MAX_UINT256 = 2n ** 256n - 1n
+const MAX_UINT256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 // USDC: CCTP V2 7-arg depositForBurn (TokenMessengerV2)
 const DEPOSIT_FOR_BURN_ABI = {
