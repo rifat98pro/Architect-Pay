@@ -278,9 +278,8 @@ export default function SwapPage() {
             <div className="mb-3 text-xs font-medium text-gray-500">You pay</div>
             <div className="flex items-center gap-3">
               <input
-                type="number"
-                step="0.01"
-                min="0.01"
+                type="text"
+                inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"

@@ -186,9 +186,8 @@ export default function EmployeesPage() {
           <div className="flex items-center rounded-lg border border-gray-700 bg-gray-900 overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
             <span className="pl-4 pr-1 text-sm text-gray-500 shrink-0 select-none">$</span>
             <input
-              type="number"
-              step="0.01"
-              min="0.01"
+              type="text"
+              inputMode="decimal"
               placeholder="0.00"
               value={salary}
               onChange={(e) => setSalary(e.target.value)}
@@ -258,9 +257,8 @@ export default function EmployeesPage() {
                     <div className="flex items-center rounded-lg border border-gray-700 bg-gray-900 overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
                       <span className="pl-3.5 pr-1 text-sm text-gray-500 shrink-0 select-none">$</span>
                       <input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
+                        type="text"
+                        inputMode="decimal"
                         value={editState.salary}
                         onChange={(e) => setEditState({ ...editState, salary: e.target.value })}
                         placeholder="0.00"
