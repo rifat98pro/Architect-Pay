@@ -79,29 +79,19 @@ export async function POST(req: Request) {
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
 
-  // Check USDC feasibility with correct per-wallet accounting:
-  // Arc employees are paid directly from Arc wallet (Arc can't be a CCTP source).
-  // All other employees are burned from Base (funded by Base + pullable chain wallets).
+  // Check USDC feasibility — all USDC employees are paid via CCTP burn from Base
+  // (Arc as CCTP destination works fine; only Arc as source is broken).
+  // Arc wallet balance is excluded since it can't be a CCTP source.
   if (usdcEmps.length > 0) {
-    const arcUsdcEmps  = usdcEmps.filter((e) => (e.preferredChain ?? 'ARC-TESTNET') === 'ARC-TESTNET')
-    const hubUsdcEmps  = usdcEmps.filter((e) => (e.preferredChain ?? 'ARC-TESTNET') !== 'ARC-TESTNET')
-    const arcNeeded    = arcUsdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
-    const baseNeeded   = hubUsdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0) + platformFee
-    const arcBalance   = numericBals['ARC-TESTNET'] ?? 0
-    // Base + any CCTP-pullable chain (everything except Arc)
-    const pullable     = Object.entries(numericBals)
+    const pullable = Object.entries(numericBals)
       .filter(([k]) => k !== 'ARC-TESTNET')
       .reduce((s, [, v]) => s + v, 0)
-
-    if (arcBalance < arcNeeded) {
+    // CCTP charges a per-burn fee (typically 1–14 bps) deducted on top of the amount.
+    // Add a 0.5% buffer so burns can't run the Base wallet dry mid-payroll.
+    const needed = totalWithFee * 1.005
+    if (pullable < needed) {
       return NextResponse.json(
-        { error: `Insufficient USDC on Arc for Arc employees. Need $${arcNeeded.toFixed(2)}, have $${arcBalance.toFixed(2)} on Arc.` },
-        { status: 400 },
-      )
-    }
-    if (pullable < baseNeeded) {
-      return NextResponse.json(
-        { error: `Insufficient USDC for cross-chain payroll. Need $${baseNeeded.toFixed(2)} (payroll + fee), have $${pullable.toFixed(2)} across Base and other chains.` },
+        { error: `Insufficient USDC. Need ~$${needed.toFixed(2)} ($${totalUsdcAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee + CCTP fees), have $${pullable.toFixed(2)} across Base and other chains.` },
         { status: 400 },
       )
     }
@@ -121,7 +111,9 @@ export async function POST(req: Request) {
     }
   }
 
-  const plan = usdcEmps.length > 0 ? computeAggregatePlan(numericBals, totalWithFee) : { feasible: true, plan: [] }
+  // Exclude Arc from the aggregate plan — Arc can't be a CCTP source
+  const nonArcBals = Object.fromEntries(Object.entries(numericBals).filter(([k]) => k !== 'ARC-TESTNET'))
+  const plan = usdcEmps.length > 0 ? computeAggregatePlan(nonArcBals, totalWithFee) : { feasible: true, plan: [] }
 
   // Create payroll run record
   const run = await db.payrollRun.create({
@@ -207,12 +199,7 @@ export async function POST(req: Request) {
           return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
         }
 
-        // USDC path — Arc-to-Arc direct; cross-chain via Base; Base direct
-        if (empChain === 'ARC-TESTNET') {
-          const result = await sendUsdcPayment({ fromWalletId: wallet.circleWalletId, toAddress: emp.walletAddress, amount: entry.amount })
-          await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
-          return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
-        }
+        // USDC path — Base direct; everything else (including Arc) via CCTP burn from Base
         if (empChain !== 'BASE-SEPOLIA') {
           const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, empChain)
           const burn = await cctpBurnFast({

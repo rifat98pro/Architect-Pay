@@ -85,12 +85,11 @@ export async function POST(req: Request) {
         await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: null, txHash: null } })
       }
 
-      const isArcDest = empToken === 'EURC'
-        ? (EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA') === 'ARC-TESTNET'
-        : empChain === 'ARC-TESTNET'
+      // EURC on Arc: send directly from Arc wallet (EURC lives natively on Arc)
+      const isEurcArcDest = empToken === 'EURC' &&
+        (EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA') === 'ARC-TESTNET'
 
-      // Arc-to-Arc: send directly from Arc wallet
-      if (isArcDest) {
+      if (isEurcArcDest) {
         const result = await sendUsdcPayment({
           fromWalletId: wallet.circleWalletId,
           toAddress:    emp.walletAddress,
@@ -107,6 +106,7 @@ export async function POST(req: Request) {
       const isBaseDest = empToken === 'EURC'
         ? (EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA') === 'BASE-SEPOLIA'
         : empChain === 'BASE-SEPOLIA'
+      // USDC Arc employees now go via CCTP burn Base→Arc (same as ARB/OP/etc.)
 
       // Base-to-Base: send immediately
       if (isBaseDest) {

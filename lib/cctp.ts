@@ -301,10 +301,11 @@ export async function cctpBurn({
     // Arc RPC nodes can lag after a tx confirms, causing the bundler to see stale state.
     await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
 
+    // Burn amount + fee so the recipient nets the full requested amount.
     const burnTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [totalToApprove, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
       feeLevel:        'MEDIUM',
     })
     const burnTxHash = await waitForTransaction(burnTxId).catch((e: Error) => { throw new Error(`[step2-depositForBurn] ${e.message}`) })
@@ -398,11 +399,12 @@ export async function cctpBurnFast({
     // Wait for allowance to be visible on-chain before submitting depositForBurn
     await waitForAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2, totalToApprove)
 
-    // Submit burn — don't wait, return Circle tx ID immediately
+    // Burn amount + fee so the recipient nets the full requested amount.
+    // CCTP V2 deducts the fee from the burned amount before minting.
     const burnCircleTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: srcMeta.tokenMessengerV2,
-      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [amountMicro, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
+      callData:        encodeFunctionData({ abi: [DEPOSIT_FOR_BURN_ABI], functionName: 'depositForBurn', args: [totalToApprove, dstDomain, recipient32, burnToken, zeroCaller, feeAmount, finalityThreshold] }),
       feeLevel:        'MEDIUM',
     })
 
