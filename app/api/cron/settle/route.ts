@@ -44,7 +44,6 @@ export async function GET(req: Request) {
       if (burnTxHash && entry.srcDomain && entry.receiverWalletId && entry.destTransmitter) {
         const att = await checkAttestationOnce(entry.srcDomain, burnTxHash)
         if (att) {
-          let receiverFunded = false
           try {
             await mintFromAttestation({
               message:          att.message,
@@ -52,35 +51,31 @@ export async function GET(req: Request) {
               receiverWalletId: entry.receiverWalletId,
               destTransmitter:  entry.destTransmitter,
             })
-            receiverFunded = true
           } catch (mintErr) {
             const mintMsg = mintErr instanceof Error ? mintErr.message : String(mintErr)
-            if (mintMsg.includes('FAILED_ON_ONCHAIN')) {
-              console.warn('[cron/settle] mint already relayed by Circle:', mintMsg)
-              receiverFunded = true
-            } else {
-              console.warn('[cron/settle] mint bundler error, checking receiver balance:', mintMsg)
-              try {
-                const empToken = (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
-                const bals     = await getWalletBalances(entry.receiverWalletId!)
-                const bal      = parseFloat(empToken === 'EURC' ? bals.eurc : bals.usdc)
-                if (bal >= parseFloat(entry.amount)) {
-                  console.log('[cron/settle] receiver wallet funded by Circle relay, proceeding to send')
-                  receiverFunded = true
-                } else {
-                  console.warn('[cron/settle] receiver wallet not yet funded, retrying next poll')
-                }
-              } catch {
-                console.warn('[cron/settle] could not check receiver balance, retrying next poll')
-              }
-            }
+            console.warn('[cron/settle] mint not done by us:', mintMsg)
           }
-          if (!receiverFunded) continue
+
+          // Send whatever actually landed — CCTP deducts its fee from the minted amount.
+          const empToken = (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
+          let available  = 0
+          try {
+            const bals = await getWalletBalances(entry.receiverWalletId!)
+            available  = parseFloat(empToken === 'EURC' ? bals.eurc : bals.usdc)
+          } catch {
+            console.warn('[cron/settle] balance check failed, retrying next poll')
+          }
+
+          const sendAmount = Math.min(parseFloat(entry.amount), available)
+          if (sendAmount <= 0) {
+            console.warn('[cron/settle] receiver not funded yet, retrying next poll')
+            continue
+          }
           const result = await sendUsdcPayment({
             fromWalletId: entry.receiverWalletId,
             toAddress:    entry.employee.walletAddress,
-            amount:       entry.amount,
-            token:        (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC',
+            amount:       sendAmount.toFixed(6),
+            token:        empToken,
           })
           await db.payrollEntry.update({
             where: { id: entry.id },

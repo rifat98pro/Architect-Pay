@@ -86,12 +86,9 @@ export async function POST(req: Request) {
     const pullable = Object.entries(numericBals)
       .filter(([k]) => k !== 'ARC-TESTNET')
       .reduce((s, [, v]) => s + v, 0)
-    // CCTP charges a per-burn fee (typically 1–14 bps) deducted on top of the amount.
-    // Add a 0.5% buffer so burns can't run the Base wallet dry mid-payroll.
-    const needed = totalWithFee * 1.005
-    if (pullable < needed) {
+    if (pullable < totalWithFee) {
       return NextResponse.json(
-        { error: `Insufficient USDC. Need ~$${needed.toFixed(2)} ($${totalUsdcAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee + CCTP fees), have $${pullable.toFixed(2)} across Base and other chains.` },
+        { error: `Insufficient USDC. Need $${totalUsdcAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee = $${totalWithFee.toFixed(2)}, have $${pullable.toFixed(2)} across Base and other chains.` },
         { status: 400 },
       )
     }

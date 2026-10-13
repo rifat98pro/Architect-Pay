@@ -54,7 +54,6 @@ export async function POST(req: Request) {
           // reason (ESTIMATION_ERROR, PAYMASTER, policy limits), fall back to checking
           // the receiver wallet balance — if Circle's auto-relay already minted, the
           // balance will be there and we can send immediately without waiting.
-          let receiverFunded = false
           try {
             await mintFromAttestation({
               message:          att.message,
@@ -62,43 +61,40 @@ export async function POST(req: Request) {
               receiverWalletId: entry.receiverWalletId,
               destTransmitter:  entry.destTransmitter,
             })
-            receiverFunded = true
           } catch (mintErr) {
             const mintMsg = mintErr instanceof Error ? mintErr.message : String(mintErr)
-            if (mintMsg.includes('FAILED_ON_ONCHAIN')) {
-              console.warn('[payroll/settle] mint already relayed by Circle:', mintMsg)
-              receiverFunded = true
-            } else {
-              // Any other bundler error (ESTIMATION_ERROR, PAYMASTER, etc.) —
-              // check if Circle's relay already funded the receiver wallet.
-              console.warn('[payroll/settle] mint bundler error, checking receiver balance:', mintMsg)
-              try {
-                const empToken = (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
-                const bals     = await getWalletBalances(entry.receiverWalletId!)
-                const bal      = parseFloat(empToken === 'EURC' ? bals.eurc : bals.usdc)
-                if (bal >= parseFloat(entry.amount)) {
-                  console.log('[payroll/settle] receiver wallet funded by Circle relay, proceeding to send')
-                  receiverFunded = true
-                } else {
-                  console.warn('[payroll/settle] receiver wallet not yet funded, retrying next poll')
-                }
-              } catch {
-                console.warn('[payroll/settle] could not check receiver balance, retrying next poll')
-              }
-            }
+            // FAILED_ON_ONCHAIN = Circle's relay already minted. Any other bundler
+            // error (ESTIMATION_ERROR, PAYMASTER…) means the relay will mint instead.
+            // Either way the balance check below decides whether we can send.
+            console.warn('[payroll/settle] mint not done by us:', mintMsg)
           }
-          if (receiverFunded) {
+
+          // Send whatever actually landed — CCTP deducts its fee from the minted
+          // amount, so the receiver holds slightly less than entry.amount.
+          const empToken = (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
+          let available  = 0
+          try {
+            const bals = await getWalletBalances(entry.receiverWalletId!)
+            available  = parseFloat(empToken === 'EURC' ? bals.eurc : bals.usdc)
+          } catch {
+            console.warn('[payroll/settle] balance check failed, retrying next poll')
+          }
+
+          const sendAmount = Math.min(parseFloat(entry.amount), available)
+          if (sendAmount > 0) {
             const result = await sendUsdcPayment({
               fromWalletId: entry.receiverWalletId,
               toAddress:    entry.employee.walletAddress,
-              amount:       entry.amount,
-              token:        (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC',
+              amount:       sendAmount.toFixed(6),
+              token:        empToken,
             })
             await db.payrollEntry.update({
               where: { id: entry.id },
               data:  { status: 'COMPLETED', circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
             })
             settled++
+          } else {
+            console.warn('[payroll/settle] receiver not funded yet, retrying next poll')
           }
         }
       }
