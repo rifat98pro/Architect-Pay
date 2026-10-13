@@ -66,28 +66,22 @@ export async function GET() {
 
     const txs = (res.data?.transactions ?? []) as unknown as Array<Record<string, unknown>>
 
+    // Circle API returns amounts as string[] (e.g. ["1.000000"]), not objects with token.symbol
     circleInbound = txs
-      .filter((tx) => {
-        const symbol = (tx.tokenId as string | undefined) ?? ''
-        const amounts = (tx.amounts as Array<{ amount: string; token?: { symbol?: string } }> | undefined) ?? []
-        const hasUsdc = amounts.some((a) => a.token?.symbol === 'USDC' || a.token?.symbol === 'EURC')
-        return hasUsdc || symbol.includes('USDC') || symbol.includes('EURC')
-      })
       .map((tx) => {
-        const amounts  = (tx.amounts as Array<{ amount: string; token?: { symbol?: string } }> | undefined) ?? []
-        const usdcAmt  = amounts.find((a) => a.token?.symbol === 'USDC' || a.token?.symbol === 'EURC')
-        const token    = usdcAmt?.token?.symbol ?? 'USDC'
-        const amount   = usdcAmt?.amount ?? '0'
+        const rawAmounts = (tx.amounts as string[] | undefined) ?? []
+        const amount     = rawAmounts[0] ?? '0'
         return {
           id:          tx.id as string,
           txHash:      (tx.txHash as string | undefined) ?? null,
           amount,
-          token,
+          token:       'USDC' as string,
           chain:       (tx.blockchain as string | undefined) ?? '',
           fromAddress: (tx.sourceAddress as string | undefined) ?? '',
           createdAt:   (tx.createDate as string | undefined) ?? new Date().toISOString(),
         }
       })
+      .filter((tx) => parseFloat(tx.amount) > 0)
   } catch (e) {
     console.error('[received] Circle listTransactions failed:', e)
   }

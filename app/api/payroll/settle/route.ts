@@ -50,6 +50,7 @@ export async function POST(req: Request) {
       if (burnTxHash && entry.srcDomain && entry.receiverWalletId && entry.destTransmitter) {
         const att = await checkAttestationOnce(entry.srcDomain, burnTxHash)
         if (att) {
+          let mintSkipped = false
           try {
             await mintFromAttestation({
               message:          att.message,
@@ -59,22 +60,31 @@ export async function POST(req: Request) {
             })
           } catch (mintErr) {
             const mintMsg = mintErr instanceof Error ? mintErr.message : String(mintErr)
-            // FAILED_ON_ONCHAIN means Circle's CCTP relay already processed receiveMessage.
-            // Funds are on the destChain wallet — proceed to sendUsdcPayment.
-            if (!mintMsg.includes('FAILED_ON_ONCHAIN')) throw mintErr
-            console.warn('[payroll/settle] mint already relayed by Circle:', mintMsg)
+            if (mintMsg.includes('FAILED_ON_ONCHAIN')) {
+              // Circle's relay already minted — funds on dest wallet, proceed to send.
+              console.warn('[payroll/settle] mint already relayed by Circle:', mintMsg)
+            } else if (mintMsg.includes('ESTIMATION_ERROR')) {
+              // Bundler can't estimate gas — Circle relay will mint via auto-relay.
+              // Keep entry PENDING so next poll retries or catches FAILED_ON_ONCHAIN.
+              console.warn('[payroll/settle] mint estimation error, retrying next poll:', mintMsg)
+              mintSkipped = true
+            } else {
+              throw mintErr
+            }
           }
-          const result = await sendUsdcPayment({
-            fromWalletId: entry.receiverWalletId,
-            toAddress:    entry.employee.walletAddress,
-            amount:       entry.amount,
-            token:        (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC',
-          })
-          await db.payrollEntry.update({
-            where: { id: entry.id },
-            data:  { status: 'COMPLETED', circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
-          })
-          settled++
+          if (!mintSkipped) {
+            const result = await sendUsdcPayment({
+              fromWalletId: entry.receiverWalletId,
+              toAddress:    entry.employee.walletAddress,
+              amount:       entry.amount,
+              token:        (entry.employee.preferredToken ?? 'USDC') as 'USDC' | 'EURC',
+            })
+            await db.payrollEntry.update({
+              where: { id: entry.id },
+              data:  { status: 'COMPLETED', circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
+            })
+            settled++
+          }
         }
       }
     } catch (err) {

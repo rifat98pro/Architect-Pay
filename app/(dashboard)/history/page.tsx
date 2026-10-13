@@ -562,14 +562,24 @@ function HistoryPage() {
                           {tx.fromAddress ? `${tx.fromAddress.slice(0, 6)}…${tx.fromAddress.slice(-4)}` : 'Unknown'}
                         </div>
                         <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs text-gray-500">{tx.chain}</span>
+                          <span className="text-xs text-gray-500">{tx.chain || 'Unknown chain'}</span>
                           <span className="text-gray-700">·</span>
                           <span className="text-xs text-gray-600">{new Date(tx.createdAt).toLocaleDateString()}</span>
-                          {tx.txHash && (
-                            <a href={`https://etherscan.io/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
-                              {tx.txHash.slice(0, 8)}… <ExternalLink className="h-2.5 w-2.5" />
-                            </a>
-                          )}
+                          {tx.txHash && (() => {
+                            const explorerBase =
+                              tx.chain === 'BASE' ? 'https://basescan.org' :
+                              tx.chain === 'ARB'  ? 'https://arbiscan.io' :
+                              tx.chain === 'ETH'  ? 'https://etherscan.io' :
+                              tx.chain === 'MATIC' ? 'https://polygonscan.com' :
+                              tx.chain === 'AVAX' ? 'https://snowtrace.io' :
+                              tx.chain === 'OP'   ? 'https://optimistic.etherscan.io' :
+                              'https://etherscan.io'
+                            return (
+                              <a href={`${explorerBase}/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline">
+                                {tx.txHash.slice(0, 8)}… <ExternalLink className="h-2.5 w-2.5" />
+                              </a>
+                            )
+                          })()}
                         </div>
                       </div>
                     </div>
