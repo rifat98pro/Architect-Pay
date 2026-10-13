@@ -46,6 +46,11 @@ const APPROVE_ABI = {
   outputs:          [{ name: '', type: 'bool' }],
 }
 
+// Approve uint256.max so parallel burns from the same wallet don't race each other.
+// USDC (FiatToken) skips allowance reduction when allowance == uint256.max, so
+// multiple concurrent depositForBurn calls all succeed from the same shared allowance.
+const MAX_UINT256 = 2n ** 256n - 1n
+
 // USDC: CCTP V2 7-arg depositForBurn (TokenMessengerV2)
 const DEPOSIT_FOR_BURN_ABI = {
   type:            'function' as const,
@@ -286,7 +291,7 @@ export async function cctpBurn({
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
+      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, MAX_UINT256] }),
       feeLevel:        'MEDIUM',
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
@@ -384,7 +389,7 @@ export async function cctpBurnFast({
     const approveTxId = await executeContractCall({
       walletId:        sourceWalletId,
       contractAddress: burnToken,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, totalToApprove] }),
+      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [srcMeta.tokenMessengerV2, MAX_UINT256] }),
       feeLevel:        'MEDIUM',
     })
     await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })

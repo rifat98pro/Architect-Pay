@@ -86,21 +86,21 @@ export async function POST(req: Request) {
     }
   }
 
-  // Recompute run status once all pending CCTP entries are resolved
-  const allEntries   = await db.payrollEntry.findMany({ where: { payrollRunId: runId } })
-  const stillPending = allEntries.filter((e) => e.status === 'PENDING' && e.cctpBurnCircleId).length
-  if (stillPending === 0) {
-    const completed   = allEntries.filter((e) => e.status === 'COMPLETED').length
-    const failed      = allEntries.filter((e) => e.status === 'FAILED').length
-    const finalStatus = failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
-    // Only update + log if status is actually changing
-    if (run.status !== finalStatus) {
-      await db.payrollRun.update({ where: { id: runId }, data: { status: finalStatus } })
-      // Log on-chain when the run fully completes for the first time
-      if (finalStatus === 'COMPLETED' || finalStatus === 'PARTIAL') {
-        const wallet = await db.wallet.findUnique({ where: { userId: user.id } })
-        if (wallet) logPayrollRunOnChain(wallet.circleWalletId, run.totalAmount, completed)
-      }
+  // Recompute run status
+  const allEntries     = await db.payrollEntry.findMany({ where: { payrollRunId: runId } })
+  const pendingCount   = allEntries.filter((e) => e.status === 'PENDING').length
+  const completedCount = allEntries.filter((e) => e.status === 'COMPLETED').length
+  const failedCount    = allEntries.filter((e) => e.status === 'FAILED').length
+
+  const finalStatus = pendingCount > 0
+    ? 'PROCESSING'
+    : failedCount === 0 ? 'COMPLETED' : completedCount === 0 ? 'FAILED' : 'PARTIAL'
+
+  if (run.status !== finalStatus) {
+    await db.payrollRun.update({ where: { id: runId }, data: { status: finalStatus } })
+    if (finalStatus === 'COMPLETED' || finalStatus === 'PARTIAL') {
+      const wallet = await db.wallet.findUnique({ where: { userId: user.id } })
+      if (wallet) logPayrollRunOnChain(wallet.circleWalletId, run.totalAmount, completedCount)
     }
   }
 

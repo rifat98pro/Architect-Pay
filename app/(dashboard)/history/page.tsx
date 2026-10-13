@@ -755,8 +755,13 @@ function HistoryPage() {
                           <div key={entry.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-3">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{entry.employee.name}</div>
-                              <div className="font-mono text-xs text-gray-500">
-                                {truncateAddress(entry.employee.walletAddress, 6)}
+                              <div className="mt-0.5 flex items-center gap-1.5">
+                                <ChainLogo chain={(entry.employee.preferredChain ?? 'ARC-TESTNET') as string} size={11} />
+                                <span className="text-xs text-gray-500">
+                                  {(entry.employee.preferredChain ?? 'ARC-TESTNET').replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}
+                                </span>
+                                <span className="text-gray-700">·</span>
+                                <span className="font-mono text-xs text-gray-600">{truncateAddress(entry.employee.walletAddress, 4)}</span>
                               </div>
                               {entry.errorMessage && (
                                 <div className="mt-0.5 text-xs text-red-400">{entry.errorMessage}</div>

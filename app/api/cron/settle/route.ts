@@ -71,18 +71,16 @@ export async function GET(req: Request) {
           settled++
 
           // Recompute run status
-          const runId    = entry.payrollRun.id
-          const all      = await db.payrollEntry.findMany({ where: { payrollRunId: runId } })
-          const pending  = all.filter((e) => e.status === 'PENDING' && e.cctpBurnCircleId).length
-          if (pending === 0) {
-            const done   = all.filter((e) => e.status === 'COMPLETED').length
-            const fail   = all.filter((e) => e.status === 'FAILED').length
-            const status = fail === 0 ? 'COMPLETED' : done === 0 ? 'FAILED' : 'PARTIAL'
-            if (entry.payrollRun.status !== status) {
-              await db.payrollRun.update({ where: { id: runId }, data: { status } })
-              if (status === 'COMPLETED' || status === 'PARTIAL') {
-                logPayrollRunOnChain(wallet.circleWalletId, entry.payrollRun.totalAmount, done)
-              }
+          const runId      = entry.payrollRun.id
+          const all        = await db.payrollEntry.findMany({ where: { payrollRunId: runId } })
+          const pending    = all.filter((e) => e.status === 'PENDING').length
+          const done       = all.filter((e) => e.status === 'COMPLETED').length
+          const fail       = all.filter((e) => e.status === 'FAILED').length
+          const newStatus  = pending > 0 ? 'PROCESSING' : fail === 0 ? 'COMPLETED' : done === 0 ? 'FAILED' : 'PARTIAL'
+          if (entry.payrollRun.status !== newStatus) {
+            await db.payrollRun.update({ where: { id: runId }, data: { status: newStatus } })
+            if (newStatus === 'COMPLETED' || newStatus === 'PARTIAL') {
+              logPayrollRunOnChain(wallet.circleWalletId, entry.payrollRun.totalAmount, done)
             }
           }
         }
