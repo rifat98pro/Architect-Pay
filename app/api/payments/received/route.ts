@@ -12,6 +12,27 @@ function getClient() {
   })
 }
 
+// Circle returns a token UUID on each transaction, not a symbol. Token metadata is
+// immutable, so cache the lookup for the lifetime of the serverless instance.
+const tokenSymbols = new Map<string, string>()
+
+async function resolveTokenSymbol(
+  client: ReturnType<typeof getClient>,
+  tokenId: string | undefined,
+): Promise<string> {
+  if (!tokenId) return 'USDC'
+  const cached = tokenSymbols.get(tokenId)
+  if (cached) return cached
+  try {
+    const res    = await client.getToken({ id: tokenId })
+    const symbol = res.data?.token?.symbol ?? 'USDC'
+    tokenSymbols.set(tokenId, symbol)
+    return symbol
+  } catch {
+    return 'USDC'
+  }
+}
+
 export async function GET() {
   const user = await getUserFromRequest()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -56,9 +77,10 @@ export async function GET() {
 
   try {
     const client = getClient()
+    // Passing `operation` here makes Circle reject the request as "API parameter
+    // invalid", so filter on it client-side instead.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const res    = await client.listTransactions({
-      operation: 'TRANSFER',
+    const res = await client.listTransactions({
       txType:    'INBOUND',
       walletIds: allWalletIds,
       pageSize:  50,
@@ -66,22 +88,31 @@ export async function GET() {
 
     const txs = (res.data?.transactions ?? []) as unknown as Array<Record<string, unknown>>
 
-    // Circle API returns amounts as string[] (e.g. ["1.000000"]), not objects with token.symbol
-    circleInbound = txs
-      .map((tx) => {
-        const rawAmounts = (tx.amounts as string[] | undefined) ?? []
-        const amount     = rawAmounts[0] ?? '0'
-        return {
-          id:          tx.id as string,
-          txHash:      (tx.txHash as string | undefined) ?? null,
-          amount,
-          token:       'USDC' as string,
-          chain:       (tx.blockchain as string | undefined) ?? '',
-          fromAddress: (tx.sourceAddress as string | undefined) ?? '',
-          createdAt:   (tx.createDate as string | undefined) ?? new Date().toISOString(),
-        }
-      })
-      .filter((tx) => parseFloat(tx.amount) > 0)
+    const ZERO = '0x0000000000000000000000000000000000000000'
+    const deposits = txs.filter((tx) => {
+      if (tx.operation !== 'TRANSFER') return false
+      const from = ((tx.sourceAddress as string | undefined) ?? '').toLowerCase()
+      // A zero source is a CCTP mint (our own bridging), not an external deposit.
+      if (!from || from === ZERO) return false
+      // Skip transfers the user sent to themselves between their own wallets.
+      if (from === wallet.walletAddress.toLowerCase()) return false
+      return parseFloat(((tx.amounts as string[] | undefined) ?? [])[0] ?? '0') > 0
+    })
+
+    // tokenId is a UUID — resolve it to a symbol (cached across requests).
+    const symbols = await Promise.all(
+      deposits.map((tx) => resolveTokenSymbol(client, tx.tokenId as string | undefined)),
+    )
+
+    circleInbound = deposits.map((tx, i) => ({
+      id:          tx.id as string,
+      txHash:      (tx.txHash as string | undefined) ?? null,
+      amount:      ((tx.amounts as string[] | undefined) ?? [])[0] ?? '0',
+      token:       symbols[i],
+      chain:       (tx.blockchain as string | undefined) ?? '',
+      fromAddress: (tx.sourceAddress as string | undefined) ?? '',
+      createdAt:   (tx.createDate as string | undefined) ?? new Date().toISOString(),
+    }))
   } catch (e) {
     console.error('[received] Circle listTransactions failed:', e)
   }
