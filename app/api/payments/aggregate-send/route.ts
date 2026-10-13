@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
-import { getAllChainBalances, sendUsdcPayment, waitForTransaction, getOrCreateChainWalletId } from '@/lib/circle'
+import { getAllChainBalances, sendUsdcPayment, waitForTransaction, getOrCreateChainWalletId, waitForTokenBalance } from '@/lib/circle'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
@@ -136,11 +136,20 @@ export async function POST(req: NextRequest) {
       sendFromWalletId = destWalletId
     }
 
-    // Step 2b: Send from destination wallet to recipient
+    // Step 2b: Send from destination wallet to recipient.
+    // The mint may land after cctpTransfer returns, and CCTP takes its fee out of
+    // the bridged amount, so wait for the funds and send what actually arrived
+    // rather than the full requested amount.
+    const available = await waitForTokenBalance(sendFromWalletId, amount)
+    if (available <= 0) {
+      throw new Error('Bridged funds have not arrived yet. They are safe in your wallet — retry this payment shortly.')
+    }
+
+    const sendAmount = Math.min(parseFloat(amount), available).toFixed(6)
     const result = await sendUsdcPayment({
       fromWalletId: sendFromWalletId,
       toAddress:    recipientAddress,
-      amount,
+      amount:       sendAmount,
     })
 
     let txHash: string | null = result.txHash

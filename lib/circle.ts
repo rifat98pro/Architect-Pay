@@ -186,6 +186,37 @@ export async function getWalletBalances(circleWalletId: string): Promise<{ usdc:
 }
 
 /**
+ * Poll a wallet until it holds at least `minAmount`, returning whatever it
+ * actually holds when the wait ends.
+ *
+ * A CCTP mint can land after the transfer call returns — Circle's own relay may
+ * complete it out of band — and the mint delivers the burn amount minus the CCTP
+ * fee, so the destination always holds slightly less than was requested. Callers
+ * should send the lesser of the requested amount and the returned balance.
+ */
+export async function waitForTokenBalance(
+  walletId:  string,
+  minAmount: string,
+  token:     'USDC' | 'EURC' = 'USDC',
+  timeoutMs = 120_000,
+): Promise<number> {
+  const need     = parseFloat(minAmount)
+  const deadline = Date.now() + timeoutMs
+  let latest     = 0
+
+  while (Date.now() < deadline) {
+    try {
+      const bal = await getWalletBalances(walletId)
+      latest    = parseFloat(token === 'EURC' ? bal.eurc : bal.usdc)
+      // Accept a hair under the target — the CCTP fee comes out of the amount.
+      if (latest >= need * 0.99) return latest
+    } catch { /* transient — retry */ }
+    await new Promise((r) => setTimeout(r, 5_000))
+  }
+  return latest
+}
+
+/**
  * Get USDC balances across all chains for a wallet.
  * Returns a map of chain -> balance string.
  */

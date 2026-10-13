@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
-import { getWalletBalances, sendUsdcPayment, getOrCreateChainWalletId } from '@/lib/circle'
+import { getWalletBalances, sendUsdcPayment, getOrCreateChainWalletId, waitForTokenBalance } from '@/lib/circle'
 import { cctpTransfer } from '@/lib/cctp'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { EURC_CCTP_CHAINS, type EurcCctpChain } from '@/lib/cctp-chains'
@@ -111,11 +111,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 2: Send from dest chain wallet to recipient
+    // Step 2: Send from dest chain wallet to recipient. Wait for the bridged
+    // funds to actually land and send what arrived, since the mint can settle
+    // after the transfer call returns.
+    const available = await waitForTokenBalance(destWalletId, amount, 'EURC')
+    if (available <= 0) {
+      throw new Error('Bridged funds have not arrived yet. They are safe in your wallet — retry this payment shortly.')
+    }
+
     const result = await sendUsdcPayment({
       fromWalletId: destWalletId,
       toAddress:    recipientAddress,
-      amount,
+      amount:       Math.min(parseFloat(amount), available).toFixed(6),
       token:        'EURC',
     })
 
