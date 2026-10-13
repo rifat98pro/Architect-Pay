@@ -15,6 +15,10 @@ export async function POST(req: Request) {
   const { runId } = await req.json().catch(() => ({}))
   if (!runId) return NextResponse.json({ error: 'Missing runId' }, { status: 400 })
 
+  // Entries claimed as SENDING are owned by another in-flight settle call. Only
+  // reclaim one if its claim has gone stale (process died mid-send).
+  const staleCutoff = new Date(Date.now() - 3 * 60 * 1000)
+
   const run = await db.payrollRun.findUnique({
     where:   { id: runId, userId: user.id },
     select: {
@@ -23,7 +27,13 @@ export async function POST(req: Request) {
       status:      true,
       totalAmount: true,
       entries: {
-        where:   { status: 'PENDING', cctpBurnCircleId: { not: null } },
+        where: {
+          cctpBurnCircleId: { not: null },
+          OR: [
+            { status: 'PENDING' },
+            { status: 'SENDING', updatedAt: { lt: staleCutoff } },
+          ],
+        },
         include: { employee: true },
       },
     },
@@ -83,7 +93,37 @@ export async function POST(req: Request) {
           }
 
           const sendAmount = Math.min(parseFloat(entry.amount), available)
-          if (sendAmount > 0) {
+
+          if (sendAmount <= 0) {
+            // A stale SENDING claim with a drained receiver means the payout already
+            // went out and we died before recording it — don't pay twice.
+            if (entry.status === 'SENDING') {
+              await db.payrollEntry.update({
+                where: { id: entry.id },
+                data:  { status: 'COMPLETED', errorMessage: null },
+              })
+              settled++
+            } else {
+              console.warn('[payroll/settle] receiver not funded yet, retrying next poll')
+            }
+            continue
+          }
+
+          // Claim atomically — the client poll and the cron both scan for settleable
+          // entries and would otherwise each pay the employee once.
+          const claim = await db.payrollEntry.updateMany({
+            where: {
+              id: entry.id,
+              OR: [
+                { status: 'PENDING' },
+                { status: 'SENDING', updatedAt: { lt: staleCutoff } },
+              ],
+            },
+            data: { status: 'SENDING' },
+          })
+          if (claim.count === 0) continue
+
+          try {
             const result = await sendUsdcPayment({
               fromWalletId: entry.receiverWalletId,
               toAddress:    entry.employee.walletAddress,
@@ -95,8 +135,9 @@ export async function POST(req: Request) {
               data:  { status: 'COMPLETED', circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
             })
             settled++
-          } else {
-            console.warn('[payroll/settle] receiver not funded yet, retrying next poll')
+          } catch (sendErr) {
+            await db.payrollEntry.update({ where: { id: entry.id }, data: { status: 'PENDING' } })
+            throw sendErr
           }
         }
       }
@@ -111,7 +152,7 @@ export async function POST(req: Request) {
 
   // Recompute run status
   const allEntries     = await db.payrollEntry.findMany({ where: { payrollRunId: runId } })
-  const pendingCount   = allEntries.filter((e) => e.status === 'PENDING').length
+  const pendingCount   = allEntries.filter((e) => e.status === 'PENDING' || e.status === 'SENDING').length
   const completedCount = allEntries.filter((e) => e.status === 'COMPLETED').length
   const failedCount    = allEntries.filter((e) => e.status === 'FAILED').length
 

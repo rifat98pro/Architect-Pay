@@ -89,6 +89,7 @@ function StatusBadge({ status }: { status: string }) {
     FAILED:     { icon: <XCircle className="h-3 w-3" />,      label: 'Failed',     dark: 'bg-red-900/30 text-red-400 border-red-900/50',         light: 'bg-red-100 text-red-600 border-red-300' },
     PENDING:    { icon: <Clock className="h-3 w-3" />,         label: 'Pending',    dark: 'bg-yellow-900/30 text-yellow-400 border-yellow-900/50', light: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
     PROCESSING: { icon: <RefreshCw className="h-3 w-3 animate-spin" />, label: 'Processing', dark: 'bg-blue-900/30 text-blue-400 border-blue-900/50', light: 'bg-blue-100 text-blue-700 border-blue-300' },
+    SENDING:    { icon: <RefreshCw className="h-3 w-3 animate-spin" />, label: 'Sending',    dark: 'bg-blue-900/30 text-blue-400 border-blue-900/50', light: 'bg-blue-100 text-blue-700 border-blue-300' },
     PARTIAL:    { icon: <AlertTriangle className="h-3 w-3" />, label: 'Partial',   dark: 'bg-amber-900/30 text-amber-400 border-amber-900/50',   light: 'bg-amber-100 text-amber-700 border-amber-300' },
   }
   const s = map[status] ?? map.PENDING
@@ -245,23 +246,33 @@ function HistoryPage() {
   useEffect(() => {
     if (loading) return
 
+    // A settle call can outlast the 15s interval. Without this guard the next tick
+    // starts while the previous is mid-flight and both pay the same employee.
+    let inFlight = false
+
     const settle = async () => {
+      if (inFlight) return
       const processing = runsRef.current.filter((r) => r.status === 'PROCESSING')
       if (!processing.length) {
         if (settlePollRef.current) { clearInterval(settlePollRef.current); settlePollRef.current = null }
         return
       }
-      for (const run of processing) {
-        try {
-          await fetch('/api/payroll/settle', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ runId: run.id }),
-          })
-        } catch { /* retry next tick */ }
+      inFlight = true
+      try {
+        for (const run of processing) {
+          try {
+            await fetch('/api/payroll/settle', {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ runId: run.id }),
+            })
+          } catch { /* retry next tick */ }
+        }
+        const data = await fetch('/api/payroll/runs').then((r) => r.json())
+        setRuns(data.runs ?? [])
+      } finally {
+        inFlight = false
       }
-      const data = await fetch('/api/payroll/runs').then((r) => r.json())
-      setRuns(data.runs ?? [])
     }
 
     settle()
