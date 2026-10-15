@@ -334,8 +334,8 @@ export default function PayrollPage() {
         <div className="mb-4 flex items-start gap-3 rounded-2xl border border-blue-900/30 bg-blue-900/10 px-5 py-3.5">
           <div className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-blue-400/50 flex items-center justify-center text-[10px] font-bold text-blue-400">i</div>
           <div>
-            <p className="text-sm font-medium text-blue-300">EURC payroll sources from Arc only</p>
-            <p className="mt-0.5 text-xs text-blue-400/70">EURC payroll is settled instantly from your Arc wallet. Ensure your Arc EURC balance covers the total before running. You can deposit EURC to Arc from the Dashboard.</p>
+            <p className="text-sm font-medium text-blue-300">EURC payroll is funded from Base</p>
+            <p className="mt-0.5 text-xs text-blue-400/70">Ensure your Base EURC balance covers the EURC total before running. Employees can receive EURC on Arc, Ethereum or Base — other chains are not supported for EURC.</p>
           </div>
         </div>
       )}

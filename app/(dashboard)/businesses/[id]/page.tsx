@@ -21,6 +21,11 @@ const CHAIN_OPTIONS = [
   { value: 'OP-SEPOLIA',   label: 'Optimism' },
 ]
 
+// EURC only exists on these chains, so EURC employees can only be paid here.
+const EURC_CHAIN_OPTIONS = CHAIN_OPTIONS.filter((c) =>
+  ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'].includes(c.value),
+)
+
 interface Employee {
   id:             string
   name:           string
@@ -439,11 +444,12 @@ export default function BusinessEmployeesPage() {
             <div className="relative sm:col-span-2">
               <label className="mb-1 block text-xs font-medium" style={{ color: t3 }}>Preferred payment chain</label>
               {preferredToken === 'EURC' ? (
-                <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5" style={{ background: L ? 'rgba(0,0,0,0.04)' : 'rgba(18,32,49,0.4)', borderColor: L ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)' }}>
-                  <ChainLogo chain="ARC-TESTNET" size={14} />
-                  <span className="text-sm font-medium" style={{ color: t1 }}>Arc</span>
-                  <span className="ml-auto text-xs" style={{ color: t3 }}>EURC payroll is Arc-only</span>
-                </div>
+                <ChainSelect
+                  value={EURC_CHAIN_OPTIONS.find(c => c.value === preferredChain) ? preferredChain : 'ARC-TESTNET'}
+                  onChange={setPreferredChain}
+                  options={EURC_CHAIN_OPTIONS}
+                  light={L}
+                />
               ) : (
                 <ChainSelect
                   value={CHAIN_OPTIONS.find(c => c.value === preferredChain) ? preferredChain : 'ARC-TESTNET'}
@@ -501,11 +507,14 @@ export default function BusinessEmployeesPage() {
                       <input type="text" value={editState.walletAddress} onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })} placeholder="0x..." className="input-base font-mono text-xs w-full" style={input} />
                       <div className="flex gap-1.5 items-center">
                         {editState.preferredToken === 'EURC' ? (
-                          <div className="flex items-center gap-1.5 rounded-lg border px-2 py-1.5 flex-1" style={{ background: L ? 'rgba(0,0,0,0.04)' : 'rgba(18,32,49,0.4)', borderColor: L ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)' }}>
-                            <ChainLogo chain="ARC-TESTNET" size={12} />
-                            <span className="text-xs" style={{ color: t2 }}>Arc</span>
-                            <span className="text-[10px]" style={{ color: t3 }}>· EURC only</span>
-                          </div>
+                          <ChainSelect
+                            value={EURC_CHAIN_OPTIONS.find(c => c.value === editState.preferredChain) ? editState.preferredChain : 'ARC-TESTNET'}
+                            onChange={(v) => setEditState({ ...editState, preferredChain: v })}
+                            options={EURC_CHAIN_OPTIONS}
+                            light={L}
+                            size="sm"
+                            className="flex-1"
+                          />
                         ) : (
                           <ChainSelect
                             value={CHAIN_OPTIONS.find(c => c.value === editState.preferredChain) ? editState.preferredChain : 'ARC-TESTNET'}
@@ -517,7 +526,7 @@ export default function BusinessEmployeesPage() {
                           />
                         )}
                         <div className="relative w-20">
-                          <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value, ...(e.target.value === 'EURC' ? { preferredChain: 'ARC-TESTNET' } : {}) })} className="w-full appearance-none rounded-lg border text-xs pl-2 pr-6 py-1.5 outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" style={{ background: L ? '#f3f4f6' : '#0d1f33', borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)', color: L ? '#0b1e47' : '#ffffff' }}>
+                          <select value={editState.preferredToken} onChange={(e) => setEditState({ ...editState, preferredToken: e.target.value, ...(e.target.value === 'EURC' && !EURC_CHAIN_OPTIONS.some(c => c.value === editState.preferredChain) ? { preferredChain: 'ARC-TESTNET' } : {}) })} className="w-full appearance-none rounded-lg border text-xs pl-2 pr-6 py-1.5 outline-none transition focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" style={{ background: L ? '#f3f4f6' : '#0d1f33', borderColor: L ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)', color: L ? '#0b1e47' : '#ffffff' }}>
                             <option value="USDC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>USDC</option>
                             <option value="EURC" style={{ background: L ? '#ffffff' : '#0d1f33', color: L ? '#0b1e47' : '#ffffff' }}>EURC</option>
                           </select>
