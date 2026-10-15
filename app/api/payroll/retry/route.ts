@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         })
         await db.payrollEntry.update({
           where: { id: entry.id },
-          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
+          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null, paidChain: entry.paidChain ?? empChain },
         })
         return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
       }
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
         })
         await db.payrollEntry.update({
           where: { id: entry.id },
-          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
+          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null, paidChain: 'ARC-TESTNET' },
         })
         return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
       }
@@ -121,7 +121,7 @@ export async function POST(req: Request) {
         })
         await db.payrollEntry.update({
           where: { id: entry.id },
-          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null },
+          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null, paidChain: 'BASE-SEPOLIA' },
         })
         return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
       }
@@ -170,6 +170,7 @@ export async function POST(req: Request) {
           srcDomain:        burn.srcDomain,
           receiverWalletId: burn.receiverWalletId,
           destTransmitter:  burn.destTransmitter,
+          paidChain:        destChain,
         },
       })
       return { entryId: entry.id, txHash: null, asyncCctp: true as const }

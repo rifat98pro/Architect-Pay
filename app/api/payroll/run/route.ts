@@ -202,7 +202,7 @@ export async function POST(req: Request) {
           const destChain = EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA'
           if (destChain === 'ARC-TESTNET') {
             const result = await sendUsdcPayment({ fromWalletId: wallet.circleWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
-            await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
+            await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined, paidChain: 'ARC-TESTNET' } })
             return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
           }
           if (destChain !== 'BASE-SEPOLIA') {
@@ -220,12 +220,12 @@ export async function POST(req: Request) {
             })
             await db.payrollEntry.update({
               where: { id: entry.id },
-              data: { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter },
+              data: { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter, paidChain: destChain },
             })
             return { entryId: entry.id, txHash: null, asyncCctp: true as const }
           }
           const result = await sendUsdcPayment({ fromWalletId: baseWalletId!, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
-          await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
+          await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined, paidChain: 'BASE-SEPOLIA' } })
           return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
         }
 
@@ -243,12 +243,12 @@ export async function POST(req: Request) {
           })
           await db.payrollEntry.update({
             where: { id: entry.id },
-            data: { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter },
+            data: { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter, paidChain: empChain },
           })
           return { entryId: entry.id, txHash: null, asyncCctp: true as const }
         }
         const result = await sendUsdcPayment({ fromWalletId: baseWalletId!, toAddress: emp.walletAddress, amount: entry.amount })
-        await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined } })
+        await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined, paidChain: 'BASE-SEPOLIA' } })
         return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
       }),
     )

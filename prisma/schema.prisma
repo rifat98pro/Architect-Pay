@@ -200,6 +200,9 @@ model PayrollEntry {
   srcDomain         Int?
   receiverWalletId  String?
   destTransmitter   String?
+  // Chain the payment actually settled on. May differ from employee.preferredChain
+  // when that chain can't be paid for the chosen token and routing falls back.
+  paidChain         String?
   updatedAt         DateTime    @default(now()) @updatedAt
 }
 

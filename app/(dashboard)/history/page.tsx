@@ -54,6 +54,7 @@ interface PayrollEntry {
   status:       string
   txHash:       string | null
   errorMessage: string | null
+  paidChain:    string | null
   employee:     { name: string; walletAddress: string; preferredToken?: string; preferredChain?: string }
 }
 
@@ -777,9 +778,9 @@ function HistoryPage() {
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{entry.employee.name}</div>
                               <div className="mt-0.5 flex items-center gap-1.5">
-                                <ChainLogo chain={(entry.employee.preferredChain ?? 'ARC-TESTNET') as string} size={11} />
+                                <ChainLogo chain={(entry.paidChain ?? entry.employee.preferredChain ?? 'ARC-TESTNET') as string} size={11} />
                                 <span className="text-xs text-gray-500">
-                                  {(entry.employee.preferredChain ?? 'ARC-TESTNET').replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}
+                                  {(entry.paidChain ?? entry.employee.preferredChain ?? 'ARC-TESTNET').replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}
                                 </span>
                                 <span className="text-gray-700">·</span>
                                 <span className="font-mono text-xs text-gray-600">{truncateAddress(entry.employee.walletAddress, 4)}</span>
@@ -798,7 +799,7 @@ function HistoryPage() {
                               </div>
                               {entry.txHash && (
                                 <a
-                                  href={txUrl(entry.employee.preferredChain ?? 'ARC-TESTNET', entry.txHash)}
+                                  href={txUrl(entry.paidChain ?? entry.employee.preferredChain ?? 'ARC-TESTNET', entry.txHash)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 text-xs text-brand-500 hover:underline"
