@@ -14,7 +14,9 @@ export async function GET() {
   const businesses = await db.business.findMany({
     where:   { userId: user.id },
     orderBy: { createdAt: 'asc' },
-    select:  { id: true, name: true, logoUrl: true, createdAt: true, scheduledDay: true, _count: { select: { employees: true } } },
+    // Deleting an employee soft-deletes it (active: false). Count only active ones
+    // so this matches the employee list and payroll, which both filter on active.
+    select:  { id: true, name: true, logoUrl: true, createdAt: true, scheduledDay: true, _count: { select: { employees: { where: { active: true } } } } },
   })
 
   return NextResponse.json({ businesses })
