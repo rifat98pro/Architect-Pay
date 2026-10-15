@@ -366,7 +366,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="mb-2 text-base font-bold text-white">Coming Soon</h3>
             <p className="mb-5 text-sm text-gray-400 leading-relaxed">
-              Deposit Funds from Debit card, Apple Pay, or Google Pay will be available on mainnet.
+              Deposit Funds from Debit card, Apple Pay, or Google Pay is coming soon.
             </p>
             <button
               onClick={() => setMainnetNotice(false)}

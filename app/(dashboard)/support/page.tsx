@@ -86,7 +86,7 @@ const FAQS = [
   {
     id: 'account',
     q: 'Is this live on mainnet?',
-    a: 'Not yet — Architect Pay is currently running on testnet only. All USDC/EURC is test tokens with no real monetary value. Mainnet launch is coming soon.',
+    a: 'Yes — Architect Pay runs on Arc mainnet. All USDC and EURC is real, so treat balances and payments as real money. Cross-chain payments and payroll currently route through Base while a known issue with Circle\'s CCTP bundler on Arc is resolved; Arc to Arc transfers and deposits are unaffected.',
   },
 ]
 

@@ -35,7 +35,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="mb-3 text-base font-semibold text-white">2. Description of Service</h2>
-            <p>Architect Pay is a non-custodial blockchain payment infrastructure that allows users to send stablecoins (USDC and EURC) across multiple EVM-compatible networks, run payroll for employees, and manage on-chain treasury. The Service is currently operating on testnet only. All tokens used are test tokens with no real monetary value until mainnet launch.</p>
+            <p>Architect Pay is a non-custodial blockchain payment infrastructure that allows users to send stablecoins (USDC and EURC) across multiple EVM-compatible networks, run payroll for employees, and manage on-chain treasury. The Service operates on Arc mainnet and other supported mainnet networks. All USDC and EURC balances are real assets with real monetary value, and all transactions are final and irreversible once settled on-chain.</p>
           </section>
 
           <section>
@@ -66,8 +66,9 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 text-base font-semibold text-white">6. Testnet Disclaimer</h2>
-            <p>During the testnet phase, all USDC and EURC balances are test tokens with no real monetary value. Architect Pay makes no guarantee of uptime, data persistence, or continuity during the testnet phase. Testnet data may be reset at any time.</p>
+            <h2 className="mb-3 text-base font-semibold text-white">6. Mainnet Risk Disclaimer</h2>
+            <p>The Service operates on live mainnet networks using real assets. Blockchain transactions are final and irreversible once settled; funds sent to an incorrect address cannot be recovered, and Architect Pay cannot reverse a completed transfer. You are responsible for verifying recipient addresses and amounts before confirming any payment.</p>
+            <p className="mt-3">Cross-chain transfers depend on third-party infrastructure including Circle&apos;s CCTP, Gas Station and wallet services, as well as the underlying networks. Architect Pay makes no guarantee of uptime, settlement time, or continuity, and is not liable for delays or failures originating in that infrastructure. Cross-chain payments and payroll currently route through Base while a known issue with Circle&apos;s CCTP bundler on Arc is resolved.</p>
           </section>
 
           <section>

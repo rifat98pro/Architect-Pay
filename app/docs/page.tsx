@@ -237,7 +237,7 @@ GET /api/payroll/runs`}</CodeBlock>
               {[
                 { step: '1', title: 'Approve', desc: 'Token allowance set for TokenMessengerV2 contract. Must confirm on-chain before burn.' },
                 { step: '2', title: 'Burn',    desc: 'depositForBurn called on source chain. Returns immediately — Circle transaction ID stored.' },
-                { step: '3', title: 'Attest',  desc: 'Iris API monitors the burn and issues a cryptographic attestation. Testnet: 20–30 min. Mainnet: 2–5 min.' },
+                { step: '3', title: 'Attest',  desc: 'Iris API monitors the burn and issues a cryptographic attestation, typically 2–5 min on mainnet.' },
                 { step: '4', title: 'Mint',    desc: 'receiveMessage called on destination chain with the attestation. USDC/EURC appears in recipient wallet.' },
               ].map((s) => (
                 <div key={s.step} className="flex gap-4 rounded-xl border p-4" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
