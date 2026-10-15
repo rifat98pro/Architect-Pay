@@ -21,9 +21,11 @@ const CHAIN_OPTIONS = [
   { value: 'OP-SEPOLIA',   label: 'Optimism' },
 ]
 
-// EURC only exists on these chains, so EURC employees can only be paid here.
+// EURC is paid directly from the wallet on the employee's chain, so only chains we
+// hold EURC on are offered. Bridging EURC to a third chain is configured but not yet
+// proven end to end; widen this list once a real cross-chain EURC transfer settles.
 const EURC_CHAIN_OPTIONS = CHAIN_OPTIONS.filter((c) =>
-  ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'].includes(c.value),
+  ['ARC-TESTNET', 'BASE-SEPOLIA'].includes(c.value),
 )
 
 interface Employee {

@@ -7,7 +7,10 @@ import { type CctpSourceChain } from '@/lib/cctp-chains'
 
 export const maxDuration = 60
 
-const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
+// Chains we pay EURC from directly, without bridging. Employees stored on any other
+// chain fall back to Base. Bridging EURC further is configured but unproven, so it is
+// kept out of the payroll path until a real cross-chain EURC transfer settles.
+const EURC_CHAINS = ['ARC-TESTNET', 'BASE-SEPOLIA']
 
 export async function POST(req: Request) {
   const user = await getUserFromRequest()

@@ -4,7 +4,7 @@ import { encodeFunctionData, encodePacked, pad } from 'viem'
 import { executeContractCall, waitForTransaction, getChainWalletAddress } from '@/lib/circle'
 import {
   SOURCE_CHAIN_META, ARC_TESTNET_CONFIG, CCTS_ADDRESS, EURC_CCTPX_TOKEN_ID,
-  feeLevelFor, type CctpSourceChain,
+  CHAIN_LABEL, feeLevelFor, type CctpSourceChain,
 } from '@/lib/cctp-chains'
 
 const IRIS_API = 'https://iris-api.circle.com'
@@ -264,8 +264,8 @@ export async function cctpBurn({
   if (token === 'EURC') {
     const eurcAddress  = srcMeta.eurcAddress
     const tokenManager = srcMeta.eurcTokenManager
-    if (!eurcAddress)  throw new Error(`EURC is not supported on ${sourceChain}`)
-    if (!tokenManager) throw new Error(`EURC TokenManager not configured for ${sourceChain}`)
+    if (!eurcAddress)  throw new Error(`EURC is not supported on ${CHAIN_LABEL[sourceChain] ?? sourceChain}`)
+    if (!tokenManager) throw new Error(`EURC bridging is not configured for ${CHAIN_LABEL[sourceChain] ?? sourceChain}`)
 
     console.log(`[cctp/eurc] burn phase: ${sourceChain} → ${destChain ?? 'ARC-TESTNET'}`)
 
@@ -368,8 +368,8 @@ export async function cctpBurnFast({
   if (token === 'EURC') {
     const eurcAddress  = srcMeta.eurcAddress
     const tokenManager = srcMeta.eurcTokenManager
-    if (!eurcAddress)  throw new Error(`EURC is not supported on ${sourceChain}`)
-    if (!tokenManager) throw new Error(`EURC TokenManager not configured for ${sourceChain}`)
+    if (!eurcAddress)  throw new Error(`EURC is not supported on ${CHAIN_LABEL[sourceChain] ?? sourceChain}`)
+    if (!tokenManager) throw new Error(`EURC bridging is not configured for ${CHAIN_LABEL[sourceChain] ?? sourceChain}`)
 
     const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 

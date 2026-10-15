@@ -94,15 +94,43 @@ export async function POST(req: Request) {
     }
   }
 
-  // Check EURC balance — Base (EURC payroll sources from Base)
+  // Check EURC balances per wallet. EURC is paid directly from the wallet on the
+  // employee's chain — Arc employees from the Arc wallet, everyone else from Base.
+  // Payroll never bridges EURC, so an Arc shortfall cannot be covered from Base
+  // or vice versa; each chain is its own budget.
   const eurcChainBals: Record<string, number> = {}
 
+  // Employees whose chain's EURC balance can't cover them. They fail individually
+  // with a clear reason rather than blocking the whole run — unlike USDC, each EURC
+  // chain is its own budget, so one underfunded chain shouldn't stop everyone else.
+  const underfundedEurc = new Map<string, string>()
+
   if (eurcEmps.length > 0) {
-    const baseEurc = parseFloat((await getWalletBalances(baseWalletId!)).eurc)
+    const [arcEurc, baseEurc] = await Promise.all([
+      getWalletBalances(wallet.circleWalletId).then((b) => parseFloat(b.eurc)).catch(() => 0),
+      getWalletBalances(baseWalletId!).then((b) => parseFloat(b.eurc)).catch(() => 0),
+    ])
+    eurcChainBals['ARC-TESTNET']  = arcEurc
     eurcChainBals['BASE-SEPOLIA'] = baseEurc
-    if (baseEurc < totalEurcAmount) {
+
+    let arcLeft  = arcEurc
+    let baseLeft = baseEurc
+    for (const e of eurcEmps) {
+      const onArc = (e.preferredChain ?? 'ARC-TESTNET') === 'ARC-TESTNET'
+      const need  = parseFloat(e.salary)
+      if (onArc) {
+        if (arcLeft >= need) arcLeft -= need
+        else underfundedEurc.set(e.id, `Insufficient EURC on Arc — €${need.toFixed(2)} needed, €${Math.max(arcLeft, 0).toFixed(2)} available. Deposit EURC to your Arc wallet.`)
+      } else {
+        if (baseLeft >= need) baseLeft -= need
+        else underfundedEurc.set(e.id, `Insufficient EURC on Base — €${need.toFixed(2)} needed, €${Math.max(baseLeft, 0).toFixed(2)} available. Deposit EURC to your Base wallet.`)
+      }
+    }
+
+    // Only block the run outright if no EURC employee at all can be paid.
+    if (underfundedEurc.size === eurcEmps.length && usdcEmps.length === 0) {
       return NextResponse.json(
-        { error: `Insufficient EURC on Base. Need €${totalEurcAmount.toFixed(2)}, have €${baseEurc.toFixed(2)} on Base. Please deposit EURC to your Base wallet before running payroll.` },
+        { error: `Insufficient EURC. Need €${totalEurcAmount.toFixed(2)}, have €${arcEurc.toFixed(2)} on Arc and €${baseEurc.toFixed(2)} on Base. EURC is paid from the wallet on each employee's chain and cannot be bridged between them.` },
         { status: 400 },
       )
     }
@@ -155,7 +183,10 @@ export async function POST(req: Request) {
       )
     }
 
-    const EURC_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
+    // Chains we pay EURC from directly, without bridging. Employees stored on any
+    // other chain fall back to Base. Bridging EURC further is configured but unproven,
+    // so it is kept out of the payroll path until a real transfer settles.
+    const EURC_CHAINS = ['ARC-TESTNET', 'BASE-SEPOLIA']
 
     // Step 2: Pay each employee — route by token + preferred chain
     const results = await Promise.allSettled(
@@ -165,7 +196,9 @@ export async function POST(req: Request) {
         const empChain   = (emp.preferredChain ?? 'BASE-SEPOLIA') as CctpSourceChain
 
         if (empToken === 'EURC') {
-          // EURC supported only on Arc / ETH-SEPOLIA / BASE-SEPOLIA
+          const shortfall = underfundedEurc.get(emp.id)
+          if (shortfall) throw new Error(shortfall)
+
           const destChain = EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA'
           if (destChain === 'ARC-TESTNET') {
             const result = await sendUsdcPayment({ fromWalletId: wallet.circleWalletId, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
