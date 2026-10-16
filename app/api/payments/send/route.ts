@@ -54,13 +54,9 @@ export async function POST(req: NextRequest) {
   const platformFee  = isCrossChain ? calcFee(amountNum) : 0
   const totalNeeded  = amountNum + platformFee
 
-  // Arc cross-chain is temporarily broken (Circle CCTP bundler issue)
-  if (isCrossChain && (sourceChain === 'ARC-TESTNET' || destChain === 'ARC-TESTNET')) {
-    return NextResponse.json(
-      { error: 'Cross-chain transfers involving Arc are temporarily unavailable. Please use Base as your primary chain.' },
-      { status: 400 },
-    )
-  }
+  // Arc as a CCTP source previously failed gas estimation in Circle's bundler.
+  // Circle has since said the domain was at fault, so the block is lifted to
+  // retest. Restore it if Arc→other-chain burns still fail.
 
   const wallet = await db.wallet.findUnique({
     where:   { userId: user.id },

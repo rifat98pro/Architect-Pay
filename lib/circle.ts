@@ -312,7 +312,15 @@ export async function executeContractCall({
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       const isRateLimit = msg.includes('rate limit') || msg.includes('429')
-      if (!isRateLimit || attempt >= 4) throw e
+      if (!isRateLimit || attempt >= 4) {
+        // Log the full request and response so a failure can be reported to Circle
+        // without needing to reproduce it. callData and walletId are not secrets.
+        console.error('[circle/executeContractCall] FAILED', JSON.stringify({
+          request:  { walletId, contractAddress, callData, fee: { type: 'level', config: { feeLevel } } },
+          response: (e as { response?: { data?: unknown } })?.response?.data ?? msg,
+        }, null, 2))
+        throw e
+      }
       await new Promise((r) => setTimeout(r, 2_000 * 2 ** attempt))
     }
   }

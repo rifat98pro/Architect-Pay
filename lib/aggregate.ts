@@ -54,7 +54,7 @@ export function computeAggregatePlan(
 
   if (remaining > 0.001) {
     const others = CCTP_SOURCE_CHAINS
-      .filter((c) => c !== destChain && c !== 'ARC-TESTNET')
+      .filter((c) => c !== destChain)
       .map((c) => ({ chain: c, bal: chainBalances[c] ?? 0 }))
       // Below a cent the burn rounds to zero and the chain rejects it, so skip dust.
       .filter((x) => x.bal >= MIN_BURN)

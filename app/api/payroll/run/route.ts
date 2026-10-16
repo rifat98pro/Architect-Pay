@@ -79,16 +79,14 @@ export async function POST(req: Request) {
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
 
-  // Check USDC feasibility — all USDC employees are paid via CCTP burn from Base
-  // (Arc as CCTP destination works fine; only Arc as source is broken).
-  // Arc wallet balance is excluded since it can't be a CCTP source.
+  // Check USDC feasibility — USDC employees are paid via CCTP burn from the hub.
+  // Arc counts as a funding source again now that Circle has attributed the earlier
+  // failures to a bad destinationDomain rather than the bundler.
   if (usdcEmps.length > 0) {
-    const pullable = Object.entries(numericBals)
-      .filter(([k]) => k !== 'ARC-TESTNET')
-      .reduce((s, [, v]) => s + v, 0)
+    const pullable = Object.values(numericBals).reduce((s, v) => s + v, 0)
     if (pullable < totalWithFee) {
       return NextResponse.json(
-        { error: `Insufficient USDC. Need $${totalUsdcAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee = $${totalWithFee.toFixed(2)}, have $${pullable.toFixed(2)} across Base and other chains.` },
+        { error: `Insufficient USDC. Need $${totalUsdcAmount.toFixed(2)} payroll + $${platformFee.toFixed(2)} fee = $${totalWithFee.toFixed(2)}, have $${pullable.toFixed(2)} across all chains.` },
         { status: 400 },
       )
     }
@@ -136,9 +134,7 @@ export async function POST(req: Request) {
     }
   }
 
-  // Exclude Arc from the aggregate plan — Arc can't be a CCTP source
-  const nonArcBals = Object.fromEntries(Object.entries(numericBals).filter(([k]) => k !== 'ARC-TESTNET'))
-  const plan = usdcEmps.length > 0 ? computeAggregatePlan(nonArcBals, totalWithFee) : { feasible: true, plan: [] }
+  const plan = usdcEmps.length > 0 ? computeAggregatePlan(numericBals, totalWithFee) : { feasible: true, plan: [] }
 
   // Create payroll run record
   const run = await db.payrollRun.create({
