@@ -3,7 +3,7 @@ import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { sendUsdcPayment, getOrCreateChainWalletId, checkTransaction } from '@/lib/circle'
 import { cctpBurnFast } from '@/lib/cctp'
-import { type CctpSourceChain } from '@/lib/cctp-chains'
+import { HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 
 export const maxDuration = 60
 
@@ -45,8 +45,10 @@ export async function POST(req: Request) {
   })
   if (!wallet) return NextResponse.json({ error: 'Wallet not found' }, { status: 404 })
 
-  const baseWalletId = wallet.chainWallets.find((cw) => cw.chain === 'BASE-SEPOLIA')?.circleWalletId
-    ?? await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, 'BASE-SEPOLIA')
+  const hubWalletId = HUB_CHAIN === 'ARC-TESTNET'
+    ? wallet.circleWalletId
+    : wallet.chainWallets.find((cw) => cw.chain === HUB_CHAIN)?.circleWalletId
+      ?? await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, HUB_CHAIN)
 
   await db.payrollRun.update({ where: { id: run.id }, data: { status: 'PROCESSING' } })
 
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
     failedEntries.map(async (entry) => {
       const emp      = entry.employee
       const empToken = (emp.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
-      const empChain = (emp.preferredChain ?? 'BASE-SEPOLIA') as CctpSourceChain
+      const empChain = (emp.preferredChain ?? HUB_CHAIN) as CctpSourceChain
 
       // Relay already minted: FAILED_ON_ONCHAIN means Circle's relay processed receiveMessage
       // before our bundler did. Funds are on receiverWalletId — skip re-burn, just send.
@@ -88,48 +90,43 @@ export async function POST(req: Request) {
         await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: null, txHash: null } })
       }
 
-      // EURC on Arc: send directly from Arc wallet (EURC lives natively on Arc)
-      const isEurcArcDest = empToken === 'EURC' &&
-        (EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA') === 'ARC-TESTNET'
-
-      if (isEurcArcDest) {
+      // EURC is never bridged — pay directly from the wallet on the employee's own
+      // chain, independent of which chain is the hub.
+      if (empToken === 'EURC') {
+        const payChain  = EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA'
+        const payWallet = payChain === 'ARC-TESTNET'
+          ? wallet.circleWalletId
+          : await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, payChain as CctpSourceChain)
         const result = await sendUsdcPayment({
-          fromWalletId: wallet.circleWalletId,
+          fromWalletId: payWallet,
+          toAddress:    emp.walletAddress,
+          amount:       entry.amount,
+          token:        'EURC',
+        })
+        await db.payrollEntry.update({
+          where: { id: entry.id },
+          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null, paidChain: payChain },
+        })
+        return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
+      }
+
+      // USDC already sitting on the hub — send immediately, no bridge needed
+      if (empChain === HUB_CHAIN) {
+        const result = await sendUsdcPayment({
+          fromWalletId: hubWalletId,
           toAddress:    emp.walletAddress,
           amount:       entry.amount,
           token:        empToken,
         })
         await db.payrollEntry.update({
           where: { id: entry.id },
-          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null, paidChain: 'ARC-TESTNET' },
+          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null, paidChain: HUB_CHAIN },
         })
         return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
       }
 
-      const isBaseDest = empToken === 'EURC'
-        ? (EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA') === 'BASE-SEPOLIA'
-        : empChain === 'BASE-SEPOLIA'
-      // USDC Arc employees now go via CCTP burn Base→Arc (same as ARB/OP/etc.)
-
-      // Base-to-Base: send immediately
-      if (isBaseDest) {
-        const result = await sendUsdcPayment({
-          fromWalletId: baseWalletId,
-          toAddress:    emp.walletAddress,
-          amount:       entry.amount,
-          token:        empToken,
-        })
-        await db.payrollEntry.update({
-          where: { id: entry.id },
-          data:  { circleTxId: result.id, txHash: result.txHash ?? undefined, errorMessage: null, paidChain: 'BASE-SEPOLIA' },
-        })
-        return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
-      }
-
-      // Cross-chain: fire async burn (settle route / cron handles mint+send)
-      const destChain = (empToken === 'EURC'
-        ? (EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA')
-        : empChain) as CctpSourceChain
+      // Cross-chain USDC: fire async burn from the hub (settle route handles mint+send)
+      const destChain = empChain as CctpSourceChain
 
       // If a burn already exists and went through, don't re-burn — just reset to PENDING
       // so the settle route retries the mint (handles PAYMASTER / ESTIMATION_ERROR cases).
@@ -152,8 +149,8 @@ export async function POST(req: Request) {
 
       const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain)
       const burn = await cctpBurnFast({
-        sourceChain:      'BASE-SEPOLIA',
-        sourceWalletId:   baseWalletId,
+        sourceChain:      HUB_CHAIN,
+        sourceWalletId:   hubWalletId,
         destChain,
         destWalletId,
         arcWalletId:      wallet.circleWalletId,

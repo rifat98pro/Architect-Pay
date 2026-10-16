@@ -5,7 +5,7 @@ import { getAllChainBalances, sendUsdcPayment, waitForTransaction, getOrCreateCh
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
-import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
+import { CCTP_SOURCE_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
 import { z } from 'zod'
 
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   // Fetch live balances and compute plan
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
-  const plan        = computeAggregatePlan(numericBals, targetAmount, 'BASE-SEPOLIA')
+  const plan        = computeAggregatePlan(numericBals, targetAmount, HUB_CHAIN)
 
   if (!plan.feasible) {
     return NextResponse.json(
@@ -77,10 +77,10 @@ export async function POST(req: NextRequest) {
     // Step 1: Run CCTP pulls in parallel (non-Base chains → user's own Base wallet)
     const cctpEntries = plan.plan.filter((e) => e.isCctp)
 
-    let baseWalletId = chainWalletIds['BASE-SEPOLIA']
-    if (!baseWalletId) {
+    let hubWalletId = HUB_CHAIN === 'ARC-TESTNET' ? wallet.circleWalletId : chainWalletIds[HUB_CHAIN]
+    if (!hubWalletId) {
       if (!wallet.walletSetId) throw new Error('No wallet set ID for Base chain')
-      baseWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId, 'BASE-SEPOLIA')
+      hubWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId, HUB_CHAIN)
     }
 
     if (cctpEntries.length > 0) {
@@ -97,8 +97,8 @@ export async function POST(req: NextRequest) {
           await cctpTransfer({
             sourceChain:      chain,
             sourceWalletId,
-            destChain:        'BASE-SEPOLIA',
-            destWalletId:     baseWalletId!,
+            destChain:        HUB_CHAIN,
+            destWalletId:     hubWalletId!,
             arcWalletId:      wallet.circleWalletId,
             recipientAddress: wallet.walletAddress,
             amount:           entry.amount,
@@ -107,18 +107,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 2a: Route to destination wallet
-    let sendFromWalletId = baseWalletId
-    if (destChain === 'ARC-TESTNET') {
-      // Arc-to-Arc: use Arc wallet directly (cross-chain to Arc is unavailable)
-      sendFromWalletId = wallet.circleWalletId
-    } else if (destChain !== 'BASE-SEPOLIA') {
-      // CCTP from Base → destChain
+    // Step 2a: Route to destination wallet. Funds are already aggregated on the hub,
+    // so a payout on the hub chain sends straight from it; anything else bridges.
+    let sendFromWalletId = hubWalletId
+    if (destChain !== HUB_CHAIN) {
       const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain)
       try {
         await cctpTransfer({
-          sourceChain:      'BASE-SEPOLIA',
-          sourceWalletId:   baseWalletId!,
+          sourceChain:      HUB_CHAIN,
+          sourceWalletId:   hubWalletId!,
           destChain,
           destWalletId,
           arcWalletId:      wallet.circleWalletId,
@@ -137,15 +134,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 2b: Send from destination wallet to recipient.
-    // The mint may land after cctpTransfer returns, and CCTP takes its fee out of
-    // the bridged amount, so wait for the funds and send what actually arrived
-    // rather than the full requested amount.
+    // CCTP takes its fee out of the bridged amount and the mint can land after
+    // cctpTransfer returns, so wait for the funds and tolerate a shortfall only
+    // as large as the fee. Anything bigger means the bridge did not deliver, and
+    // paying a reduced amount while reporting success would hide that.
+    const requested = parseFloat(amount)
     const available = await waitForTokenBalance(sendFromWalletId, amount)
-    if (available <= 0) {
-      throw new Error('Bridged funds have not arrived yet. They are safe in your wallet — retry this payment shortly.')
+    if (available < requested * 0.99) {
+      throw new Error(
+        `Only ${available.toFixed(6)} USDC is available on the destination chain but ${requested.toFixed(6)} was requested. ` +
+        `Your funds are safe — retry once the bridged amount has settled.`,
+      )
     }
 
-    const sendAmount = Math.min(parseFloat(amount), available).toFixed(6)
+    const sendAmount = Math.min(requested, available).toFixed(6)
     const result = await sendUsdcPayment({
       fromWalletId: sendFromWalletId,
       toAddress:    recipientAddress,

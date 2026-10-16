@@ -97,6 +97,11 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
   },
 }
 
+// The chain cross-chain value is aggregated on before being fanned out. Funds are
+// pulled here from other chains, and every cross-chain payout is burned from here.
+// Switching hubs is this one line — nothing else should hardcode a hub chain.
+export const HUB_CHAIN: CctpSourceChain = 'ARC-TESTNET'
+
 // Circle's paymaster reserves maxFeePerGas × gasLimit upfront and checks that
 // reservation against the policy cap — not the actual gas burned. On cheap L2s a
 // MEDIUM/HIGH quote reserves dollars for a transaction that costs fractions of a

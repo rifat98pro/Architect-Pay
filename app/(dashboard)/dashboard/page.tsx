@@ -1,5 +1,6 @@
 'use client'
 
+import { HUB_CHAIN } from '@/lib/cctp-chains'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
@@ -226,7 +227,7 @@ export default function DashboardPage() {
                 <ChainLogo chain={chain} size={28} />
                 <div>
                   <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#0b1e47' : '#c5d3ed' }}>{CHAIN_LABEL[chain] ?? chain}</div>
-                  {chain === 'BASE-SEPOLIA' && (
+                  {chain === HUB_CHAIN && (
                     <div className="text-xs text-brand-500">Primary</div>
                   )}
                 </div>

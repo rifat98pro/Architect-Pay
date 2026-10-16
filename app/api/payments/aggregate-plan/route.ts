@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 import { getAllChainBalances } from '@/lib/circle'
-import { CCTP_SOURCE_CHAINS, type CctpSourceChain } from '@/lib/cctp-chains'
+import { CCTP_SOURCE_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
 
 export async function GET(req: NextRequest) {
@@ -12,7 +12,6 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const amountStr = req.nextUrl.searchParams.get('amount')
-  const destChain = req.nextUrl.searchParams.get('dest') ?? 'BASE-SEPOLIA'
   const amount    = parseFloat(amountStr ?? '0')
   if (!amount || amount <= 0) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
@@ -30,7 +29,9 @@ export async function GET(req: NextRequest) {
 
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
-  const result      = computeAggregatePlan(numericBals, amount, 'BASE-SEPOLIA')
+  // Funds always aggregate onto the hub before being paid out, whatever the
+  // user's final destination chain is — so the preview targets the hub too.
+  const result      = computeAggregatePlan(numericBals, amount, HUB_CHAIN)
 
   return NextResponse.json(result)
 }

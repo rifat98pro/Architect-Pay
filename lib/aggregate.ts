@@ -1,4 +1,4 @@
-import { CCTP_SOURCE_CHAINS, EURC_CCTP_CHAINS } from '@/lib/cctp-chains'
+import { CCTP_SOURCE_CHAINS, EURC_CCTP_CHAINS, HUB_CHAIN } from '@/lib/cctp-chains'
 
 export interface AggregatePlanEntry {
   chain:   string
@@ -38,7 +38,7 @@ const CHAIN_LABEL: Record<string, string> = {
 export function computeAggregatePlan(
   chainBalances: Record<string, number>,
   targetAmount: number,
-  destChain = 'BASE-SEPOLIA',
+  destChain: string = HUB_CHAIN,
 ): AggregatePlan {
   const plan: AggregatePlanEntry[] = []
   let remaining = targetAmount

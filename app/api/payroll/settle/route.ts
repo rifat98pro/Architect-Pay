@@ -92,22 +92,25 @@ export async function POST(req: Request) {
             console.warn('[payroll/settle] balance check failed, retrying next poll')
           }
 
-          const sendAmount = Math.min(parseFloat(entry.amount), available)
-
-          if (sendAmount <= 0) {
+          // Tolerate only a fee-sized shortfall. Paying a materially reduced amount
+          // and marking it COMPLETED would report a success that didn't happen.
+          const requested = parseFloat(entry.amount)
+          if (available < requested * 0.99) {
             // A stale SENDING claim with a drained receiver means the payout already
             // went out and we died before recording it — don't pay twice.
-            if (entry.status === 'SENDING') {
+            if (entry.status === 'SENDING' && available < requested * 0.01) {
               await db.payrollEntry.update({
                 where: { id: entry.id },
                 data:  { status: 'COMPLETED', errorMessage: null },
               })
               settled++
             } else {
-              console.warn('[payroll/settle] receiver not funded yet, retrying next poll')
+              console.warn('[payroll/settle] receiver underfunded, retrying next poll', { requested, available })
             }
             continue
           }
+
+          const sendAmount = Math.min(requested, available)
 
           // Claim atomically — the client poll and the cron both scan for settleable
           // entries and would otherwise each pay the employee once.

@@ -111,18 +111,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 2: Send from dest chain wallet to recipient. Wait for the bridged
-    // funds to actually land and send what arrived, since the mint can settle
-    // after the transfer call returns.
+    // Step 2: Send from dest chain wallet to recipient. Wait for the bridged funds
+    // to land, tolerating only a fee-sized shortfall — paying less than requested
+    // while reporting success would hide a bridge that did not deliver.
+    const requested = parseFloat(amount)
     const available = await waitForTokenBalance(destWalletId, amount, 'EURC')
-    if (available <= 0) {
-      throw new Error('Bridged funds have not arrived yet. They are safe in your wallet — retry this payment shortly.')
+    if (available < requested * 0.99) {
+      throw new Error(
+        `Only ${available.toFixed(6)} EURC is available on the destination chain but ${requested.toFixed(6)} was requested. ` +
+        `Your funds are safe — retry once the bridged amount has settled.`,
+      )
     }
 
     const result = await sendUsdcPayment({
       fromWalletId: destWalletId,
       toAddress:    recipientAddress,
-      amount:       Math.min(parseFloat(amount), available).toFixed(6),
+      amount:       Math.min(requested, available).toFixed(6),
       token:        'EURC',
     })
 
