@@ -25,6 +25,13 @@ const CCTP_FEE_RATE = 0.001
 // Anything under a cent isn't worth a cross-chain transfer anyway.
 const MIN_BURN = 0.01
 
+// Never commit a chain's entire balance. The bridge can take a fee on top of the
+// burn amount, and a burn that exceeds the balance by even one unit reverts with
+// INSUFFICIENT_TOKEN — which aborts the whole payment after other legs have burned.
+function spendable(balance: number): number {
+  return Math.floor(balance * (1 - CCTP_FEE_RATE) * 1e6) / 1e6
+}
+
 const CHAIN_LABEL: Record<string, string> = {
   'ARC-TESTNET':  'Arc',
   'ETH-SEPOLIA':  'Ethereum',
@@ -62,7 +69,7 @@ export function computeAggregatePlan(
 
     for (const { chain, bal } of others) {
       if (remaining <= 0.001) break
-      const burnAmount   = parseFloat(Math.min(bal, remaining / (1 - CCTP_FEE_RATE)).toFixed(6))
+      const burnAmount   = parseFloat(Math.min(spendable(bal), remaining / (1 - CCTP_FEE_RATE)).toFixed(6))
       if (burnAmount < MIN_BURN) continue
       const estimatedFee = parseFloat((burnAmount * CCTP_FEE_RATE).toFixed(6))
       const netReceived  = burnAmount - estimatedFee
@@ -110,7 +117,7 @@ export function computeEurcAggregatePlan(
 
     for (const { chain, bal } of others) {
       if (remaining <= 0.001) break
-      const burnAmount = parseFloat(Math.min(bal, remaining).toFixed(6))
+      const burnAmount = parseFloat(Math.min(spendable(bal), remaining).toFixed(6))
       if (burnAmount < MIN_BURN) continue
       // CCTPx EURC protocol fee is 0; no platform fee on aggregate withdraw
       plan.push({ chain, label: CHAIN_LABEL[chain] ?? chain, amount: burnAmount.toFixed(6), fee: '0', isCctp: true })
