@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
-import { getAllChainBalances, sendUsdcPayment, waitForTransaction, getOrCreateChainWalletId, waitForTokenBalance } from '@/lib/circle'
+import { getAllChainBalances, sendUsdcPayment, waitForTransaction, getOrCreateChainWalletId, waitForTokenBalance, getWalletBalances } from '@/lib/circle'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
@@ -112,6 +112,17 @@ export async function POST(req: NextRequest) {
     let sendFromWalletId = hubWalletId
     if (destChain !== HUB_CHAIN) {
       const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, destChain)
+
+      // Aggregation loses a little to CCTP fees on each leg, so the hub holds
+      // slightly less than the target. Burn what actually landed, not what was
+      // asked for — burning more than the balance reverts with INSUFFICIENT_TOKEN.
+      const hubBal   = await getWalletBalances(hubWalletId!)
+      const onHub    = parseFloat(hubBal.usdc)
+      const burnAmt  = Math.min(parseFloat(amount), onHub).toFixed(6)
+      if (parseFloat(burnAmt) <= 0) {
+        throw new Error('No USDC available on the hub chain to bridge. Your funds are safe — retry shortly.')
+      }
+
       try {
         await cctpTransfer({
           sourceChain:      HUB_CHAIN,
@@ -120,7 +131,7 @@ export async function POST(req: NextRequest) {
           destWalletId,
           arcWalletId:      wallet.circleWalletId,
           recipientAddress: wallet.walletAddress,
-          amount,
+          amount:           burnAmt,
         })
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
