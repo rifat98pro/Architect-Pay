@@ -269,14 +269,22 @@ export async function cctpBurn({
 
     console.log(`[cctp/eurc] burn phase: ${sourceChain} → ${destChain ?? 'ARC-TESTNET'}`)
 
-    const eurcFeeLevel = feeLevelFor(sourceChain)
-    const approveTxId  = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: eurcAddress,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
-      feeLevel:        eurcFeeLevel,
-    })
-    await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+    const eurcFeeLevel  = feeLevelFor(sourceChain)
+    const eurcOwner     = await getChainWalletAddress(sourceWalletId)
+    // Approve uint256.max so parallel EURC burns from one wallet don't race each
+    // other, then wait for the allowance to be visible before the transfer — the
+    // bundler simulates against chain state that can lag a confirmed approve.
+    const existingEurc  = await readAllowance(srcMeta.rpcUrl, eurcAddress, eurcOwner, tokenManager)
+    if (existingEurc === null || existingEurc < amountMicro) {
+      const approveTxId = await executeContractCall({
+        walletId:        sourceWalletId,
+        contractAddress: eurcAddress,
+        callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, MAX_UINT256] }),
+        feeLevel:        eurcFeeLevel,
+      })
+      await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+      await waitForAllowance(srcMeta.rpcUrl, eurcAddress, eurcOwner, tokenManager, amountMicro)
+    }
 
     const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
@@ -374,14 +382,22 @@ export async function cctpBurnFast({
     const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
     // Wait for approve to confirm — burn requires the allowance to be set on-chain
-    const eurcFeeLevel = feeLevelFor(sourceChain)
-    const approveTxId  = await executeContractCall({
-      walletId:        sourceWalletId,
-      contractAddress: eurcAddress,
-      callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, amountMicro] }),
-      feeLevel:        eurcFeeLevel,
-    })
-    await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+    const eurcFeeLevel  = feeLevelFor(sourceChain)
+    const eurcOwner     = await getChainWalletAddress(sourceWalletId)
+    // Approve uint256.max so parallel EURC burns from one wallet don't race each
+    // other, then wait for the allowance to be visible before the transfer — the
+    // bundler simulates against chain state that can lag a confirmed approve.
+    const existingEurc  = await readAllowance(srcMeta.rpcUrl, eurcAddress, eurcOwner, tokenManager)
+    if (existingEurc === null || existingEurc < amountMicro) {
+      const approveTxId = await executeContractCall({
+        walletId:        sourceWalletId,
+        contractAddress: eurcAddress,
+        callData:        encodeFunctionData({ abi: [APPROVE_ABI], functionName: 'approve', args: [tokenManager, MAX_UINT256] }),
+        feeLevel:        eurcFeeLevel,
+      })
+      await waitForTransaction(approveTxId).catch((e: Error) => { throw new Error(`[step1-approve] ${e.message}`) })
+      await waitForAllowance(srcMeta.rpcUrl, eurcAddress, eurcOwner, tokenManager, amountMicro)
+    }
 
     // Submit burn — don't wait, return Circle tx ID immediately
     const destAddress    = encodePacked(['address'], [recipientAddress as `0x${string}`])

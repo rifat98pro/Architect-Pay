@@ -107,10 +107,14 @@ export function computeEurcAggregatePlan(
     remaining -= use
   }
 
-  // Pull from other EURC chains via CCTPx (protocol fee is 0; platform fee 0.01%)
+  // Pull from other EURC chains via CCTPx. A route is only usable if one endpoint
+  // is Arc — CCTPx quotes a zero fee for those, but charges a native-token fee for
+  // Base↔Ethereum (~0.0001 ETH), and our Circle wallets hold no native balance
+  // because gas is sponsored, so crossChainTransfer would revert.
+  const arcInvolved = destChain === 'ARC-TESTNET'
   if (remaining > 0.001) {
     const others = [...EURC_CCTP_CHAINS]
-      .filter((c) => c !== destChain)
+      .filter((c) => c !== destChain && (arcInvolved || c === 'ARC-TESTNET'))
       .map((c) => ({ chain: c as string, bal: eurcBalances[c] ?? 0 }))
       .filter((x) => x.bal >= MIN_BURN)
       .sort((a, b) => b.bal - a.bal)
@@ -119,7 +123,6 @@ export function computeEurcAggregatePlan(
       if (remaining <= 0.001) break
       const burnAmount = parseFloat(Math.min(spendable(bal), remaining).toFixed(6))
       if (burnAmount < MIN_BURN) continue
-      // CCTPx EURC protocol fee is 0; no platform fee on aggregate withdraw
       plan.push({ chain, label: CHAIN_LABEL[chain] ?? chain, amount: burnAmount.toFixed(6), fee: '0', isCctp: true })
       remaining -= burnAmount
     }
