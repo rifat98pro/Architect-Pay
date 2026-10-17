@@ -11,6 +11,7 @@ import ChainLogo from '@/components/chain-logo'
 import ChainSelect from '@/components/chain-select'
 import { cn } from '@/lib/utils'
 import type { AggregatePlanEntry } from '@/lib/aggregate'
+import { HUB_CHAIN } from '@/lib/cctp-chains'
 
 const DEST_CHAINS = [
   { id: 'ARC-TESTNET',  label: 'Arc'       },
@@ -486,12 +487,23 @@ export default function PaymentsPage() {
                         {token === 'EURC' ? '' : '$'}{parseFloat(entry.amount).toFixed(2)} {token}
                         {entry.isCctp && parseFloat(entry.fee) > 0 && <span className="ml-1 text-blue-500">(~{token === 'EURC' ? '' : '$'}{parseFloat(entry.fee).toFixed(2)} fee)</span>}
                         {entry.isCctp && parseFloat(entry.fee) === 0 && <span className="ml-1 text-amber-400">(via CCTP, ~2–5 min)</span>}
-                        {!entry.isCctp && <span className="ml-1 text-green-400">(instant)</span>}
+                        {!entry.isCctp && <span className="ml-1 text-green-400">(already here)</span>}
                       </span>
                     </div>
                   ))}
+                  <div className="mt-2 border-t border-blue-800/50 pt-2 text-xs">
+                    {destChain === HUB_CHAIN ? (
+                      <span className="text-green-400">
+                        Paid out on {DEST_CHAINS.find((c) => c.id === destChain)?.label} directly — no bridge needed.
+                      </span>
+                    ) : (
+                      <span className="text-amber-400">
+                        Then bridged to {DEST_CHAINS.find((c) => c.id === destChain)?.label} via CCTP, ~2–5 min.
+                      </span>
+                    )}
+                  </div>
                   {parseFloat(planFee) > 0 && (
-                    <div className="mt-2 border-t border-blue-800/50 pt-2 text-xs text-blue-400">
+                    <div className="mt-1 text-xs text-blue-400">
                       Total CCTP fees: ~${parseFloat(planFee).toFixed(2)} USDC
                     </div>
                   )}
