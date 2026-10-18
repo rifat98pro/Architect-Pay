@@ -55,7 +55,7 @@ export async function mintPendingSweeps(limit: number, userId?: string): Promise
         receiverWalletId: sweep.receiverWalletId,
         destTransmitter:  sweep.destTransmitter,
       })
-      await db.sweep.update({ where: { id: sweep.id }, data: { status: 'COMPLETED', mintTxHash } })
+      await db.sweep.update({ where: { id: sweep.id }, data: { status: 'COMPLETED', mintTxHash, errorMessage: null } })
       minted++
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Mint failed'
@@ -93,7 +93,7 @@ export async function finishSweep(sweepId: string, deadline: number): Promise<bo
           receiverWalletId: sweep.receiverWalletId,
           destTransmitter:  sweep.destTransmitter,
         })
-        await db.sweep.update({ where: { id: sweepId }, data: { status: 'COMPLETED', mintTxHash } })
+        await db.sweep.update({ where: { id: sweepId }, data: { status: 'COMPLETED', mintTxHash, errorMessage: null } })
         return true
       }
     } catch {
