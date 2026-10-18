@@ -21,14 +21,16 @@ export async function POST() {
   const { minted }           = await mintPendingSweeps(10, user.id)
   const { burned, sweepIds } = await sweepWallet(wallet, 4)
 
-  // Stay inside the function timeout with room to spare. USDC attests in well under
-  // a minute, so this usually returns with the deposit already on the hub; anything
-  // slower is left BURNED and the cron finishes it.
-  const deadline = Date.now() + 200_000
-  let completed  = 0
+  // Wait only for burns that can realistically finish here. USDC attests in well
+  // under a minute, so the deposit is usually on the hub by the time this returns.
+  // EURC settles at hard finality and never would, and holding the function open
+  // for it would tie up a request on every page load — those stay BURNED for the
+  // next visit or the cron to mint.
+  let completed = 0
   for (const id of sweepIds) {
-    if (Date.now() >= deadline) break
-    if (await finishSweep(id, deadline)) completed++
+    const sweep = await db.sweep.findUnique({ where: { id }, select: { token: true } })
+    if (sweep?.token !== 'USDC') continue
+    if (await finishSweep(id, Date.now() + 90_000)) completed++
   }
 
   return NextResponse.json({ minted: minted + completed, burned })
