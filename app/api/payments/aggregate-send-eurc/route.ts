@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { getWalletBalances, sendUsdcPayment, getOrCreateChainWalletId, waitForTokenBalance } from '@/lib/circle'
-import { cctpTransfer } from '@/lib/cctp'
+import { cctpBurn, cctpMint } from '@/lib/cctp'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { EURC_CCTP_CHAINS, type EurcCctpChain } from '@/lib/cctp-chains'
 import { computeEurcAggregatePlan } from '@/lib/aggregate'
@@ -97,7 +97,10 @@ export async function POST(req: NextRequest) {
           const srcWalletId = walletIds[srcChain]
           if (!srcWalletId) throw new Error(`No wallet for ${srcChain}`)
 
-          await cctpTransfer({
+          // Burn first and record the result before minting. CCTPx without a
+          // FORWARD request is a direct mint — nothing relays it — so if the mint
+          // leg is lost the burn must still be recoverable from the payment row.
+          const burn = await cctpBurn({
             sourceChain:      srcChain,
             sourceWalletId:   srcWalletId,
             destChain:        destChain as EurcCctpChain,
@@ -107,6 +110,18 @@ export async function POST(req: NextRequest) {
             amount:           entry.amount,
             token:            'EURC',
           })
+
+          await db.payment.update({
+            where: { id: payment.id },
+            data:  {
+              burnTxHash:       burn.burnTxHash,
+              srcDomain:        burn.srcDomain,
+              receiverWalletId: burn.receiverWalletId,
+              destTransmitter:  burn.destTransmitter,
+            },
+          }).catch(() => { /* recording is best-effort; never fail the burn over it */ })
+
+          await cctpMint({ ...burn, destChain: destChain as EurcCctpChain })
         }),
       )
     }
