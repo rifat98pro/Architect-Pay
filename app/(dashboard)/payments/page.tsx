@@ -138,8 +138,14 @@ export default function PaymentsPage() {
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
   const EURC_CHAINS       = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
   const totalBalance      = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
+  // EURC is only bridgeable on routes with Arc at one end — CCTPx charges a native
+  // fee otherwise, which sponsored wallets can't pay. So the amount actually
+  // reachable for a given destination is not the total across all chains.
   const totalEurcBalance  = Object.values(eurcChainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  const availableBalance  = token === 'EURC' ? totalEurcBalance.toFixed(2) : totalBalance.toFixed(2)
+  const reachableEurc     = destChain === 'ARC-TESTNET'
+    ? totalEurcBalance
+    : parseFloat(eurcChainBalances[destChain] ?? '0') + parseFloat(eurcChainBalances['ARC-TESTNET'] ?? '0')
+  const availableBalance  = token === 'EURC' ? reachableEurc.toFixed(2) : totalBalance.toFixed(2)
   const filteredDestChains = token === 'EURC' ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id)) : DEST_CHAINS
   const amountNum          = parseFloat(amount || '0')
   const availableNum       = parseFloat(availableBalance)

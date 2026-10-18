@@ -6,9 +6,12 @@ export type AnyChain = CctpSourceChain
 export const EURC_CCTP_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'] as const
 export type EurcCctpChain = (typeof EURC_CCTP_CHAINS)[number]
 
-// CrossChainTokenService (CCTPx) — mainnet address on Arc
+// CrossChainTokenService (CCTPx) — the contract we call. Note this is NOT the
+// spender: each token has its own TokenManager that pulls the funds, so the ERC-20
+// approve must target eurcTokenManager, not this address.
 export const CCTS_ADDRESS = '0x431871229103b780868f8C6BB820cd16ECf942BC' as const
-// EURC token ID in the CCTPx registry (mainnet) — verify from docs.arc.io/arc/references/contract-addresses
+// EURC token ID and TokenManager, confirmed against https://iris-api.circle.com/v2/cctpx/tokens
+// (EURC is enabled on Ethereum/domain 0, Base/6 and Arc/26; Avalanche/1 is disabled)
 export const EURC_CCTPX_TOKEN_ID = '0x6ca9e29fa53becc29becaf4a90b9ca7a995ad4d2234880da13ca38c657fb241c' as const
 
 // Maps our internal chain key → Circle SDK blockchain name (mainnet)
@@ -38,7 +41,7 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     rpcUrl:               'https://rpc.mainnet.arc.io',
     usdcAddress:          '0x3600000000000000000000000000000000000000',
     eurcAddress:          '0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1',
-    eurcTokenManager:     '0x431871229103b780868f8C6BB820cd16ECf942BC',
+    eurcTokenManager:     '0x8c27579e24f9f19d96724e19fc059dacd1469e10',
     tokenMessengerV2:     '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
     messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
   },
@@ -48,7 +51,7 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     rpcUrl:               'https://ethereum.publicnode.com',
     usdcAddress:          '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     eurcAddress:          '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
-    eurcTokenManager:     '0x431871229103b780868f8C6BB820cd16ECf942BC',
+    eurcTokenManager:     '0x8c27579e24f9f19d96724e19fc059dacd1469e10',
     tokenMessengerV2:     '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
     messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
   },
@@ -58,7 +61,7 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
     rpcUrl:               'https://mainnet.base.org',
     usdcAddress:          '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     eurcAddress:          '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
-    eurcTokenManager:     '0x431871229103b780868f8C6BB820cd16ECf942BC',
+    eurcTokenManager:     '0x8c27579e24f9f19d96724e19fc059dacd1469e10',
     tokenMessengerV2:     '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d',
     messageTransmitterV2: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
   },
