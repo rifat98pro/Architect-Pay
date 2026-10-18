@@ -57,7 +57,11 @@ export default function DashboardPage() {
       Object.entries(data.eurcChainBalances ?? {})
         .filter(([c]) => c !== HUB_CHAIN)
         .reduce((s, [, b]) => s + parseFloat(b || '0'), 0)
-    if (offHub > 0.01) fetch('/api/wallet/sweep', { method: 'POST' }).catch(() => {})
+    // Also nudge when a burn is already in flight. Its funds have left the source
+    // chain and not yet reached the hub, so they appear in no chain balance — going
+    // only by offHub would stop calling exactly when the mint still has to happen.
+    const inFlight = parseFloat(data.inFlightUsdc ?? '0') + parseFloat(data.inFlightEurc ?? '0')
+    if (offHub > 0.01 || inFlight > 0) fetch('/api/wallet/sweep', { method: 'POST' }).catch(() => {})
   }
 
   useEffect(() => {
