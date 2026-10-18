@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
 import {
   CheckCircle2, XCircle, Clock, RefreshCw,
-  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowRight, ArrowUpCircle, ArrowDownCircle, RotateCcw,
+  ExternalLink, AlertTriangle, Loader2, ChevronDown, ArrowLeftRight, ArrowUpCircle, ArrowDownCircle, RotateCcw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TokenLogo from '@/components/token-logo'
@@ -370,21 +370,11 @@ function HistoryPage() {
                       )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
-                      {p.sourceChain === 'ALL_CHAINS' ? (
-                        <span className="text-xs font-medium text-brand-400">All Chains</span>
-                      ) : (
-                        <>
-                          <ChainLogo chain={p.sourceChain} size={12} />
-                          <span className="text-xs text-gray-500">{p.sourceChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
-                        </>
-                      )}
-                      {(p.sourceChain !== p.destChain) && (
-                        <>
-                          <ArrowRight className="h-3 w-3 text-gray-700 shrink-0" />
-                          <ChainLogo chain={p.destChain} size={12} />
-                          <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
-                        </>
-                      )}
+                      {/* Only the destination is the user's concern — funds settle on the
+                          hub, so naming a source chain would describe plumbing, not the payment. */}
+                      <span className="text-xs text-gray-500">to</span>
+                      <ChainLogo chain={p.destChain} size={12} />
+                      <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
                       <span className="text-gray-700">·</span>
                       <span className="font-mono text-xs text-gray-600">{truncateAddress(p.recipientAddress, 5)}</span>
                       <span className="text-gray-700">·</span>
@@ -623,7 +613,6 @@ function HistoryPage() {
             </div>
             <div className="divide-y divide-gray-800/60">
               {swaps.map((s) => {
-                const isCross = s.srcChain !== s.destChain
                 return (
                   <div key={s.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-4 hover:bg-gray-800/30 transition">
                     <div className="min-w-0">
@@ -635,16 +624,6 @@ function HistoryPage() {
                         <span className="text-purple-400">{s.tokenOut}</span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
-                        <ChainLogo chain={s.srcChain} size={12} />
-                        <span className="text-xs text-gray-500">{s.srcChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
-                        {isCross && (
-                          <>
-                            <ArrowLeftRight className="h-3 w-3 text-gray-700 shrink-0" />
-                            <ChainLogo chain={s.destChain} size={12} />
-                            <span className="text-xs text-gray-500">{s.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
-                          </>
-                        )}
-                        <span className="text-gray-700">·</span>
                         <span className="text-xs text-gray-600">{new Date(s.createdAt).toLocaleDateString()}</span>
                       </div>
                       <TxTimer createdAt={s.createdAt} status={s.status} />
