@@ -290,34 +290,43 @@ GET /api/swap/history`}</CodeBlock>
                 Auth
               </div>
               <div className="px-5">
-                <ApiRow method="POST" path="/api/auth/register" desc="Create a new account and provision wallets" />
-                <ApiRow method="POST" path="/api/auth/login"    desc="Sign in and receive session token" />
-                <ApiRow method="GET"  path="/api/auth/me"       desc="Get current authenticated user" />
+                <ApiRow method="POST" path="/api/auth/signup"          desc="Create a new account and provision wallets" />
+                <ApiRow method="POST" path="/api/auth/send-otp"        desc="Email a one-time code to verify an address" />
+                <ApiRow method="POST" path="/api/auth/forgot-password" desc="Start a password reset" />
+                <ApiRow method="POST" path="/api/auth/reset-password"  desc="Complete a password reset with the emailed token" />
+                <ApiRow method="GET"  path="/api/auth/[...nextauth]"   desc="NextAuth session and sign-in handler" />
               </div>
               <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ background: 'rgba(255,255,255,0.03)', color: '#555' }}>
                 Wallet
               </div>
               <div className="px-5">
-                <ApiRow method="GET"  path="/api/wallet/balance"  desc="Get USDC & EURC balances across all chains" />
-                <ApiRow method="GET"  path="/api/wallet/address"  desc="Get wallet address for any supported chain" />
+                <ApiRow method="GET"  path="/api/wallet/balance" desc="Unified USDC & EURC balance, per-chain detail and funds still settling" />
+                <ApiRow method="POST" path="/api/wallet/deposit" desc="Get the deposit address for a chain" />
+                <ApiRow method="POST" path="/api/wallet/sweep"   desc="Consolidate off-hub balances onto Arc now" />
               </div>
               <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ background: 'rgba(255,255,255,0.03)', color: '#555' }}>
                 Payments
               </div>
               <div className="px-5">
-                <ApiRow method="POST" path="/api/payments/send"         desc="Send USDC/EURC same-chain or cross-chain" />
-                <ApiRow method="POST" path="/api/payments/{id}/mint"    desc="Poll cross-chain mint status" />
-                <ApiRow method="GET"  path="/api/payments/history"      desc="List all sent payments" />
-                <ApiRow method="POST" path="/api/payments/aggregate-send" desc="Send from your balance to one recipient" />
+                <ApiRow method="POST" path="/api/payments/aggregate-send"      desc="Send USDC from your balance to one recipient" />
+                <ApiRow method="POST" path="/api/payments/aggregate-send-eurc" desc="Send EURC from your balance to one recipient" />
+                <ApiRow method="GET"  path="/api/payments/aggregate-plan"      desc="Preview how a USDC payment would be funded" />
+                <ApiRow method="GET"  path="/api/payments/aggregate-plan-eurc" desc="Preview how a EURC payment would be funded" />
+                <ApiRow method="POST" path="/api/payments/send"                desc="Send from one specific chain" />
+                <ApiRow method="POST" path="/api/payments/{id}/mint"           desc="Poll cross-chain mint status" />
+                <ApiRow method="GET"  path="/api/payments/history"             desc="List all sent payments" />
+                <ApiRow method="GET"  path="/api/payments/received"            desc="List incoming transfers from external wallets" />
               </div>
               <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ background: 'rgba(255,255,255,0.03)', color: '#555' }}>
                 Payroll
               </div>
               <div className="px-5">
-                <ApiRow method="GET"  path="/api/employees"   desc="List employees" />
-                <ApiRow method="POST" path="/api/employees"   desc="Add employee" />
-                <ApiRow method="POST" path="/api/payroll/run" desc="Execute payroll for all employees" />
-                <ApiRow method="GET"  path="/api/payroll/runs" desc="List all payroll runs with entries" />
+                <ApiRow method="GET"  path="/api/businesses"    desc="List businesses" />
+                <ApiRow method="GET"  path="/api/employees"     desc="List employees" />
+                <ApiRow method="POST" path="/api/employees"     desc="Add employee" />
+                <ApiRow method="POST" path="/api/payroll/run"   desc="Execute payroll for all employees" />
+                <ApiRow method="POST" path="/api/payroll/retry" desc="Retry the entries that failed in a run" />
+                <ApiRow method="GET"  path="/api/payroll/runs"  desc="List all payroll runs with entries" />
               </div>
               <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ background: 'rgba(255,255,255,0.03)', color: '#555' }}>
                 Swaps

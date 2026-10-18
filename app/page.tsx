@@ -346,7 +346,7 @@ export default function LandingPage() {
                 {[
                   ['POST', '/api/auth/signup'],
                   ['GET',  '/api/wallet/balance'],
-                  ['POST', '/api/payments/send'],
+                  ['POST', '/api/payments/aggregate-send'],
                   ['POST', '/api/wallet/sweep'],
                   ['POST', '/api/payroll/run'],
                   ['GET',  '/api/payroll/runs'],

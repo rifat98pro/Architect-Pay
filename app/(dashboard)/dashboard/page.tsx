@@ -5,7 +5,7 @@ import { HUB_CHAIN } from '@/lib/cctp-chains'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
-import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CreditCard, Rocket, Building2, Users, Banknote, X } from 'lucide-react'
+import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CreditCard, Rocket, Building2, Users, Banknote, X, ChevronRight } from 'lucide-react'
 import DepositModal from '@/components/deposit-modal'
 import OnrampModal from '@/components/onramp-modal'
 import { useTheme } from '@/context/theme-context'
@@ -115,47 +115,19 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
           <p className="mt-0.5 text-sm text-gray-500">Your balance · <span className="text-brand-400 font-medium">Zero gas fees</span></p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={refresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition disabled:opacity-50"
-            style={{
-              borderColor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)',
-              background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
-              color:       theme === 'light' ? '#324862' : '#8faab8',
-            }}
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-          <button
-            onClick={() => setMainnetNotice(true)}
-            className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 hover:bg-brand-400 transition"
-          >
-            <CreditCard className="h-4 w-4 shrink-0 text-navy-950" />
-            <div className="text-left">
-              <div className="text-xs font-bold text-navy-950 leading-tight">Deposit Funds</div>
-              <div className="text-[10px] font-medium text-navy-950/70 leading-tight">Debit Card · Apple Pay · Google Pay</div>
-            </div>
-          </button>
-          <button
-            onClick={() => setDepositOpen(true)}
-            className="flex items-center gap-2 rounded-xl border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 transition"
-            style={{ background: 'rgba(18,32,49,0.6)' }}
-          >
-            <ArrowDownCircle className="h-4 w-4" />
-            Deposit
-          </button>
-          <button
-            onClick={() => router.push('/withdraw')}
-            className="flex items-center gap-2 rounded-xl border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 transition"
-            style={{ background: 'rgba(18,32,49,0.6)' }}
-          >
-            <ArrowUpCircle className="h-4 w-4" />
-            Withdraw
-          </button>
-        </div>
+        <button
+          onClick={refresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition disabled:opacity-50"
+          style={{
+            borderColor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)',
+            background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+            color:       theme === 'light' ? '#324862' : '#8faab8',
+          }}
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Hero balance cards */}
@@ -212,6 +184,73 @@ export default function DashboardPage() {
           <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>
             {settlingEurc > 0.01 ? `€${settlingEurc.toFixed(2)} still settling` : 'Available now'}
           </div>
+        </div>
+      </div>
+
+      {/* Money in and out. These used to be buttons crowded into the header; as a
+          section under the balance they read as the things you do with it. */}
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">Move money</span>
+          <div className="h-px flex-1" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              key:   'card',
+              icon:  <CreditCard className="h-5 w-5" />,
+              title: 'Buy with card',
+              body:  'Debit card, Apple Pay or Google Pay',
+              accent: '#2aabab',
+              onClick: () => setMainnetNotice(true),
+            },
+            {
+              key:   'deposit',
+              icon:  <ArrowDownCircle className="h-5 w-5" />,
+              title: 'Deposit crypto',
+              body:  'Send USDC or EURC from any supported chain',
+              accent: '#60a5fa',
+              onClick: () => setDepositOpen(true),
+            },
+            {
+              key:   'withdraw',
+              icon:  <ArrowUpCircle className="h-5 w-5" />,
+              title: 'Withdraw',
+              body:  'Send to an external wallet or exchange',
+              accent: '#a78bfa',
+              onClick: () => router.push('/withdraw'),
+            },
+          ].map((action) => (
+            <button
+              key={action.key}
+              onClick={action.onClick}
+              className="group flex flex-col items-start gap-3 rounded-2xl border p-4 text-left transition hover:-translate-y-0.5"
+              style={{
+                background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+                borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)',
+              }}
+            >
+              <span
+                className="inline-flex rounded-xl p-2.5 transition"
+                style={{ background: `${action.accent}1a`, color: action.accent }}
+              >
+                {action.icon}
+              </span>
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="text-sm font-semibold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
+                  {action.title}
+                </span>
+                <ChevronRight
+                  className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5"
+                  style={{ color: theme === 'light' ? '#8694a1' : '#45607a' }}
+                />
+              </span>
+              <span className="text-xs leading-relaxed" style={{ color: theme === 'light' ? '#637d96' : '#8faab8' }}>
+                {action.body}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
