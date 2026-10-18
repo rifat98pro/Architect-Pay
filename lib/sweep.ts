@@ -1,8 +1,7 @@
 import { db } from '@/lib/db'
-import { checkTransaction, getWalletBalances, sendUsdcPayment } from '@/lib/circle'
+import { checkTransaction, getWalletBalances } from '@/lib/circle'
 import { cctpBurnFast, checkAttestationOnce, mintFromAttestation } from '@/lib/cctp'
-import { EURC_CCTP_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
-import { FEE_RECIPIENT, SWEEP_MIN_ETHEREUM, sweepFeeFor } from '@/lib/fees'
+import { CCTP_SOURCE_CHAINS, EURC_CCTP_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 
 // Deposits land on whichever chain the sender picked. Consolidating them onto the
 // hub is what lets the app show one balance per token and pay out instantly: Arc is
@@ -21,43 +20,6 @@ import { FEE_RECIPIENT, SWEEP_MIN_ETHEREUM, sweepFeeFor } from '@/lib/fees'
 // more than a small deposit is worth, but stranding that deposit costs the user
 // more than the gas costs us.
 const SWEEP_MIN = parseFloat(process.env.SWEEP_MIN_AMOUNT ?? '0.01')
-
-/** Smallest balance worth consolidating from a given chain. */
-function sweepMinimum(chain: CctpSourceChain): number {
-  return chain === 'ETH-SEPOLIA' ? SWEEP_MIN_ETHEREUM : SWEEP_MIN
-}
-
-/**
- * Take the sweep fee once the funds are on the hub.
- *
- * Charged here rather than on the source chain on purpose: splitting the amount
- * before the burn would mean a second Ethereum transaction, which costs more than
- * the fee recovers. On the hub it is a cheap local transfer.
- *
- * Best-effort. The money has already arrived; failing to collect our own fee is
- * not a reason to mark the sweep unfinished and retry the whole thing.
- */
-async function collectSweepFee(
-  chain: string, token: string, amount: string, hubWalletId: string,
-): Promise<void> {
-  const fee = sweepFeeFor(chain)
-  if (fee <= 0) return
-  // Never take more than arrived. sweepMinimum should prevent this, but a balance
-  // can shrink between the threshold check and the burn.
-  const charge = Math.min(fee, parseFloat(amount))
-  if (!(charge > 0)) return
-
-  try {
-    await sendUsdcPayment({
-      fromWalletId: hubWalletId,
-      toAddress:    FEE_RECIPIENT,
-      amount:       charge.toFixed(6),
-      token:        token as 'USDC' | 'EURC',
-    })
-  } catch (err) {
-    console.error('[sweep] fee collection failed', { chain, token, charge, err })
-  }
-}
 
 type WalletWithChains = {
   id:             string
@@ -128,7 +90,6 @@ export async function mintPendingSweeps(limit: number, userId?: string): Promise
         destTransmitter:  sweep.destTransmitter,
       })
       await db.sweep.update({ where: { id: sweep.id }, data: { status: 'COMPLETED', mintTxHash, errorMessage: null } })
-      await collectSweepFee(sweep.chain, sweep.token, sweep.amount, sweep.receiverWalletId)
       minted++
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Mint failed'
@@ -168,8 +129,7 @@ export async function finishSweep(sweepId: string, deadline: number): Promise<bo
           destTransmitter:  sweep.destTransmitter,
         })
         await db.sweep.update({ where: { id: sweepId }, data: { status: 'COMPLETED', mintTxHash, errorMessage: null } })
-        await collectSweepFee(sweep.chain, sweep.token, sweep.amount, sweep.receiverWalletId)
-        return true
+          return true
       }
     } catch {
       // Transient. Keep polling until the deadline, then leave it for the cron.
@@ -225,6 +185,9 @@ export async function sweepWallet(wallet: WalletWithChains, budget: number): Pro
     if (burned >= budget) break
     const chain = chainWallet.chain as CctpSourceChain
     if (chain === HUB_CHAIN) continue // already home
+    // Wallet rows outlive the chains we route on. A retired chain is skipped
+    // rather than swept — there is no gas policy behind it any more.
+    if (!(CCTP_SOURCE_CHAINS as readonly string[]).includes(chain)) continue
 
     let balances: { usdc: string; eurc: string }
     try {
@@ -238,7 +201,7 @@ export async function sweepWallet(wallet: WalletWithChains, budget: number): Pro
       if (token === 'EURC' && !(EURC_CCTP_CHAINS as readonly string[]).includes(chain)) continue
 
       const available = parseFloat(token === 'EURC' ? balances.eurc : balances.usdc)
-      if (!(available >= sweepMinimum(chain))) continue
+      if (!(available >= SWEEP_MIN)) continue
 
       // One sweep per chain+token at a time, or the second burn races the first
       // against a balance that has already been spent.

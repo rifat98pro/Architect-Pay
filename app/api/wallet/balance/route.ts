@@ -61,12 +61,9 @@ export async function GET() {
     }
   }
 
-  const [balances, arcTokenBalances, eurcEth, eurcBase] = await Promise.all([
+  const [balances, arcTokenBalances, eurcBase] = await Promise.all([
     getAllChainBalances(wallet.circleWalletId, chainWalletIds),
     getWalletBalances(wallet.circleWalletId),
-    chainWalletIds['ETH-SEPOLIA']
-      ? getWalletBalances(chainWalletIds['ETH-SEPOLIA']!)
-      : Promise.resolve({ usdc: '0', eurc: '0' }),
     chainWalletIds['BASE-SEPOLIA']
       ? getWalletBalances(chainWalletIds['BASE-SEPOLIA']!)
       : Promise.resolve({ usdc: '0', eurc: '0' }),
@@ -74,7 +71,6 @@ export async function GET() {
 
   const eurcChainBalances: Record<string, string> = {
     'ARC-TESTNET':  arcTokenBalances.eurc,
-    'ETH-SEPOLIA':  eurcEth.eurc,
     'BASE-SEPOLIA': eurcBase.eurc,
   }
   const eurcBalance = Object.values(eurcChainBalances)

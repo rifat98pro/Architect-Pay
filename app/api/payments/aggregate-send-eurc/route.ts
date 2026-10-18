@@ -6,7 +6,7 @@ import { cctpBurn, cctpMint } from '@/lib/cctp'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { EURC_CCTP_CHAINS, HUB_CHAIN, SOURCE_CHAIN_META, type EurcCctpChain } from '@/lib/cctp-chains'
 import { computeEurcAggregatePlan } from '@/lib/aggregate'
-import { calcFee, ethereumSurcharge, FEE_RECIPIENT } from '@/lib/fees'
+import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 import { z } from 'zod'
 
 export const maxDuration = 300
@@ -71,21 +71,11 @@ export async function POST(req: NextRequest) {
   const isCrossChain = destChain !== HUB_CHAIN
   const percentFee   = isCrossChain ? calcFee(targetAmount) : 0
 
-  // Price the Ethereum legs before planning, since the surcharge has to be
-  // aggregated alongside the amount. Paying out to Ethereum is one leg; a plan that
-  // pulls from Ethereum is another, so a probe plan tells us whether it will.
-  const probe        = computeEurcAggregatePlan(eurcBalances, targetAmount + percentFee, destChain)
-  const pullsFromEth = probe.plan.some((e) => e.chain === 'ETH-SEPOLIA' && e.isCctp)
-  const ethFee       = ethereumSurcharge(
-    destChain === 'ETH-SEPOLIA' ? 'ETH-SEPOLIA' : null,
-    pullsFromEth ? 'ETH-SEPOLIA' : null,
-  )
-
-  const platformFee = percentFee + ethFee
+  const platformFee  = percentFee
   const plan = computeEurcAggregatePlan(eurcBalances, targetAmount + platformFee, destChain)
   if (!plan.feasible) {
     const needed = platformFee > 0
-      ? `${amount} + ${platformFee.toFixed(2)} fee${ethFee > 0 ? ' (includes Ethereum network cost)' : ''}`
+      ? `${amount} + ${platformFee.toFixed(2)} fee`
       : amount
     return NextResponse.json(
       { error: `Insufficient EURC balance. Need ${needed} EURC across all chains.` },

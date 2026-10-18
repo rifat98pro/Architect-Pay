@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils'
 
 const DEST_CHAINS = [
   { id: 'ARC-TESTNET',  label: 'Arc'       },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum'  },
   { id: 'BASE-SEPOLIA', label: 'Base'      },
   { id: 'ARB-SEPOLIA',  label: 'Arbitrum'  },
   { id: 'MATIC-AMOY',   label: 'Polygon'   },
@@ -21,7 +20,6 @@ const DEST_CHAINS = [
 
 const EURC_CHAINS = [
   { id: 'ARC-TESTNET',  label: 'Arc'      },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum' },
   { id: 'BASE-SEPOLIA', label: 'Base'     },
 ]
 
@@ -281,7 +279,7 @@ export default function WithdrawPage() {
             subtitle={
               token === 'USDC'
                 ? `Total available: $${totalUsdcBalance.toFixed(2)} USDC across all chains`
-                : `Total available: €${totalEurcBalance.toFixed(2)} EURC across Arc, Ethereum & Base`
+                : `Total available: €${totalEurcBalance.toFixed(2)} EURC`
             }
           />
 

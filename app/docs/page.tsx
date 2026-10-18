@@ -147,7 +147,7 @@ export default function DocsPage() {
                 {
                   n: 2,
                   title: 'Fund your wallet',
-                  body: 'Go to your Dashboard and click Deposit, then pick the chain you are sending from — Arc, Ethereum, Base, Arbitrum, Polygon, Avalanche or Optimism. Funds are spendable on arrival and settle onto Arc in the background, usually within a minute for USDC and up to 20 for EURC.',
+                  body: 'Go to your Dashboard and click Deposit, then pick the chain you are sending from — Arc, Base, Arbitrum, Polygon, Avalanche or Optimism. Funds are spendable on arrival and settle onto Arc in the background, usually within a minute for USDC and up to 20 for EURC.',
                 },
                 {
                   n: 3,
@@ -184,7 +184,7 @@ export default function DocsPage() {
   "recipientAddress": "0xABC...",
   "amount": "10.00",
   "sourceChain": "ARC-TESTNET",
-  "destChain": "ETH-SEPOLIA",
+  "destChain": "BASE-SEPOLIA",
   "token": "USDC",
   "label": "Invoice #42"
 }
@@ -259,8 +259,8 @@ GET /api/payroll/runs`}</CodeBlock>
             </div>
             <div className="rounded-xl border p-5" style={{ background: 'rgba(251,191,36,0.04)', borderColor: 'rgba(251,191,36,0.15)' }}>
               <p className="text-sm font-semibold mb-1" style={{ color: '#fbbf24' }}>Supported Chains</p>
-              <p className="text-sm" style={{ color: '#888' }}>Arc · Ethereum · Base · Arbitrum · Polygon · Avalanche · Optimism</p>
-              <p className="text-sm mt-1" style={{ color: '#888' }}>EURC is supported on Arc, Ethereum, and Base only.</p>
+              <p className="text-sm" style={{ color: '#888' }}>Arc · Base · Arbitrum · Polygon · Avalanche · Optimism</p>
+              <p className="text-sm mt-1" style={{ color: '#888' }}>EURC is supported on Arc and Base only.</p>
             </div>
           </Section>
 
@@ -356,7 +356,7 @@ GET /api/swap/history`}</CodeBlock>
                 },
                 {
                   q: 'What tokens are supported?',
-                  a: 'USDC and EURC. USDC is supported on all chains. EURC is supported on Arc, Ethereum, and Base only.',
+                  a: 'USDC and EURC. USDC is supported on all six chains. EURC is supported on Arc and Base only.',
                 },
                 {
                   q: 'What if I close the tab during a cross-chain transfer?',

@@ -13,7 +13,6 @@ import ChainSelect from '@/components/chain-select'
 
 const CHAIN_OPTIONS = [
   { value: 'ARC-TESTNET',  label: 'Arc' },
-  { value: 'ETH-SEPOLIA',  label: 'Ethereum' },
   { value: 'BASE-SEPOLIA', label: 'Base' },
   { value: 'ARB-SEPOLIA',  label: 'Arbitrum' },
   { value: 'MATIC-AMOY',   label: 'Polygon' },

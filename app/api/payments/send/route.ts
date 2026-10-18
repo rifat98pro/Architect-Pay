@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const { EURC_CCTP_CHAINS } = await import('@/lib/cctp-chains')
     if (!EURC_CCTP_CHAINS.includes(sourceChain as never) || !EURC_CCTP_CHAINS.includes(destChain as never)) {
       return NextResponse.json(
-        { error: 'EURC is only supported on Arc Testnet, Ethereum Sepolia, and Base Sepolia.' },
+        { error: 'EURC is only supported on Arc and Base.' },
         { status: 400 },
       )
     }

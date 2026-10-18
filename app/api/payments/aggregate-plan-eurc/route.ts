@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { getWalletBalances, getOrCreateChainWalletId } from '@/lib/circle'
 import { EURC_CCTP_CHAINS, HUB_CHAIN, type EurcCctpChain } from '@/lib/cctp-chains'
 import { computeEurcAggregatePlan } from '@/lib/aggregate'
-import { calcFee, ethereumSurcharge } from '@/lib/fees'
+import { calcFee } from '@/lib/fees'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,16 +54,9 @@ export async function GET(req: NextRequest) {
   // plan route for why.
   const isCrossChain = destChain !== HUB_CHAIN
   const percentFee   = isCrossChain ? calcFee(amount) : 0
-  const pullsFromEth = result.plan.some((e) => e.chain === 'ETH-SEPOLIA' && e.isCctp)
-  const ethFee       = ethereumSurcharge(
-    destChain === 'ETH-SEPOLIA' ? 'ETH-SEPOLIA' : null,
-    pullsFromEth ? 'ETH-SEPOLIA' : null,
-  )
 
   return NextResponse.json({
     ...result,
-    percentFee: percentFee.toFixed(6),
-    ethFee:     ethFee.toFixed(6),
-    quotedFee:  (percentFee + ethFee).toFixed(6),
+    quotedFee: percentFee.toFixed(6),
   })
 }

@@ -9,7 +9,7 @@ import { ArrowDown, Loader2, CheckCircle2, Clock, RefreshCw, Settings } from 'lu
 import TokenLogo from '@/components/token-logo'
 
 type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
-type Chain = 'ARC-TESTNET' | 'ETH-SEPOLIA' | 'BASE-SEPOLIA'
+type Chain = 'ARC-TESTNET' | 'BASE-SEPOLIA'
 
 type BalMap = Record<Chain, { usdc: string; eurc: string }>
 
@@ -53,7 +53,6 @@ export default function SwapPage() {
   const [swapCache, setSwapCache] = useFeatureState('swap-cache', {
     bals: {
       'ARC-TESTNET':  { usdc: '0', eurc: '0' },
-      'ETH-SEPOLIA':  { usdc: '0', eurc: '0' },
       'BASE-SEPOLIA': { usdc: '0', eurc: '0' },
     } as BalMap,
     eurcUsd:      null as number | null,
@@ -79,10 +78,6 @@ export default function SwapPage() {
         'ARC-TESTNET':  {
           usdc: parseFloat(data.chainBalances?.['ARC-TESTNET']      ?? '0').toFixed(2),
           eurc: parseFloat(data.eurcChainBalances?.['ARC-TESTNET']  ?? '0').toFixed(2),
-        },
-        'ETH-SEPOLIA':  {
-          usdc: parseFloat(data.chainBalances?.['ETH-SEPOLIA']      ?? '0').toFixed(2),
-          eurc: parseFloat(data.eurcChainBalances?.['ETH-SEPOLIA']  ?? '0').toFixed(2),
         },
         'BASE-SEPOLIA': {
           usdc: parseFloat(data.chainBalances?.['BASE-SEPOLIA']     ?? '0').toFixed(2),

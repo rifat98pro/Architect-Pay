@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils'
 
 const DEST_CHAINS = [
   { id: 'ARC-TESTNET',  label: 'Arc'       },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum'  },
   { id: 'BASE-SEPOLIA', label: 'Base'      },
   { id: 'ARB-SEPOLIA',  label: 'Arbitrum'  },
   { id: 'MATIC-AMOY',   label: 'Polygon'   },
@@ -79,11 +78,9 @@ export default function PaymentsPage() {
 
   const [planLoading, setPlanLoading]   = useState(false)
   const [planFeasible, setPlanFeasible] = useState(true)
-  // Quoted by the plan endpoint, never computed here: the Ethereum surcharge depends
-  // on env config and on whether the plan pulls from Ethereum, and a confirmation
-  // screen that understates the fee is worse than showing none.
+  // Quoted by the plan endpoint, never computed here — the $0.01 minimum makes a
+  // naive percentage understate every small payment.
   const [quotedFee, setQuotedFee]       = useState('0')
-  const [ethFee, setEthFee]             = useState('0')
 
   const [lookupState, setLookupState]         = useState<LookupState>('idle')
   const [resolvedAddress, setResolvedAddress] = useState('')
@@ -137,12 +134,10 @@ export default function PaymentsPage() {
 
   const recipientAddress  = recipientMode === 'wallet' ? walletAddress : resolvedAddress
   const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
-  const EURC_CHAINS       = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA']
+  const EURC_CHAINS       = ['ARC-TESTNET', 'BASE-SEPOLIA']
   const totalBalance      = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   // Every EURC balance is spendable to every EURC destination. CCTPx quotes a zero
-  // fee on any route with Arc at one end, so a Base↔Ethereum payment that sponsored
-  // wallets could never pay the native fee for is relayed through Arc in two free
-  // hops instead. Slower, but no chain's balance is stranded.
+  // fee on any route with Arc at one end, and Arc is where every balance settles.
   const totalEurcBalance  = Object.values(eurcChainBalances).reduce((s, v) => s + parseFloat(v), 0)
   const availableBalance  = token === 'EURC' ? totalEurcBalance.toFixed(2) : totalBalance.toFixed(2)
   const filteredDestChains = token === 'EURC' ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id)) : DEST_CHAINS
@@ -163,7 +158,6 @@ export default function PaymentsPage() {
       const data = await res.json()
       setPlanFeasible(data.feasible ?? false)
       setQuotedFee(data.quotedFee ?? '0')
-      setEthFee(data.ethFee ?? '0')
     } finally { setPlanLoading(false) }
   }, [])
 
@@ -251,7 +245,7 @@ export default function PaymentsPage() {
 
       // Clear form fields first — success state is set after so it survives the clear
       clearPayForm(); setResolvedAddress(''); setResolvedName('')
-      setLookupState('idle'); setPlanFeasible(true); setQuotedFee('0'); setEthFee('0')
+      setLookupState('idle'); setPlanFeasible(true); setQuotedFee('0')
 
       if (data.pending && data.paymentId) {
         // Cross-chain: burn done, minting in progress — poll until complete (globally, survives navigation)
@@ -562,15 +556,6 @@ export default function PaymentsPage() {
                 </span>
               </div>
 
-              {parseFloat(ethFee) > 0 && (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-800/40 bg-amber-900/10 px-2.5 py-2">
-                  <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-amber-400" />
-                  <span className="text-[11px] leading-relaxed text-amber-300/90">
-                    Includes {token === 'EURC' ? '' : '$'}{parseFloat(ethFee).toFixed(2)} for Ethereum network costs.
-                    Ethereum charges the same whatever you send — another network is far cheaper.
-                  </span>
-                </div>
-              )}
 
               {/* Label */}
               {label && (

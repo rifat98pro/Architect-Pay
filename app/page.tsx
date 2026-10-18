@@ -285,7 +285,7 @@ export default function LandingPage() {
               {
                 label: 'Deposits',
                 price: 'Free',
-                note:  'From any supported network except Ethereum.',
+                note:  'From any of the six supported networks.',
                 good:  true,
               },
               {
@@ -304,12 +304,6 @@ export default function LandingPage() {
                 price: '0.01% per payout',
                 note:  'Charged per employee paid on a non-Arc network, minimum $0.01 each. Employees paid on Arc are free.',
               },
-              {
-                label: 'Anything touching Ethereum',
-                price: '$6 per leg',
-                note:  'Deposits ($20 minimum), payments to Ethereum, and payroll for employees on Ethereum. Ethereum network costs the same whatever you send, so other networks are dramatically cheaper.',
-                warn:  true,
-              },
             ].map((row, i) => (
               <div
                 key={row.label}
@@ -322,7 +316,7 @@ export default function LandingPage() {
                 <div className="w-full sm:w-64 shrink-0 text-sm font-semibold text-white">{row.label}</div>
                 <div
                   className="w-full sm:w-40 shrink-0 text-sm font-bold"
-                  style={{ color: row.good ? '#34d399' : row.warn ? '#fbbf24' : '#2aabab' }}
+                  style={{ color: row.good ? '#34d399' : '#2aabab' }}
                 >
                   {row.price}
                 </div>

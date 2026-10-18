@@ -11,11 +11,10 @@ export const maxDuration = 120
 
 const CHAIN_MAP: Record<string, string> = {
   'ARC-TESTNET':  'Arc',
-  'ETH-SEPOLIA':  'Ethereum',
   'BASE-SEPOLIA': 'Base',
 }
 
-const CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'] as const
+const CHAINS = ['ARC-TESTNET', 'BASE-SEPOLIA'] as const
 
 const schema = z.object({
   tokenIn:   z.enum(['EURC', 'USDC']),

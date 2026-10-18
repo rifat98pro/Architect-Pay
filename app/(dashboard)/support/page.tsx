@@ -46,7 +46,7 @@ const FAQS = [
   {
     id: 'getting-started',
     q: 'How do I fund my wallet?',
-    a: 'Click the Deposit button on your Dashboard. A QR code and your wallet address will appear. Send USDC or EURC from any exchange or wallet — it works on Arc, Ethereum, Base, Arbitrum, Polygon, Avalanche, and Optimism.',
+    a: 'Click the Deposit button on your Dashboard. A QR code and your wallet address will appear. Send USDC or EURC from any exchange or wallet — it works on Arc, Base, Arbitrum, Polygon, Avalanche, and Optimism.',
   },
   {
     id: 'getting-started',

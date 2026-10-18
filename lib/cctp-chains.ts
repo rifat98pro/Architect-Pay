@@ -1,9 +1,21 @@
-export const CCTP_SOURCE_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA', 'ARB-SEPOLIA', 'MATIC-AMOY', 'AVAX-FUJI', 'OP-SEPOLIA'] as const
+// Ethereum is deliberately absent. Gas there runs $2-7 per transaction whatever the
+// amount, which no percentage fee can cover and which made sponsored payouts cost
+// more than they earned. Its metadata stays below so historical payments still
+// resolve a label and an explorer link; it is simply never routed to or from.
+export const CCTP_SOURCE_CHAINS = ['ARC-TESTNET', 'BASE-SEPOLIA', 'ARB-SEPOLIA', 'MATIC-AMOY', 'AVAX-FUJI', 'OP-SEPOLIA'] as const
 export type CctpSourceChain = (typeof CCTP_SOURCE_CHAINS)[number]
+
+// Retired chains keep their metadata so old payments still render a label and an
+// explorer link. They are never routable: nothing reads this list to pick a route.
+export const RETIRED_CHAINS = ['ETH-SEPOLIA'] as const
+export type RetiredChain = (typeof RETIRED_CHAINS)[number]
+
+/** Any chain the app has ever transacted on, routable or not. */
+export type KnownChain = CctpSourceChain | RetiredChain
 export type AnyChain = CctpSourceChain
 
 // Chains that support EURC CCTP bridging
-export const EURC_CCTP_CHAINS = ['ARC-TESTNET', 'ETH-SEPOLIA', 'BASE-SEPOLIA'] as const
+export const EURC_CCTP_CHAINS = ['ARC-TESTNET', 'BASE-SEPOLIA'] as const
 export type EurcCctpChain = (typeof EURC_CCTP_CHAINS)[number]
 
 // CrossChainTokenService (CCTPx) — the contract we call. Note this is NOT the
@@ -15,7 +27,7 @@ export const CCTS_ADDRESS = '0x431871229103b780868f8C6BB820cd16ECf942BC' as cons
 export const EURC_CCTPX_TOKEN_ID = '0x6ca9e29fa53becc29becaf4a90b9ca7a995ad4d2234880da13ca38c657fb241c' as const
 
 // Maps our internal chain key → Circle SDK blockchain name (mainnet)
-export const CIRCLE_BLOCKCHAIN: Record<CctpSourceChain, string> = {
+export const CIRCLE_BLOCKCHAIN: Record<KnownChain, string> = {
   'ARC-TESTNET':  'ARC',
   'ETH-SEPOLIA':  'ETH',
   'BASE-SEPOLIA': 'BASE',
@@ -25,7 +37,7 @@ export const CIRCLE_BLOCKCHAIN: Record<CctpSourceChain, string> = {
   'OP-SEPOLIA':   'OP',
 }
 
-export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
+export const SOURCE_CHAIN_META: Record<KnownChain, {
   label:                string
   cctpDomain:           number
   rpcUrl:               string
@@ -106,11 +118,12 @@ export const SOURCE_CHAIN_META: Record<CctpSourceChain, {
 export const HUB_CHAIN: CctpSourceChain = 'ARC-TESTNET'
 
 // Circle's paymaster reserves maxFeePerGas × gasLimit upfront and checks that
-// reservation against the policy cap — not the actual gas burned. On cheap L2s a
-// MEDIUM/HIGH quote reserves dollars for a transaction that costs fractions of a
-// cent, tripping the cap. Only Ethereum mainnet has a mempool worth bidding into.
-export function feeLevelFor(chain: CctpSourceChain): 'LOW' | 'MEDIUM' | 'HIGH' {
-  return chain === 'ETH-SEPOLIA' ? 'MEDIUM' : 'LOW'
+// reservation against the policy cap — not the actual gas burned. On the chains we
+// route on, a MEDIUM/HIGH quote reserves dollars for a transaction costing
+// fractions of a cent, tripping the cap. None of them has a mempool worth bidding
+// into, so LOW everywhere.
+export function feeLevelFor(_chain: KnownChain): 'LOW' | 'MEDIUM' | 'HIGH' {
+  return 'LOW'
 }
 
 // Kept for backward compatibility
@@ -118,7 +131,7 @@ export const ARC_TESTNET_CONFIG = SOURCE_CHAIN_META['ARC-TESTNET']
 
 export const ALL_CHAINS: CctpSourceChain[] = [...CCTP_SOURCE_CHAINS]
 
-export const CHAIN_LABEL: Record<CctpSourceChain, string> = {
+export const CHAIN_LABEL: Record<KnownChain, string> = {
   'ARC-TESTNET':  'Arc',
   'ETH-SEPOLIA':  'Ethereum',
   'BASE-SEPOLIA': 'Base',

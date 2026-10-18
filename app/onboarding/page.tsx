@@ -107,7 +107,7 @@ export default function OnboardingPage() {
               {[
                 { icon: <Send className="h-4 w-4" />,   title: 'Send Payments',  desc: 'Pay any wallet address or @username in USDC or EURC'        },
                 { icon: <Users className="h-4 w-4" />,  title: 'Run Payroll',    desc: 'Add employees and batch-pay your entire team in one click'   },
-                { icon: <Globe className="h-4 w-4" />,  title: 'Cross-chain',    desc: 'Bridge USDC via Circle CCTP across Arc, Ethereum, Base & more' },
+                { icon: <Globe className="h-4 w-4" />,  title: 'Cross-chain',    desc: 'Bridge USDC via Circle CCTP across Arc, Base, Polygon & more' },
               ].map((f) => (
                 <div
                   key={f.title}

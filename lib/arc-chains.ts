@@ -2,7 +2,6 @@
 export const SUPPORTED_DEPOSIT_CHAINS = [
   'Base',
   'Arbitrum',
-  'Ethereum',
   'Polygon',
 ] as const
 
