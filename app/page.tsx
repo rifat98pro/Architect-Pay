@@ -98,7 +98,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
-            Global payroll and stablecoin payments for businesses. Manage multiple businesses and pay teams across chains from one account with Web2 simplicity.
+            Global payroll and stablecoin payments for businesses. One USDC and EURC balance, however many chains your team is spread across. No networks to pick, no gas to hold.
           </p>
 
           <div className="flex items-center gap-4">
@@ -159,9 +159,9 @@ export default function LandingPage() {
             {[
               { icon: <Building2 className="h-5 w-5" />,      title: 'Multi-Business Management', desc: 'Create multiple businesses under one account. Each business has its own employee roster, payroll history, and settings.',  color: '#2aabab' },
               { icon: <Users className="h-5 w-5" />,           title: 'Global Payroll',             desc: 'Add employees, set salaries, run payroll with one click. Pay any wallet on any supported chain simultaneously.',            color: '#60a5fa' },
-              { icon: <Globe className="h-5 w-5" />,           title: 'Stablecoin Payments',        desc: 'Send USDC and EURC to any wallet address globally. Instant on the same chain, ~2–3 min cross-chain via Circle CCTP.',       color: '#a78bfa' },
+              { icon: <Globe className="h-5 w-5" />,           title: 'Stablecoin Payments',        desc: 'Send USDC and EURC to any wallet address globally. Pick the recipient and the chain they want — routing is handled for you.',       color: '#a78bfa' },
               { icon: <Calendar className="h-5 w-5" />,        title: 'Scheduled Auto-Payroll',     desc: 'Set a payday date once. Payroll fires automatically every month — even while you sleep.',                                    color: '#34d399' },
-              { icon: <Wallet className="h-5 w-5" />,          title: 'No Wallet Setup',            desc: 'Sign up with email and password. Wallets are created and managed for you. No seed phrases, no MetaMask, no gas fees.',       color: '#fb923c' },
+              { icon: <Wallet className="h-5 w-5" />,          title: 'No Wallet Setup',            desc: 'Sign up with email and password. Wallets are created and funded behind the scenes. No seed phrases, no MetaMask, no gas fees.',       color: '#fb923c' },
               { icon: <Shield className="h-5 w-5" />,          title: 'On-Chain Audit Trail',       desc: 'Every payroll run and payment is logged immutably on-chain. Full history with explorer links — no spreadsheet needed.',      color: '#f472b6' },
             ].map((feat) => (
               <div
@@ -205,19 +205,19 @@ export default function LandingPage() {
                 step: '01',
                 icon: <Wallet className="h-6 w-6" />,
                 title: 'Create your account',
-                body: 'Sign up with email and password like any web app. We silently provision multi-chain wallets for you — no seed phrases, no MetaMask required.',
+                body: 'Sign up with email and password like any web app. Wallets are provisioned silently behind a single balance — no seed phrases, no MetaMask, no network switching.',
               },
               {
                 step: '02',
                 icon: <Building2 className="h-6 w-6" />,
                 title: 'Add your businesses & teams',
-                body: 'Create one or more businesses, add employees with their wallet addresses and salaries. Mix USDC and EURC, different chains — all in one place.',
+                body: 'Create one or more businesses, add employees with their wallet addresses and salaries. Each one picks USDC or EURC and the chain they want to be paid on.',
               },
               {
                 step: '03',
                 icon: <Banknote className="h-6 w-6" />,
                 title: 'Run payroll & send payments',
-                body: 'Hit Run Payroll and every employee gets paid to their preferred chain instantly. Or send one-off payments to any address globally.',
+                body: 'Hit Run Payroll and everyone is paid on the chain they chose, out of your one balance. Or send one-off payments to any address globally.',
               },
             ].map((item, i) => (
               <div
@@ -242,16 +242,16 @@ export default function LandingPage() {
 
           {/* Cross-chain flow */}
           <div className="mt-12 rounded-2xl border p-8" style={{ background: 'rgba(42,171,171,0.04)', borderColor: 'rgba(42,171,171,0.15)' }}>
-            <p className="mb-6 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: '#2aabab' }}>What happens under the hood (Circle CCTP)</p>
+            <p className="mb-6 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: '#2aabab' }}>What happens under the hood (Arc + Circle CCTP)</p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               {[
-                { label: 'Your funds on any chain',   bg: 'rgba(255,255,255,0.05)', color: '#888'    },
+                { label: 'Deposit on any chain',      bg: 'rgba(255,255,255,0.05)', color: '#888'    },
                 null,
-                { label: 'Burn on source chain',      bg: 'rgba(251,191,36,0.08)',  color: '#fbbf24' },
+                { label: 'Settles onto Arc',          bg: 'rgba(251,191,36,0.08)',  color: '#fbbf24' },
                 null,
                 { label: 'Circle attestation',        bg: 'rgba(96,165,250,0.08)',  color: '#60a5fa' },
                 null,
-                { label: 'Mint on destination chain', bg: 'rgba(52,211,153,0.08)',  color: '#34d399' },
+                { label: 'Mint on their chain',       bg: 'rgba(52,211,153,0.08)',  color: '#34d399' },
                 null,
                 { label: 'Employee receives payment', bg: 'rgba(42,171,171,0.12)',  color: '#2aabab' },
               ].map((item, i) =>
@@ -277,7 +277,7 @@ export default function LandingPage() {
               {
                 icon: <Users className="h-5 w-5" />,
                 title: 'Remote-First Companies',
-                body: 'Pay distributed teams across any country and chain in USDC or EURC. No FX fees, no bank delays, no paperwork.',
+                body: 'Pay distributed teams across any country in USDC or EURC, from one balance. No FX fees, no bank delays, no paperwork.',
                 bullets: ['Employees choose their preferred chain', 'Payroll runs automatically each month', 'Full payment history on-chain'],
                 color: '#2aabab',
               },
@@ -291,15 +291,15 @@ export default function LandingPage() {
               {
                 icon: <Globe className="h-5 w-5" />,
                 title: 'Vendor & Contractor Payments',
-                body: "Pay freelancers and suppliers globally without asking what chain they're on. Any EVM address receives USDC or EURC.",
+                body: 'Pay freelancers and suppliers globally. Ask which chain they want and send there — funding it is not your problem.',
                 bullets: ['One-off payments to any wallet', 'Wallet address + label tracking', 'Explorer links for every transaction'],
                 color: '#a78bfa',
               },
               {
                 icon: <Zap className="h-5 w-5" />,
                 title: 'Crypto-Native Startups',
-                body: 'Replace your manual stablecoin payroll spreadsheets with a proper system. Audit-ready, automated, multi-chain.',
-                bullets: ['Replace manual wallet sends', 'On-chain proof of every payment', 'No gas management or RPC setup'],
+                body: 'Replace your manual stablecoin payroll spreadsheets with a proper system. Audit-ready, automated, no treasury juggling.',
+                bullets: ['Replace manual wallet sends', 'On-chain proof of every payment', 'No gas, RPC or bridge management'],
                 color: '#34d399',
               },
             ].map((uc) => (
@@ -347,6 +347,7 @@ export default function LandingPage() {
                   ['POST', '/api/auth/signup'],
                   ['GET',  '/api/wallet/balance'],
                   ['POST', '/api/payments/send'],
+                  ['POST', '/api/wallet/sweep'],
                   ['POST', '/api/payroll/run'],
                   ['GET',  '/api/payroll/runs'],
                   ['POST', '/api/swap'],
@@ -377,6 +378,7 @@ export default function LandingPage() {
                     'Circle Developer-Controlled Wallets SDK',
                     'Circle Onramp Kit',
                     'Circle Unified Balance Kit',
+                    'CCTPx (EURC cross-chain)',
                     'Circle Swap Kit',
                     'CCTP (viem encodeFunctionData)',
                     'Prisma + Neon PostgreSQL',

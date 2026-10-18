@@ -110,14 +110,20 @@ export default function DocsPage() {
           {/* Overview */}
           <Section id="overview" title="Overview">
             <p className="mb-6 leading-relaxed" style={{ color: '#888' }}>
-              Architect Pay is an on-chain payroll and payments platform built on the Arc blockchain. It uses Circle's
+              Architect Pay is an on-chain payroll and payments platform built on the Arc blockchain. It uses Circle&apos;s
               Developer-Controlled Wallets (SCA — ERC-4337 Smart Contract Accounts) so users never manage seed phrases,
-              and Circle's Gas Station sponsors all transaction fees.
+              and Circle&apos;s Gas Station sponsors all transaction fees.
+            </p>
+            <p className="mb-6 leading-relaxed" style={{ color: '#888' }}>
+              Arc is the settlement hub. A deposit on any supported chain is consolidated onto Arc automatically, and
+              every payout is routed from there — Circle quotes Arc at zero basis points outbound to every destination,
+              where routing chain-to-chain directly costs more. Users see one USDC balance and one EURC balance and
+              never choose a source chain; they choose who to pay and which chain that person receives on.
             </p>
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                { icon: <Zap className="h-5 w-5" />,   title: 'Instant payments',    desc: 'Arc → Arc transfers settle immediately with no fees.',          color: '#2aabab' },
-                { icon: <Globe className="h-5 w-5" />,  title: 'Cross-chain CCTP',   desc: 'Send USDC & EURC across all supported chains via Circle CCTP.',            color: '#60a5fa' },
+                { icon: <Zap className="h-5 w-5" />,   title: 'Instant payments',    desc: 'Payouts leave Arc at zero CCTP fee, to any supported chain.',          color: '#2aabab' },
+                { icon: <Globe className="h-5 w-5" />,  title: 'Cross-chain CCTP',   desc: 'One USDC and one EURC balance. Deposits settle onto Arc on their own.',            color: '#60a5fa' },
                 { icon: <Users className="h-5 w-5" />,  title: 'Automated payroll',   desc: 'Schedule monthly payroll runs for any number of employees.',   color: '#a78bfa' },
               ].map((f) => (
                 <div key={f.title} className="rounded-xl border p-5" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.07)' }}>
@@ -136,17 +142,17 @@ export default function DocsPage() {
                 {
                   n: 1,
                   title: 'Create an account',
-                  body: 'Sign up at architect-pay.vercel.app/signup. A Circle SCA wallet is provisioned instantly on Arc and all supported chains.',
+                  body: 'Sign up at architectpay.website/signup. A Circle SCA wallet is provisioned instantly on Arc and every supported chain.',
                 },
                 {
                   n: 2,
                   title: 'Fund your wallet',
-                  body: 'Go to your Dashboard and click Deposit. Send USDC or EURC from any exchange or wallet on Arc, Ethereum, Base, Arbitrum, Polygon, Avalanche, or Optimism.',
+                  body: 'Go to your Dashboard and click Deposit, then pick the chain you are sending from — Arc, Ethereum, Base, Arbitrum, Polygon, Avalanche or Optimism. Funds are spendable on arrival and settle onto Arc in the background, usually within a minute for USDC and up to 20 for EURC.',
                 },
                 {
                   n: 3,
                   title: 'Send a payment',
-                  body: 'Go to Send Payment, enter a recipient address, choose your chain and token, and confirm. Same-chain transfers are instant; cross-chain takes 2–30 min depending on network.',
+                  body: 'Go to Send Payment, pick the token and the chain your recipient receives on, enter their address and confirm. You never pick a source chain — the payment is funded from your balance.',
                 },
                 {
                   n: 4,
@@ -231,13 +237,15 @@ GET /api/payroll/runs`}</CodeBlock>
           {/* Cross-Chain */}
           <Section id="cross-chain" title="Cross-Chain CCTP">
             <p className="mb-6 text-sm leading-relaxed" style={{ color: '#888' }}>
-              Cross-chain transfers use Circle&apos;s Cross-Chain Transfer Protocol V2. The flow has two phases: burn on source chain, mint on destination chain.
+              Cross-chain movement uses Circle&apos;s Cross-Chain Transfer Protocol V2 for USDC, and CCTPx for EURC. The
+              flow has two phases either way: burn on the source chain, mint on the destination. This runs in two places —
+              consolidating a deposit onto Arc, and paying out from Arc to a recipient&apos;s chain.
             </p>
             <div className="mb-6 space-y-3">
               {[
                 { step: '1', title: 'Approve', desc: 'Token allowance set for TokenMessengerV2 contract. Must confirm on-chain before burn.' },
                 { step: '2', title: 'Burn',    desc: 'depositForBurn called on source chain. Returns immediately — Circle transaction ID stored.' },
-                { step: '3', title: 'Attest',  desc: 'Iris API monitors the burn and issues a cryptographic attestation, typically 2–5 min on mainnet.' },
+                { step: '3', title: 'Attest',  desc: 'Iris monitors the burn and issues an attestation. USDC uses fast finality and lands in under a minute; EURC waits for hard finality, roughly 15 minutes.' },
                 { step: '4', title: 'Mint',    desc: 'receiveMessage called on destination chain with the attestation. USDC/EURC appears in recipient wallet.' },
               ].map((s) => (
                 <div key={s.step} className="flex gap-4 rounded-xl border p-4" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
@@ -259,7 +267,7 @@ GET /api/payroll/runs`}</CodeBlock>
           {/* Swaps */}
           <Section id="swaps" title="Swaps">
             <p className="mb-6 text-sm leading-relaxed" style={{ color: '#888' }}>
-              Swap USDC ↔ EURC on the same chain or cross-chain via the unified swap interface.
+              Swap USDC ↔ EURC against your balance. Swaps execute on Arc, where every balance settles, so there is no chain to choose.
             </p>
             <CodeBlock>{`POST /api/swap
 
@@ -268,7 +276,7 @@ GET /api/payroll/runs`}</CodeBlock>
   "tokenOut": "EURC",
   "amountIn": "100.00",
   "srcChain": "ARC-TESTNET",
-  "destChain": "ETH-SEPOLIA"
+  "destChain": "ARC-TESTNET"
 }
 
 GET /api/swap/history`}</CodeBlock>
@@ -300,7 +308,7 @@ GET /api/swap/history`}</CodeBlock>
                 <ApiRow method="POST" path="/api/payments/send"         desc="Send USDC/EURC same-chain or cross-chain" />
                 <ApiRow method="POST" path="/api/payments/{id}/mint"    desc="Poll cross-chain mint status" />
                 <ApiRow method="GET"  path="/api/payments/history"      desc="List all sent payments" />
-                <ApiRow method="POST" path="/api/payments/aggregate-send" desc="Sweep all chains to one recipient" />
+                <ApiRow method="POST" path="/api/payments/aggregate-send" desc="Send from your balance to one recipient" />
               </div>
               <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ background: 'rgba(255,255,255,0.03)', color: '#555' }}>
                 Payroll
@@ -334,8 +342,8 @@ GET /api/swap/history`}</CodeBlock>
                   a: "Circle's Gas Station sponsors all transaction fees for SCA (ERC-4337) wallets. Neither you nor your employees ever need native tokens for gas.",
                 },
                 {
-                  q: 'Why does cross-chain take 20+ minutes?',
-                  a: "Circle's Iris attestation service processes cross-chain CCTP transfers in 2–5 minutes. Congestion on source or destination chains can occasionally add extra time.",
+                  q: 'How long does a payment take?',
+                  a: "A USDC payout to another chain settles in roughly 20 to 60 seconds. EURC moves over CCTPx, whose fast tier is paid in the source chain's native token that sponsored wallets do not hold, so it waits for hard finality — about 15 minutes. Funds are safe the whole time and the payment completes on its own.",
                 },
                 {
                   q: 'What tokens are supported?',
@@ -343,11 +351,19 @@ GET /api/swap/history`}</CodeBlock>
                 },
                 {
                   q: 'What if I close the tab during a cross-chain transfer?',
-                  a: "The transfer state is saved in your browser's localStorage. When you reopen the app on any page, polling resumes automatically and the transfer will complete.",
+                  a: 'Nothing is lost. The burn and everything needed to finish the mint are recorded server-side, so the transfer completes whether or not you are watching. Reopening the app resumes it sooner; a scheduled job catches anything left over.',
                 },
                 {
                   q: 'Is there a fee?',
                   a: 'Same-chain transfers: free. Cross-chain transfers: 0.01% platform fee (minimum $0.01), plus Circle CCTP has no additional fee at standard finality.',
+                },
+                {
+                  q: 'Do I choose which chain a payment comes from?',
+                  a: 'No. You have one USDC balance and one EURC balance. Deposits from any supported chain are consolidated onto Arc automatically, and payouts are routed from there. You only choose which chain your recipient receives on.',
+                },
+                {
+                  q: 'Can I spend a deposit before it finishes settling?',
+                  a: 'Yes. A deposit counts toward your balance and is spendable as soon as it arrives on-chain. Settling onto Arc happens in the background and only affects swaps and EURC payroll, which draw on Arc directly.',
                 },
               ].map((item) => (
                 <details
