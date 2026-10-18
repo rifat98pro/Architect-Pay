@@ -312,16 +312,6 @@ export default function PayrollPage() {
         </div>
       )}
 
-      {eurcEmps.length > 0 && (
-        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-blue-900/30 bg-blue-900/10 px-5 py-3.5">
-          <div className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-blue-400/50 flex items-center justify-center text-[10px] font-bold text-blue-400">i</div>
-          <div>
-            <p className="text-sm font-medium text-blue-300">EURC is paid from the wallet on each employee&apos;s chain</p>
-            <p className="mt-0.5 text-xs text-blue-400/70">Employees on Arc are paid from your Arc EURC balance, employees on Base from your Base EURC balance. Fund whichever you use — EURC cannot be bridged between them. Arc and Base are the only supported EURC chains.</p>
-          </div>
-        </div>
-      )}
-
       {!businessId && businesses.length > 0 && (
         <p className="mb-4 text-sm text-gray-500">Select a business above to preview payroll.</p>
       )}
