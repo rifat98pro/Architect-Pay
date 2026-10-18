@@ -523,7 +523,7 @@ export default function LandingPage() {
             <Link href="/terms"   className="transition-colors hover:text-white">Terms</Link>
             <Link href="/privacy" className="transition-colors hover:text-white">Privacy</Link>
             <a href="https://x.com/architectpay" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Twitter</a>
-            <p className="hidden sm:block">Powered by Circle CCTP · Real USDC on mainnet</p>
+            <p className="hidden sm:block">Powered by Circle CCTP</p>
           </div>
         </div>
       </footer>
