@@ -2,10 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { checkAttestationOnce, mintFromAttestation, cctpBurnFast } from '@/lib/cctp'
-import { checkTransaction } from '@/lib/circle'
+import { checkTransaction, getWalletBalances, sendUsdcPayment } from '@/lib/circle'
 import { type CctpSourceChain } from '@/lib/cctp-chains'
 
 export const maxDuration = 60
+
+/** A bridge that lands in the user's own wallet still owes the recipient a local
+ *  send. Without this the mint looked like the end of the payment and the route
+ *  marked it COMPLETED while the recipient had been paid nothing. */
+type PayoutMeta = {
+  payout:   true
+  walletId: string
+  to:       string
+  amount:   string
+  token:    'USDC' | 'EURC'
+}
 
 type HopMeta = {
   hop:                   number
@@ -27,10 +38,47 @@ async function finishOrContinueHop(
   mintTxHash:   string,
   hopMetaRaw:   string | null,
 ): Promise<NextResponse> {
-  let hopData: HopMeta | null = null
+  let parsed: (HopMeta & Partial<PayoutMeta>) | null = null
   if (hopMetaRaw) {
-    try { hopData = JSON.parse(hopMetaRaw) as HopMeta } catch { /* ignore — fall through to COMPLETED */ }
+    try { parsed = JSON.parse(hopMetaRaw) as HopMeta & Partial<PayoutMeta> } catch { /* ignore — fall through to COMPLETED */ }
   }
+
+  // The bridged funds landed in the user's own wallet on the destination chain and
+  // the recipient still has to be paid out of it. Check rather than wait: this route
+  // is polled, so a mint that has not shown up in the balance yet is simply picked
+  // up on the next tick instead of holding the request open.
+  if (parsed?.payout) {
+    const payout    = parsed as unknown as PayoutMeta
+    const requested = parseFloat(payout.amount)
+    try {
+      const bals      = await getWalletBalances(payout.walletId)
+      const available = parseFloat(payout.token === 'EURC' ? bals.eurc : bals.usdc)
+      if (available < requested * 0.99) {
+        return NextResponse.json({ status: 'PROCESSING' })
+      }
+
+      const result = await sendUsdcPayment({
+        fromWalletId: payout.walletId,
+        toAddress:    payout.to,
+        amount:       Math.min(requested, available).toFixed(6),
+        token:        payout.token,
+      })
+      await db.payment.update({
+        where: { id },
+        data:  { status: 'COMPLETED', txHash: result.txHash ?? mintTxHash, hopMeta: null, errorMessage: null },
+      })
+      return NextResponse.json({ status: 'COMPLETED', txHash: result.txHash ?? mintTxHash })
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Payout failed'
+      console.error(`[payments/${id}/mint] payout error:`, message)
+      // Stay PROCESSING. The money is in the user's own wallet and the send is
+      // replayable; marking this FAILED would strand it with nothing retrying.
+      await db.payment.update({ where: { id }, data: { errorMessage: message } }).catch(() => {})
+      return NextResponse.json({ status: 'PROCESSING', error: message })
+    }
+  }
+
+  const hopData = parsed
 
   if (hopData?.hop === 1) {
     try {

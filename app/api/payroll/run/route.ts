@@ -57,8 +57,20 @@ export async function POST(req: Request) {
   const totalUsdcAmount = usdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalEurcAmount = eurcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalAmount   = totalUsdcAmount + totalEurcAmount
-  const platformFee   = calcFee(totalUsdcAmount)
-  const totalWithFee  = totalUsdcAmount + platformFee
+  // The fee is per cross-chain payout, not per run: a payroll that bridges to six
+  // chains costs six times what one does. Employees paid on the hub are a local
+  // send and carry nothing. Each payout takes its own minimum, so ten small
+  // cross-chain salaries are ten minimums rather than one.
+  const isCrossChainEmp = (e: { preferredChain: string | null }) =>
+    (e.preferredChain ?? HUB_CHAIN) !== HUB_CHAIN
+
+  const usdcFee = usdcEmps.filter(isCrossChainEmp)
+    .reduce((sum, e) => sum + calcFee(parseFloat(e.salary)), 0)
+  const eurcFee = eurcEmps.filter(isCrossChainEmp)
+    .reduce((sum, e) => sum + calcFee(parseFloat(e.salary)), 0)
+
+  const platformFee   = usdcFee
+  const totalWithFee  = totalUsdcAmount + usdcFee
 
   // Build chain wallet ID map
   const chainWalletIds: Partial<Record<CctpSourceChain, string>> = {}
@@ -116,7 +128,9 @@ export async function POST(req: Request) {
         }),
     )).reduce((s, v) => s + v, 0)
 
-    let left = hubEurc
+    // Reserve the EURC fee before budgeting salaries, or the last employee is paid
+    // and the fee transfer then fails on an empty hub.
+    let left = hubEurc - eurcFee
     for (const e of eurcEmps) {
       const need = parseFloat(e.salary)
       if (left >= need) { left -= need; continue }
@@ -279,17 +293,23 @@ export async function POST(req: Request) {
       : failed === 0 ? 'COMPLETED' : completed === 0 ? 'FAILED' : 'PARTIAL'
     await db.payrollRun.update({ where: { id: run.id }, data: { status: finalStatus } })
 
-    // Collect platform fee (best-effort — don't fail the run if fee transfer fails)
-    // Fire even for async payrolls — burns are already submitted so the cost is real
+    // Collect platform fees (best-effort — don't fail the run if a transfer fails).
+    // Fire even for async payrolls: the burns are already submitted, so the cost is
+    // real whether or not the mints have landed. USDC and EURC are charged
+    // separately because a euro payroll cannot be billed out of a dollar balance.
     if (completed > 0 || asyncPending > 0) {
-      try {
-        await sendUsdcPayment({
-          fromWalletId: hubWalletId!,
-          toAddress:    FEE_RECIPIENT,
-          amount:       platformFee.toFixed(6),
-        })
-      } catch (feeErr) {
-        console.error('[payroll] fee transfer failed:', feeErr)
+      for (const [token, fee] of [['USDC', usdcFee], ['EURC', eurcFee]] as const) {
+        if (fee <= 0) continue
+        try {
+          await sendUsdcPayment({
+            fromWalletId: hubWalletId!,
+            toAddress:    FEE_RECIPIENT,
+            amount:       fee.toFixed(6),
+            token,
+          })
+        } catch (feeErr) {
+          console.error(`[payroll] ${token} fee transfer failed:`, feeErr)
+        }
       }
     }
 

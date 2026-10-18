@@ -50,6 +50,7 @@ export default function LandingPage() {
           <nav className="hidden items-center gap-8 text-sm font-medium md:flex" style={{ color: '#888' }}>
             <a href="#features"  className="transition-colors hover:text-white">Features</a>
             <a href="#developer" className="transition-colors hover:text-white">Developers</a>
+            <a href="#pricing"   className="transition-colors hover:text-white">Pricing</a>
             <a href="#use-cases" className="transition-colors hover:text-white">Use Cases</a>
             <Link href="/docs"   className="transition-colors hover:text-white">Docs</Link>
             <a href="#socials"   className="transition-colors hover:text-white">Socials</a>
@@ -261,6 +262,80 @@ export default function LandingPage() {
               )}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── Pricing ────────────────────────────────────────────────────────── */}
+      <section id="pricing" className="px-6 py-24" style={{ background: 'rgba(255,255,255,0.015)' }}>
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-14 text-center">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#2aabab' }}>Pricing</div>
+            <h2 className="text-3xl font-bold text-white">What it costs</h2>
+            <p className="mt-3 text-sm" style={{ color: '#555' }}>Gas is always on us. You only pay when value crosses a network.</p>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            {[
+              {
+                label: 'Gas fees',
+                price: 'Free',
+                note:  'Every transaction, every network. You never hold a native token.',
+                good:  true,
+              },
+              {
+                label: 'Deposits',
+                price: 'Free',
+                note:  'From any supported network except Ethereum.',
+                good:  true,
+              },
+              {
+                label: 'Transfers on Arc',
+                price: 'Free',
+                note:  'Paying someone on Arc is a direct transfer, so there is nothing to charge for.',
+                good:  true,
+              },
+              {
+                label: 'Transfers to a non-Arc network',
+                price: '0.01%',
+                note:  'Platform fee, minimum $0.01 per transfer. A $500 payment costs 5 cents.',
+              },
+              {
+                label: 'Payroll',
+                price: '0.01% per payout',
+                note:  'Charged per employee paid on a non-Arc network, minimum $0.01 each. Employees paid on Arc are free.',
+              },
+              {
+                label: 'Ethereum deposits',
+                price: '$6 flat',
+                note:  '$20 minimum. Ethereum gas costs the same whatever you send, so smaller amounts are cheaper on another network.',
+                warn:  true,
+              },
+            ].map((row, i) => (
+              <div
+                key={row.label}
+                className="flex flex-col gap-1 px-6 py-5 sm:flex-row sm:items-baseline sm:gap-6"
+                style={{
+                  background:  i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                  borderTop:   i === 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                <div className="w-full sm:w-64 shrink-0 text-sm font-semibold text-white">{row.label}</div>
+                <div
+                  className="w-full sm:w-40 shrink-0 text-sm font-bold"
+                  style={{ color: row.good ? '#34d399' : row.warn ? '#fbbf24' : '#2aabab' }}
+                >
+                  {row.price}
+                </div>
+                <div className="min-w-0 text-sm leading-relaxed" style={{ color: '#666' }}>{row.note}</div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-5 text-xs leading-relaxed" style={{ color: '#555' }}>
+            Circle&rsquo;s cross-chain protocol takes a small fee of its own on transfers between
+            networks, deducted from the amount sent. It is typically a fraction of a cent and is
+            shown before you confirm.
+          </p>
         </div>
       </section>
 

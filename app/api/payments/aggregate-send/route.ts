@@ -7,6 +7,7 @@ import { logPaymentOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
+import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 import { z } from 'zod'
 
 export const maxDuration = 300
@@ -49,13 +50,22 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch live balances and compute plan
+  // Only a payout that leaves the hub is a cross-chain transfer; paying someone on
+  // the hub itself is a local send and carries no fee. The plan has to aggregate the
+  // fee as well as the amount, or the hub comes up short when we collect it.
+  const isCrossChain = destChain !== HUB_CHAIN
+  const platformFee  = isCrossChain ? calcFee(targetAmount) : 0
+
   const balances    = await getAllChainBalances(wallet.circleWalletId, chainWalletIds)
   const numericBals = Object.fromEntries(Object.entries(balances).map(([k, v]) => [k, parseFloat(v)]))
-  const plan        = computeAggregatePlan(numericBals, targetAmount, HUB_CHAIN)
+  const plan        = computeAggregatePlan(numericBals, targetAmount + platformFee, HUB_CHAIN)
 
   if (!plan.feasible) {
+    const needed = platformFee > 0
+      ? `$${amount} + $${platformFee.toFixed(2)} fee`
+      : `$${amount}`
     return NextResponse.json(
-      { error: `Insufficient total balance. Need $${amount} USDC across all chains.` },
+      { error: `Insufficient total balance. Need ${needed} USDC across all chains.` },
       { status: 400 },
     )
   }
@@ -174,6 +184,16 @@ export async function POST(req: NextRequest) {
       where: { id: payment.id },
       data:  { status: 'COMPLETED', txHash },
     })
+
+    // Collected after the recipient is paid, and never allowed to fail the payment —
+    // the transfer already happened, so a fee we could not take is our problem.
+    if (platformFee > 0) {
+      sendUsdcPayment({
+        fromWalletId: hubWalletId!,
+        toAddress:    FEE_RECIPIENT,
+        amount:       platformFee.toFixed(6),
+      }).catch((e) => console.error('[aggregate-send] fee collection failed:', e))
+    }
 
     logPaymentOnChain(wallet.circleWalletId, recipientAddress, amount, label ?? '')
 

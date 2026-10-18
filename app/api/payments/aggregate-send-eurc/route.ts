@@ -6,6 +6,7 @@ import { cctpBurn, cctpMint } from '@/lib/cctp'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
 import { EURC_CCTP_CHAINS, HUB_CHAIN, SOURCE_CHAIN_META, type EurcCctpChain } from '@/lib/cctp-chains'
 import { computeEurcAggregatePlan } from '@/lib/aggregate'
+import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 import { z } from 'zod'
 
 export const maxDuration = 300
@@ -64,10 +65,19 @@ export async function POST(req: NextRequest) {
     }),
   )
 
-  const plan = computeEurcAggregatePlan(eurcBalances, targetAmount, destChain)
+  // Only a payout that leaves the hub is a cross-chain transfer; paying someone on
+  // the hub itself is a local send and carries no fee. The plan aggregates the fee
+  // too, or the hub comes up short when we collect it.
+  const isCrossChain = destChain !== HUB_CHAIN
+  const platformFee  = isCrossChain ? calcFee(targetAmount) : 0
+
+  const plan = computeEurcAggregatePlan(eurcBalances, targetAmount + platformFee, destChain)
   if (!plan.feasible) {
+    const needed = platformFee > 0
+      ? `${amount} + ${platformFee.toFixed(2)} fee`
+      : amount
     return NextResponse.json(
-      { error: `Insufficient EURC balance. Need ${amount} EURC across all chains.` },
+      { error: `Insufficient EURC balance. Need ${needed} EURC across all chains.` },
       { status: 400 },
     )
   }
@@ -114,6 +124,16 @@ export async function POST(req: NextRequest) {
           srcDomain:        burn.srcDomain,
           receiverWalletId: burn.receiverWalletId,
           destTransmitter:  burn.destTransmitter,
+          // Minting only gets the money to our own wallet on the destination chain.
+          // Record what is still owed so a recovery finishes the payment instead of
+          // stopping halfway and calling it complete.
+          hopMeta:          JSON.stringify({
+            payout:   true,
+            walletId: destWalletId,
+            to:       recipientAddress,
+            amount,
+            token:    'EURC',
+          }),
         },
       }).catch(() => { /* recording is best-effort; never fail the burn over it */ })
 
@@ -219,6 +239,20 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // Collected after the recipient is paid, and never allowed to fail the payment —
+    // the transfer already happened, so a fee we could not take is our problem.
+    if (platformFee > 0) {
+      const hubWalletId = walletIds[HUB_CHAIN as EurcCctpChain]
+      if (hubWalletId) {
+        sendUsdcPayment({
+          fromWalletId: hubWalletId,
+          toAddress:    FEE_RECIPIENT,
+          amount:       platformFee.toFixed(6),
+          token:        'EURC',
+        }).catch((e) => console.error('[aggregate-send-eurc] fee collection failed:', e))
+      }
+    }
+
     await db.payment.update({
       where: { id: payment.id },
       data:  { status: 'COMPLETED', txHash: directTxHash },
@@ -228,10 +262,23 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[aggregate-send-eurc]', message)
+
+    // A burn cannot be undone. Once funds have left the source chain the payment is
+    // in flight, not failed — the poller can still finish it, and marking it FAILED
+    // both lies to the user and stops anything retrying. Only a failure before any
+    // burn is a real failure.
+    const current  = await db.payment.findUnique({ where: { id: payment.id } }).catch(() => null)
+    const burned   = !!current?.burnTxHash
     await db.payment.update({
       where: { id: payment.id },
-      data:  { status: 'FAILED', errorMessage: message },
-    })
-    return NextResponse.json({ error: message }, { status: 500 })
+      data:  { status: burned ? 'PROCESSING' : 'FAILED', errorMessage: message },
+    }).catch(() => {})
+
+    return NextResponse.json(
+      burned
+        ? { error: message, paymentId: payment.id, pending: true }
+        : { error: message },
+      { status: burned ? 202 : 500 },
+    )
   }
 }

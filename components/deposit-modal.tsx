@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { X, Copy, CheckCheck, AlertTriangle, AtSign, ChevronDown, Clock } from 'lucide-react'
+import { X, Copy, CheckCheck, AlertTriangle, AtSign, ChevronDown, Clock, Info } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import ChainLogo from '@/components/chain-logo'
 import { HUB_CHAIN } from '@/lib/cctp-chains'
+import { SWEEP_FEE_ETHEREUM, SWEEP_MIN_ETHEREUM } from '@/lib/fees'
 import TokenLogo from '@/components/token-logo'
 
 const USDC_CHAINS = [
@@ -54,6 +55,8 @@ export default function DepositModal({
   // source chain's native token — our wallets are gas-sponsored and hold none, so
   // it waits for hard finality instead.
   const settlementEta = token === 'EURC' ? 'up to 20 minutes' : 'a few minutes'
+  const isEthereum    = chainId === 'ETH-SEPOLIA'
+  const symbol        = token === 'EURC' ? '€' : '$'
 
   useEffect(() => {
     fetch('/api/wallet/balance')
@@ -174,6 +177,21 @@ export default function DepositModal({
               <p className="text-xs text-gray-400 leading-relaxed">
                 Deposits on {selectedChain.label} take {settlementEta} to finish settling.
                 You can spend them as soon as they arrive.
+              </p>
+            </div>
+          )}
+
+          {/* Ethereum costs real money to consolidate — a few dollars of gas whatever
+              the amount — so it carries a minimum and a flat fee. Both have to be on
+              screen before someone sends, not discovered afterwards in their balance. */}
+          {isEthereum && (
+            <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-700/40 bg-amber-900/15 px-3 py-2.5">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <p className="text-xs leading-relaxed text-amber-300/90">
+                Ethereum deposits have a <span className="font-semibold">{symbol}{SWEEP_MIN_ETHEREUM} minimum</span> and a
+                flat <span className="font-semibold">{symbol}{SWEEP_FEE_ETHEREUM} network fee</span>, deducted once the funds
+                settle. Ethereum gas costs the same whatever you send, so smaller deposits
+                are cheaper on another network.
               </p>
             </div>
           )}

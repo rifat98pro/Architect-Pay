@@ -411,7 +411,11 @@ export async function cctpBurnFast({
   recipientAddress,
   amount,
   token = 'USDC',
-}: Parameters<typeof cctpBurn>[0]): Promise<{
+  // Background work can bid less for inclusion. Nobody is watching a sweep, so a
+  // slower, cheaper Ethereum burn is a straight saving — safe only because the
+  // caller records the submission before it confirms.
+  feeLevelOverride,
+}: Parameters<typeof cctpBurn>[0] & { feeLevelOverride?: 'LOW' | 'MEDIUM' | 'HIGH' }): Promise<{
   burnCircleTxId: string
   srcDomain:        number
   receiverWalletId: string
@@ -434,7 +438,7 @@ export async function cctpBurnFast({
     const { signedQuote, feeTotalAmount, finalityThreshold } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
     // Wait for approve to confirm — burn requires the allowance to be set on-chain
-    const eurcFeeLevel  = feeLevelFor(sourceChain)
+    const eurcFeeLevel  = feeLevelOverride ?? feeLevelFor(sourceChain)
     const eurcOwner     = await getChainWalletAddress(sourceWalletId)
     // Approve uint256.max so parallel EURC burns from one wallet don't race each
     // other, then wait for the allowance to be visible before the transfer — the
@@ -484,7 +488,7 @@ export async function cctpBurnFast({
     // We approve uint256.max, so after the first burn from this wallet the allowance
     // is already effectively infinite. Skipping the redundant approve halves both the
     // Circle API calls (rate limits) and the sponsored gas spend (paymaster daily cap).
-    const srcFeeLevel = feeLevelFor(sourceChain)
+    const srcFeeLevel = feeLevelOverride ?? feeLevelFor(sourceChain)
     const existing = await readAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2)
     if (existing === null || existing < UNLIMITED_ALLOWANCE) {
       const approveTxId = await executeContractCall({
