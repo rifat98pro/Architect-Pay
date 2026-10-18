@@ -395,8 +395,8 @@ export default function LandingPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { title: 'Circle CCTP',     href: 'https://developers.circle.com/stablecoins/cctp-getting-started', tag: 'Docs'     },
-                  { title: 'Arc',             href: 'https://developers.circle.com/arc',                              tag: 'Docs'     },
+                  { title: 'Circle CCTP',     href: 'https://developers.circle.com/cctp', tag: 'Docs'     },
+                  { title: 'Arc',             href: 'https://docs.arc.io',                              tag: 'Docs'     },
                   { title: 'ArcScan',         href: 'https://explorer.arc.io',                                        tag: 'Explorer' },
                   { title: 'Circle Docs',     href: 'https://developers.circle.com',                                  tag: 'Docs'     },
                 ].map((doc) => (
