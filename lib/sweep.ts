@@ -12,9 +12,14 @@ import { EURC_CCTP_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-ch
 // planner can still burn from any chain — so this is allowed to be slow, skip work,
 // and retry later.
 
-// Below this a sweep isn't worth an on-chain round trip. Dust still counts toward
-// the displayed balance and stays spendable where it sits.
-const SWEEP_MIN = parseFloat(process.env.SWEEP_MIN_AMOUNT ?? '0.05')
+// Every deposit is swept, because the hub is where the money is spent from —
+// anything left behind is money the user can see and not use. Only true dust is
+// skipped: below a cent a burn rounds to zero and the chain rejects it.
+//
+// This is deliberately not a gas-based threshold. Sponsoring an Ethereum burn costs
+// more than a small deposit is worth, but stranding that deposit costs the user
+// more than the gas costs us.
+const SWEEP_MIN = parseFloat(process.env.SWEEP_MIN_AMOUNT ?? '0.01')
 
 type WalletWithChains = {
   id:             string

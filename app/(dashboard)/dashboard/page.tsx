@@ -17,6 +17,8 @@ interface WalletData {
   eurcBalance:       string
   eurcChainBalances: Record<string, string>
   chainBalances:     Record<string, string>
+  inFlightUsdc?:     string
+  inFlightEurc?:     string
 }
 
 
@@ -84,15 +86,21 @@ export default function DashboardPage() {
   const sumOf = (bals: Record<string, string> | undefined) =>
     Object.values(bals ?? {}).reduce((sum, b) => sum + parseFloat(b || '0'), 0)
 
-  const totalUsdc = sumOf(wallet?.chainBalances).toFixed(2)
-  const totalEurc = parseFloat(wallet?.eurcBalance ?? '0').toFixed(2)
+  // Money mid-sweep has left its source chain and not yet reached the hub, so it is
+  // in no chain balance. Add it back, or the total visibly drops for the ~15 minutes
+  // an EURC consolidation takes.
+  const inFlightUsdc = parseFloat(wallet?.inFlightUsdc ?? '0')
+  const inFlightEurc = parseFloat(wallet?.inFlightEurc ?? '0')
+
+  const totalUsdc = (sumOf(wallet?.chainBalances) + inFlightUsdc).toFixed(2)
+  const totalEurc = (parseFloat(wallet?.eurcBalance ?? '0') + inFlightEurc).toFixed(2)
 
   // Deposits are spendable the moment they arrive, but swap and payroll draw on the
-  // hub, which the sweep tops up every few minutes. Naming the amount still in
-  // transit is the difference between a balance that looks wrong and one that
-  // explains itself — same reason a bank shows pending alongside available.
-  const settlingUsdc = sumOf(wallet?.chainBalances)     - parseFloat(wallet?.chainBalances?.[HUB_CHAIN]     ?? '0')
-  const settlingEurc = sumOf(wallet?.eurcChainBalances) - parseFloat(wallet?.eurcChainBalances?.[HUB_CHAIN] ?? '0')
+  // hub. Naming the amount still in transit is the difference between a balance that
+  // looks wrong and one that explains itself — the same reason a bank shows pending
+  // alongside available.
+  const settlingUsdc = sumOf(wallet?.chainBalances)     - parseFloat(wallet?.chainBalances?.[HUB_CHAIN]     ?? '0') + inFlightUsdc
+  const settlingEurc = sumOf(wallet?.eurcChainBalances) - parseFloat(wallet?.eurcChainBalances?.[HUB_CHAIN] ?? '0') + inFlightEurc
 
   return (
     <div className="max-w-3xl space-y-6">

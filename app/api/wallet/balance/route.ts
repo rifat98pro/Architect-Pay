@@ -81,11 +81,27 @@ export async function GET() {
     .reduce((sum, b) => sum + parseFloat(b || '0'), 0)
     .toFixed(6)
 
+  // A sweep's burn leaves the source chain before its mint reaches the hub, so for
+  // that window the money is on no chain at all and summing balances would show the
+  // user less than they own. Report it separately: the dashboard adds it back and
+  // labels it as settling, while anything asking what is spendable right now
+  // (payments, payroll) keeps using the chain balances alone.
+  const inFlight = await db.sweep.findMany({
+    where:  { userId: user.id, status: 'BURNED' },
+    select: { token: true, amount: true },
+  })
+  const sumInFlight = (token: string) => inFlight
+    .filter((s) => s.token === token)
+    .reduce((sum, s) => sum + parseFloat(s.amount || '0'), 0)
+    .toFixed(6)
+
   return NextResponse.json({
     address:          wallet.walletAddress,
     balance:          balances['ARC-TESTNET'] ?? '0',
     eurcBalance,
     eurcChainBalances,
     chainBalances:    balances,
+    inFlightUsdc:     sumInFlight('USDC'),
+    inFlightEurc:     sumInFlight('EURC'),
   })
 }
