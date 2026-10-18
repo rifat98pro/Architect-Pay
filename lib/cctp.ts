@@ -69,6 +69,12 @@ const APPROVE_ABI = {
 // multiple concurrent depositForBurn calls all succeed from the same shared allowance.
 const MAX_UINT256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
+// A previous exact-amount approve can leave an allowance that covers the amount we
+// pass but not what the contract actually pulls (CCTPx takes a cut on top), which
+// reverts with "transfer amount exceeds allowance". Only treat an allowance as good
+// enough when it is effectively unlimited; otherwise re-approve to uint256.max.
+const UNLIMITED_ALLOWANCE = MAX_UINT256 / BigInt(2)
+
 // USDC: CCTP V2 7-arg depositForBurn (TokenMessengerV2)
 const DEPOSIT_FOR_BURN_ABI = {
   type:            'function' as const,
@@ -275,7 +281,7 @@ export async function cctpBurn({
     // other, then wait for the allowance to be visible before the transfer — the
     // bundler simulates against chain state that can lag a confirmed approve.
     const existingEurc  = await readAllowance(srcMeta.rpcUrl, eurcAddress, eurcOwner, tokenManager)
-    if (existingEurc === null || existingEurc < amountMicro) {
+    if (existingEurc === null || existingEurc < UNLIMITED_ALLOWANCE) {
       const approveTxId = await executeContractCall({
         walletId:        sourceWalletId,
         contractAddress: eurcAddress,
@@ -321,7 +327,7 @@ export async function cctpBurn({
     // Skip the approve when the wallet already has a sufficient (uint256.max) allowance.
     const srcFeeLevel = feeLevelFor(sourceChain)
     const existing = await readAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2)
-    if (existing === null || existing < totalToApprove) {
+    if (existing === null || existing < UNLIMITED_ALLOWANCE) {
       const approveTxId = await executeContractCall({
         walletId:        sourceWalletId,
         contractAddress: burnToken,
@@ -388,7 +394,7 @@ export async function cctpBurnFast({
     // other, then wait for the allowance to be visible before the transfer — the
     // bundler simulates against chain state that can lag a confirmed approve.
     const existingEurc  = await readAllowance(srcMeta.rpcUrl, eurcAddress, eurcOwner, tokenManager)
-    if (existingEurc === null || existingEurc < amountMicro) {
+    if (existingEurc === null || existingEurc < UNLIMITED_ALLOWANCE) {
       const approveTxId = await executeContractCall({
         walletId:        sourceWalletId,
         contractAddress: eurcAddress,
@@ -433,7 +439,7 @@ export async function cctpBurnFast({
     // Circle API calls (rate limits) and the sponsored gas spend (paymaster daily cap).
     const srcFeeLevel = feeLevelFor(sourceChain)
     const existing = await readAllowance(srcMeta.rpcUrl, burnToken, walletAddress, srcMeta.tokenMessengerV2)
-    if (existing === null || existing < totalToApprove) {
+    if (existing === null || existing < UNLIMITED_ALLOWANCE) {
       const approveTxId = await executeContractCall({
         walletId:        sourceWalletId,
         contractAddress: burnToken,
