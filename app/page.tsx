@@ -376,10 +376,8 @@ export default function LandingPage() {
                   {[
                     'Next.js 14 App Router + TypeScript',
                     'Circle Developer-Controlled Wallets SDK',
-                    'Circle Onramp Kit',
-                    'Circle Unified Balance Kit',
+                    'Arc App Kits',
                     'CCTPx (EURC cross-chain)',
-                    'Circle Swap Kit',
                     'CCTP (viem encodeFunctionData)',
                     'Prisma + Neon PostgreSQL',
                     'NextAuth.js sessions',
@@ -396,9 +394,10 @@ export default function LandingPage() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { title: 'Circle CCTP',     href: 'https://developers.circle.com/cctp', tag: 'Docs'     },
-                  { title: 'Arc',             href: 'https://docs.arc.io',                              tag: 'Docs'     },
-                  { title: 'ArcScan',         href: 'https://explorer.arc.io',                                        tag: 'Explorer' },
-                  { title: 'Circle Docs',     href: 'https://developers.circle.com',                                  tag: 'Docs'     },
+                  { title: 'Arc',             href: 'https://docs.arc.io',                tag: 'Docs'     },
+                  { title: 'Arc App Kits',    href: 'https://docs.arc.io/app-kit',        tag: 'Docs'     },
+                  { title: 'ArcScan',         href: 'https://explorer.arc.io',            tag: 'Explorer' },
+                  { title: 'Circle Docs',     href: 'https://developers.circle.com',      tag: 'Docs'     },
                 ].map((doc) => (
                   <a
                     key={doc.title}
