@@ -305,9 +305,9 @@ export default function LandingPage() {
                 note:  'Charged per employee paid on a non-Arc network, minimum $0.01 each. Employees paid on Arc are free.',
               },
               {
-                label: 'Ethereum deposits',
-                price: '$6 flat',
-                note:  '$20 minimum. Ethereum gas costs the same whatever you send, so smaller amounts are cheaper on another network.',
+                label: 'Anything touching Ethereum',
+                price: '$6 per leg',
+                note:  'Deposits ($20 minimum), payments to Ethereum, and payroll for employees on Ethereum. Ethereum network costs the same whatever you send, so other networks are dramatically cheaper.',
                 warn:  true,
               },
             ].map((row, i) => (

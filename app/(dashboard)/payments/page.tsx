@@ -79,6 +79,11 @@ export default function PaymentsPage() {
 
   const [planLoading, setPlanLoading]   = useState(false)
   const [planFeasible, setPlanFeasible] = useState(true)
+  // Quoted by the plan endpoint, never computed here: the Ethereum surcharge depends
+  // on env config and on whether the plan pulls from Ethereum, and a confirmation
+  // screen that understates the fee is worse than showing none.
+  const [quotedFee, setQuotedFee]       = useState('0')
+  const [ethFee, setEthFee]             = useState('0')
 
   const [lookupState, setLookupState]         = useState<LookupState>('idle')
   const [resolvedAddress, setResolvedAddress] = useState('')
@@ -157,6 +162,8 @@ export default function PaymentsPage() {
       const res  = await fetch(url)
       const data = await res.json()
       setPlanFeasible(data.feasible ?? false)
+      setQuotedFee(data.quotedFee ?? '0')
+      setEthFee(data.ethFee ?? '0')
     } finally { setPlanLoading(false) }
   }, [])
 
@@ -244,7 +251,7 @@ export default function PaymentsPage() {
 
       // Clear form fields first — success state is set after so it survives the clear
       clearPayForm(); setResolvedAddress(''); setResolvedName('')
-      setLookupState('idle'); setPlanFeasible(true)
+      setLookupState('idle'); setPlanFeasible(true); setQuotedFee('0'); setEthFee('0')
 
       if (data.pending && data.paymentId) {
         // Cross-chain: burn done, minting in progress — poll until complete (globally, survives navigation)
@@ -543,17 +550,27 @@ export default function PaymentsPage() {
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-gray-500 shrink-0">Route</span>
                 <span className="flex items-center justify-end gap-1 text-xs text-gray-300 flex-wrap">
-                  All Chains → <ChainLogo chain={destChain} size={13} />{selectedDestChain.label}
+                  to <ChainLogo chain={destChain} size={13} />{selectedDestChain.label}
                 </span>
               </div>
 
               {/* Fee */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Platform fee (0.01%)</span>
+                <span className="text-xs text-gray-500">Fee</span>
                 <span className="text-xs text-amber-400">
-                  ~{token === 'EURC' ? '' : '$'}{(parseFloat(amount || '0') * 0.0001).toFixed(4)} {token}
+                  {token === 'EURC' ? '' : '$'}{parseFloat(quotedFee).toFixed(2)} {token}
                 </span>
               </div>
+
+              {parseFloat(ethFee) > 0 && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-800/40 bg-amber-900/10 px-2.5 py-2">
+                  <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-amber-400" />
+                  <span className="text-[11px] leading-relaxed text-amber-300/90">
+                    Includes {token === 'EURC' ? '' : '$'}{parseFloat(ethFee).toFixed(2)} for Ethereum network costs.
+                    Ethereum charges the same whatever you send — another network is far cheaper.
+                  </span>
+                </div>
+              )}
 
               {/* Label */}
               {label && (

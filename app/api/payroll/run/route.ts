@@ -6,7 +6,7 @@ import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer, cctpBurnFast } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, EURC_CCTP_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
-import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
+import { calcFee, ethereumSurcharge, FEE_RECIPIENT } from '@/lib/fees'
 
 export const maxDuration = 300
 
@@ -64,10 +64,13 @@ export async function POST(req: Request) {
   const isCrossChainEmp = (e: { preferredChain: string | null }) =>
     (e.preferredChain ?? HUB_CHAIN) !== HUB_CHAIN
 
-  const usdcFee = usdcEmps.filter(isCrossChainEmp)
-    .reduce((sum, e) => sum + calcFee(parseFloat(e.salary)), 0)
-  const eurcFee = eurcEmps.filter(isCrossChainEmp)
-    .reduce((sum, e) => sum + calcFee(parseFloat(e.salary)), 0)
+  // An employee on Ethereum also costs a flat surcharge: their payout is an
+  // Ethereum mint, which the percentage fee cannot cover at any realistic salary.
+  const feeForEmp = (e: { salary: string; preferredChain: string | null }) =>
+    calcFee(parseFloat(e.salary)) + ethereumSurcharge(e.preferredChain)
+
+  const usdcFee = usdcEmps.filter(isCrossChainEmp).reduce((sum, e) => sum + feeForEmp(e), 0)
+  const eurcFee = eurcEmps.filter(isCrossChainEmp).reduce((sum, e) => sum + feeForEmp(e), 0)
 
   const platformFee   = usdcFee
   const totalWithFee  = totalUsdcAmount + usdcFee

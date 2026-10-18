@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 import { getAllChainBalances } from '@/lib/circle'
 import { CCTP_SOURCE_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
+import { calcFee, ethereumSurcharge } from '@/lib/fees'
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest()
@@ -33,5 +34,23 @@ export async function GET(req: NextRequest) {
   // user's final destination chain is — so the preview targets the hub too.
   const result      = computeAggregatePlan(numericBals, amount, HUB_CHAIN)
 
-  return NextResponse.json(result)
+  // Quote the fee here rather than letting the client recompute it. The Ethereum
+  // surcharge depends on env config and on whether the plan actually pulls from
+  // Ethereum — neither of which the browser can know, and a confirmation screen
+  // that understates the fee is worse than no figure at all.
+  const destChain    = req.nextUrl.searchParams.get('dest') ?? HUB_CHAIN
+  const isCrossChain = destChain !== HUB_CHAIN
+  const percentFee   = isCrossChain ? calcFee(amount) : 0
+  const pullsFromEth = result.plan.some((e) => e.chain === 'ETH-SEPOLIA' && e.isCctp)
+  const ethFee       = ethereumSurcharge(
+    destChain === 'ETH-SEPOLIA' ? 'ETH-SEPOLIA' : null,
+    pullsFromEth ? 'ETH-SEPOLIA' : null,
+  )
+
+  return NextResponse.json({
+    ...result,
+    percentFee: percentFee.toFixed(6),
+    ethFee:     ethFee.toFixed(6),
+    quotedFee:  (percentFee + ethFee).toFixed(6),
+  })
 }
