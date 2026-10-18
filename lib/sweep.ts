@@ -104,15 +104,30 @@ export async function finishSweep(sweepId: string, deadline: number): Promise<bo
   return false
 }
 
+// How long a payment or payroll entry can sit unfinished before the sweep stops
+// deferring to it. A row that has not moved in this long is stuck, not in flight,
+// and without a bound a single abandoned row would block consolidation forever.
+const STALE_AFTER_MS = 30 * 60 * 1000
+
 /** True when this user has money moving that a sweep could pull out from under. */
 async function hasWorkInFlight(userId: string): Promise<boolean> {
+  const since = new Date(Date.now() - STALE_AFTER_MS)
+
   const busyPayments = await db.payment.count({
-    where: { senderId: userId, status: { in: ['PENDING', 'PROCESSING', 'SENDING'] } },
+    where: {
+      senderId:  userId,
+      status:    { in: ['PENDING', 'PROCESSING', 'SENDING'] },
+      updatedAt: { gte: since },
+    },
   })
   if (busyPayments > 0) return true
 
   const busyPayroll = await db.payrollEntry.count({
-    where: { status: { in: ['PENDING', 'SENDING', 'PROCESSING'] }, payrollRun: { userId } },
+    where: {
+      status:     { in: ['PENDING', 'SENDING', 'PROCESSING'] },
+      updatedAt:  { gte: since },
+      payrollRun: { userId },
+    },
   })
   return busyPayroll > 0
 }
