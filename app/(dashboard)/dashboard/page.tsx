@@ -1,7 +1,7 @@
 'use client'
 
-import { HUB_CHAIN } from '@/lib/cctp-chains'
 import { useEffect, useState } from 'react'
+import { HUB_CHAIN } from '@/lib/cctp-chains'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
@@ -10,23 +10,6 @@ import DepositModal from '@/components/deposit-modal'
 import OnrampModal from '@/components/onramp-modal'
 import { useTheme } from '@/context/theme-context'
 import TokenLogo from '@/components/token-logo'
-import ChainLogo from '@/components/chain-logo'
-
-const CHAIN_LABEL: Record<string, string> = {
-  'ARC-TESTNET':  'Arc',
-  'ETH-SEPOLIA':  'Ethereum',
-  'BASE-SEPOLIA': 'Base',
-  'ARB-SEPOLIA':  'Arbitrum',
-  'MATIC-AMOY':   'Polygon',
-  'AVAX-FUJI':    'Avalanche',
-  'OP-SEPOLIA':   'Optimism',
-}
-
-const EURC_CHAIN_LABEL: Record<string, string> = {
-  'ARC-TESTNET':  'Arc',
-  'ETH-SEPOLIA':  'Ethereum',
-  'BASE-SEPOLIA': 'Base',
-}
 
 interface WalletData {
   address:           string
@@ -61,10 +44,24 @@ export default function DashboardPage() {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
 
+  // Opening the app is the trigger for consolidating any deposit that landed on
+  // another chain. Fire and forget — it takes a couple of minutes to settle and
+  // nothing here waits on it, so the dashboard renders at its normal speed.
+  function nudgeSweep(data: WalletData) {
+    const offHub =
+      Object.entries(data.chainBalances ?? {})
+        .filter(([c]) => c !== HUB_CHAIN)
+        .reduce((s, [, b]) => s + parseFloat(b || '0'), 0) +
+      Object.entries(data.eurcChainBalances ?? {})
+        .filter(([c]) => c !== HUB_CHAIN)
+        .reduce((s, [, b]) => s + parseFloat(b || '0'), 0)
+    if (offHub > 0.01) fetch('/api/wallet/sweep', { method: 'POST' }).catch(() => {})
+  }
+
   useEffect(() => {
     if (!user?.id) return
     fetch('/api/wallet/balance')
-      .then(async (r) => { const data = await r.json(); if (r.ok) setWallet(data) })
+      .then(async (r) => { const data = await r.json(); if (r.ok) { setWallet(data); nudgeSweep(data) } })
       .finally(() => setLoading(false))
   }, [user?.id])
 
@@ -72,7 +69,7 @@ export default function DashboardPage() {
     setRefreshing(true)
     const r    = await fetch('/api/wallet/balance')
     const data = await r.json()
-    if (r.ok) setWallet(data)
+    if (r.ok) { setWallet(data); nudgeSweep(data) }
     setRefreshing(false)
   }
 
@@ -84,10 +81,18 @@ export default function DashboardPage() {
     )
   }
 
-  const totalUsdc = Object.values(wallet?.chainBalances ?? {})
-    .reduce((sum, b) => sum + parseFloat(b || '0'), 0)
-    .toFixed(2)
+  const sumOf = (bals: Record<string, string> | undefined) =>
+    Object.values(bals ?? {}).reduce((sum, b) => sum + parseFloat(b || '0'), 0)
+
+  const totalUsdc = sumOf(wallet?.chainBalances).toFixed(2)
   const totalEurc = parseFloat(wallet?.eurcBalance ?? '0').toFixed(2)
+
+  // Deposits are spendable the moment they arrive, but swap and payroll draw on the
+  // hub, which the sweep tops up every few minutes. Naming the amount still in
+  // transit is the difference between a balance that looks wrong and one that
+  // explains itself — same reason a bank shows pending alongside available.
+  const settlingUsdc = sumOf(wallet?.chainBalances)     - parseFloat(wallet?.chainBalances?.[HUB_CHAIN]     ?? '0')
+  const settlingEurc = sumOf(wallet?.eurcChainBalances) - parseFloat(wallet?.eurcChainBalances?.[HUB_CHAIN] ?? '0')
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -96,7 +101,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="mt-0.5 text-sm text-gray-500">Your multi-chain wallet overview · <span className="text-brand-400 font-medium">Zero gas fees</span></p>
+          <p className="mt-0.5 text-sm text-gray-500">Your balance · <span className="text-brand-400 font-medium">Zero gas fees</span></p>
         </div>
         <div className="flex gap-2">
           <button
@@ -165,7 +170,9 @@ export default function DashboardPage() {
             ${formatUSDC(totalUsdc)}
             <span className="ml-2 text-base font-normal text-brand-400">USDC</span>
           </div>
-          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Unified USDC balance</div>
+          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>
+            {settlingUsdc > 0.01 ? `$${settlingUsdc.toFixed(2)} still settling` : 'Available now'}
+          </div>
         </div>
 
         {/* EURC total */}
@@ -190,77 +197,11 @@ export default function DashboardPage() {
             €{parseFloat(totalEurc).toFixed(2)}
             <span className="ml-2 text-base font-normal text-blue-400">EURC</span>
           </div>
-          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>Unified EURC balance</div>
+          <div className="mt-1 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>
+            {settlingEurc > 0.01 ? `€${settlingEurc.toFixed(2)} still settling` : 'Available now'}
+          </div>
         </div>
       </div>
-
-      {/* USDC per-chain */}
-      <div>
-        <div className="mb-3 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">USDC by All Supported Chains</span>
-          <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }} />
-        </div>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {Object.entries(wallet?.chainBalances ?? {}).map(([chain, bal]) => (
-            <div
-              key={chain}
-              className="flex items-center justify-between rounded-xl border px-4 py-3.5 transition"
-              style={{
-                background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
-                borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)',
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <ChainLogo chain={chain} size={28} />
-                <div>
-                  <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#0b1e47' : '#c5d3ed' }}>{CHAIN_LABEL[chain] ?? chain}</div>
-                  {chain === HUB_CHAIN && (
-                    <div className="text-xs text-brand-500">Primary</div>
-                  )}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>${formatUSDC(bal)}</div>
-                <div className="flex items-center justify-end gap-1 text-xs text-gray-500">
-                  <TokenLogo token="USDC" size={12} />USDC
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* EURC per-chain */}
-      <div>
-        <div className="mb-3 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-widest text-blue-500/70">EURC by All Supported Chains</span>
-          <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }} />
-        </div>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-          {Object.entries(wallet?.eurcChainBalances ?? {}).map(([chain, bal]) => (
-            <div
-              key={chain}
-              className="flex items-center justify-between rounded-xl border px-4 py-3.5"
-              style={{
-                background:  theme === 'light' ? '#eef4ff' : 'rgba(30,58,138,0.12)',
-                borderColor: theme === 'light' ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)',
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <ChainLogo chain={chain} size={28} />
-                <div className="text-sm font-medium" style={{ color: theme === 'light' ? '#1e3a8a' : '#93c5fd' }}>{EURC_CHAIN_LABEL[chain] ?? chain}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-semibold" style={{ color: theme === 'light' ? '#1e3a8a' : '#ffffff' }}>€{parseFloat(bal).toFixed(2)}</div>
-                <div className="flex items-center justify-end gap-1 text-xs text-blue-500">
-                  <TokenLogo token="EURC" size={12} />EURC
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
 
       {depositOpen && (
         <DepositModal onClose={() => setDepositOpen(false)} onSuccess={refresh} />

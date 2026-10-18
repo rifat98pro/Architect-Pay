@@ -1,79 +1,23 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { HUB_CHAIN } from '@/lib/cctp-chains'
 import { useFeatureState } from '@/lib/hooks/use-feature-state'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { ArrowDown, ChevronDown, Loader2, CheckCircle2, Clock, RefreshCw, Settings } from 'lucide-react'
+import { ArrowDown, Loader2, CheckCircle2, Clock, RefreshCw, Settings } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
-import ChainLogo from '@/components/chain-logo'
 
 type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
 type Chain = 'ARC-TESTNET' | 'ETH-SEPOLIA' | 'BASE-SEPOLIA'
 
-const CHAINS: { id: Chain; label: string; short: string }[] = [
-  { id: 'ARC-TESTNET',  label: 'Arc',      short: 'Arc'      },
-  { id: 'ETH-SEPOLIA',  label: 'Ethereum', short: 'Ethereum' },
-  { id: 'BASE-SEPOLIA', label: 'Base',     short: 'Base'     },
-]
-
 type BalMap = Record<Chain, { usdc: string; eurc: string }>
 
-function ChainDropdown({
-  value, onChange, tokenLabel,
-}: {
-  value: Chain
-  onChange: (c: Chain) => void
-  tokenLabel: string
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handle)
-    return () => document.removeEventListener('mousedown', handle)
-  }, [])
-
-  const selected = CHAINS.find(c => c.id === value)!
-
+function TokenPill({ token }: { token: 'USDC' | 'EURC' }) {
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-xl bg-gray-800/80 px-3 py-2.5 hover:bg-gray-700/80 transition border border-gray-700/50"
-      >
-        <TokenLogo token={tokenLabel as 'USDC' | 'EURC'} size={28} />
-        <div className="text-left">
-          <div className="text-sm font-semibold text-white leading-none">{tokenLabel}</div>
-          <div className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400">
-            <ChainLogo chain={value} size={10} />{selected.short}
-          </div>
-        </div>
-        <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-gray-700 bg-gray-900 shadow-xl overflow-hidden">
-          {CHAINS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => { onChange(c.id); setOpen(false) }}
-              className={`flex w-full items-center gap-2.5 px-4 py-3 text-sm transition ${
-                value === c.id ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <ChainLogo chain={c.id} size={18} />
-              <span className="flex-1">{c.label}</span>
-              {value === c.id && <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="flex items-center gap-2 rounded-xl border border-gray-700/50 bg-gray-800/80 px-3 py-2.5">
+      <TokenLogo token={token} size={28} />
+      <div className="text-sm font-semibold leading-none text-white">{token}</div>
     </div>
   )
 }
@@ -83,16 +27,26 @@ export default function SwapPage() {
   const { user, loading: authLoading } = useAuth()
 
   const [swapForm, setSwapForm, clearSwapAmount] = useFeatureState('swap-form', {
-    srcChain:  'BASE-SEPOLIA' as Chain,
-    destChain: 'BASE-SEPOLIA' as Chain,
     direction: 'eurc-to-usdc' as Direction,
     amount:    '',
+    // The result of a swap belongs with the form: leaving it in local state meant
+    // switching tabs mid-swap threw away the spinner and the outcome.
+    loading:   false,
+    pending:   false,
+    success:   false,
+    error:     '',
   })
-  const { srcChain, destChain, direction, amount } = swapForm
-  const setSrcChain  = (v: Chain)      => setSwapForm({ srcChain: v, amount: '' })
-  const setDestChain = (v: Chain)      => setSwapForm({ destChain: v })
+  const { direction, amount, loading, pending, success, error } = swapForm
+  // Swapping happens on the hub, where every balance settles. The user never picks
+  // a chain here — there is only one balance per token as far as the app is concerned.
+  const srcChain  = HUB_CHAIN as Chain
+  const destChain = HUB_CHAIN as Chain
   const setDirection = (v: Direction)  => setSwapForm({ direction: v, amount: '' })
   const setAmount    = (v: string)     => setSwapForm({ amount: v })
+  const setLoading   = (v: boolean)    => setSwapForm({ loading: v })
+  const setPending   = (v: boolean)    => setSwapForm({ pending: v })
+  const setSuccess   = (v: boolean)    => setSwapForm({ success: v })
+  const setError     = (v: string)     => setSwapForm({ error: v })
   const BAL_CACHE_TTL  = 30_000
   const RATE_CACHE_TTL = 60_000
 
@@ -111,10 +65,6 @@ export default function SwapPage() {
   const [eurcUsd,    setEurcUsd]    = useState<number | null>(() => swapCache.eurcUsd)
   const [rateLoading,setRateLoading]= useState(() => swapCache.rateFetchedAt === 0)
   const [balLoading, setBalLoading] = useState(() => swapCache.balFetchedAt === 0)
-  const [loading,    setLoading]    = useState(false)
-  const [pending,    setPending]    = useState(false)
-  const [success,    setSuccess]    = useState(false)
-  const [error,      setError]      = useState('')
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -286,11 +236,7 @@ export default function SwapPage() {
                 disabled={loading}
                 className="flex-1 bg-transparent text-3xl font-semibold text-white placeholder-gray-700 outline-none w-0 min-w-0"
               />
-              <ChainDropdown
-                value={srcChain}
-                onChange={(c) => { setSrcChain(c); setAmount(''); setError('') }}
-                tokenLabel={tokenIn}
-              />
+              <TokenPill token={tokenIn} />
             </div>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-xs text-gray-600">
@@ -331,11 +277,7 @@ export default function SwapPage() {
               <div className="flex-1 text-3xl font-semibold text-gray-400 w-0 min-w-0 truncate">
                 {amountNum > 0 ? `≈ ${amountOut.toFixed(4)}` : '0'}
               </div>
-              <ChainDropdown
-                value={destChain}
-                onChange={(c) => { setDestChain(c); setError('') }}
-                tokenLabel={tokenOut}
-              />
+              <TokenPill token={tokenOut} />
             </div>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-xs text-gray-600">
@@ -353,13 +295,9 @@ export default function SwapPage() {
           </div>
 
           {/* Fee info */}
-          <div className={`mt-2 flex items-center justify-between rounded-xl px-3 py-2 text-xs ${
-            srcChain !== destChain
-              ? 'border border-amber-900/30 bg-amber-900/10 text-amber-500/80'
-              : 'border border-green-900/20 bg-green-900/10 text-green-500/70'
-          }`}>
+          <div className="mt-2 flex items-center justify-between rounded-xl border border-green-900/20 bg-green-900/10 px-3 py-2 text-xs text-green-500/70">
             <span>Platform fee</span>
-            <span>{srcChain !== destChain ? '0.01% (cross-chain)' : 'Free — same chain'}</span>
+            <span>Free</span>
           </div>
 
           {/* Swap button */}

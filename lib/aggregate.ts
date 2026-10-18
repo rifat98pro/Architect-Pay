@@ -6,6 +6,8 @@ export interface AggregatePlanEntry {
   amount:  string
   fee:     string
   isCctp:  boolean
+  // Base↔Ethereum is relayed through Arc in two hops rather than burned direct.
+  viaHub?: boolean
 }
 
 export interface AggregatePlan {
@@ -107,23 +109,32 @@ export function computeEurcAggregatePlan(
     remaining -= use
   }
 
-  // Pull from other EURC chains via CCTPx. A route is only usable if one endpoint
-  // is Arc — CCTPx quotes a zero fee for those, but charges a native-token fee for
-  // Base↔Ethereum (~0.0001 ETH), and our Circle wallets hold no native balance
-  // because gas is sponsored, so crossChainTransfer would revert.
-  const arcInvolved = destChain === 'ARC-TESTNET'
+  // Pull from the other EURC chains via CCTPx. Every route to or from Arc is
+  // quoted at a zero fee, but Base↔Ethereum direct costs a native-token fee
+  // (~0.0001 ETH) that our gas-sponsored wallets can't pay — they hold no native
+  // balance, so crossChainTransfer would revert. Those legs go through Arc in two
+  // free hops instead, which is slower but keeps every chain's balance spendable.
+  const arcInvolved = destChain === HUB_CHAIN
   if (remaining > 0.001) {
     const others = [...EURC_CCTP_CHAINS]
-      .filter((c) => c !== destChain && (arcInvolved || c === 'ARC-TESTNET'))
+      .filter((c) => c !== destChain)
       .map((c) => ({ chain: c as string, bal: eurcBalances[c] ?? 0 }))
       .filter((x) => x.bal >= MIN_BURN)
-      .sort((a, b) => b.bal - a.bal)
+      // Prefer single-hop sources; only reach for a hub relay once they run out.
+      .sort((a, b) => {
+        const aHop = a.chain === HUB_CHAIN || arcInvolved ? 0 : 1
+        const bHop = b.chain === HUB_CHAIN || arcInvolved ? 0 : 1
+        return aHop !== bHop ? aHop - bHop : b.bal - a.bal
+      })
 
     for (const { chain, bal } of others) {
       if (remaining <= 0.001) break
-      const burnAmount = parseFloat(Math.min(spendable(bal), remaining).toFixed(6))
+      const viaHub = chain !== HUB_CHAIN && !arcInvolved
+      // A hub relay burns twice, so budget the fee twice before committing funds.
+      const usable = viaHub ? spendable(spendable(bal)) : spendable(bal)
+      const burnAmount = parseFloat(Math.min(usable, remaining).toFixed(6))
       if (burnAmount < MIN_BURN) continue
-      plan.push({ chain, label: CHAIN_LABEL[chain] ?? chain, amount: burnAmount.toFixed(6), fee: '0', isCctp: true })
+      plan.push({ chain, label: CHAIN_LABEL[chain] ?? chain, amount: burnAmount.toFixed(6), fee: '0', isCctp: true, viaHub })
       remaining -= burnAmount
     }
   }

@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { X, Copy, CheckCheck, AlertTriangle, AtSign, ChevronDown } from 'lucide-react'
+import { X, Copy, CheckCheck, AlertTriangle, AtSign, ChevronDown, Clock } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import ChainLogo from '@/components/chain-logo'
+import { HUB_CHAIN } from '@/lib/cctp-chains'
 import TokenLogo from '@/components/token-logo'
 
 const USDC_CHAINS = [
@@ -48,6 +49,11 @@ export default function DepositModal({
 
   const chains        = token === 'EURC' ? EURC_CHAINS : USDC_CHAINS
   const selectedChain = chains.find((c) => c.id === chainId) ?? chains[0]
+  // USDC consolidates over CCTP V2 fast finality, which needs no native token and
+  // lands in about a minute. EURC rides CCTPx, whose fast tier is charged in the
+  // source chain's native token — our wallets are gas-sponsored and hold none, so
+  // it waits for hard finality instead.
+  const settlementEta = token === 'EURC' ? 'up to 20 minutes' : 'a few minutes'
 
   useEffect(() => {
     fetch('/api/wallet/balance')
@@ -158,6 +164,19 @@ export default function DepositModal({
               </div>
             )}
           </div>
+
+          {/* Settlement notice — the only place the app admits chains exist. Funds
+              are spendable the moment they land, but they settle onto Arc in the
+              background so later payouts are instant and free. */}
+          {chainId !== HUB_CHAIN && (
+            <div className="mt-2 flex items-start gap-2 rounded-xl border border-gray-700/60 bg-gray-800/40 px-3 py-2.5">
+              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Deposits on {selectedChain.label} take {settlementEta} to finish settling.
+                You can spend them as soon as they arrive.
+              </p>
+            </div>
+          )}
 
           {/* Critical warning */}
           <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-700/40 bg-amber-900/20 px-3 py-2.5">

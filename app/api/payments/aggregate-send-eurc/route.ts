@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { getWalletBalances, sendUsdcPayment, getOrCreateChainWalletId, waitForTokenBalance } from '@/lib/circle'
 import { cctpBurn, cctpMint } from '@/lib/cctp'
 import { paymentLimiter, checkRateLimit } from '@/lib/ratelimit'
-import { EURC_CCTP_CHAINS, type EurcCctpChain } from '@/lib/cctp-chains'
+import { EURC_CCTP_CHAINS, HUB_CHAIN, SOURCE_CHAIN_META, type EurcCctpChain } from '@/lib/cctp-chains'
 import { computeEurcAggregatePlan } from '@/lib/aggregate'
 import { z } from 'zod'
 
@@ -90,67 +90,141 @@ export async function POST(req: NextRequest) {
     const cctpEntries = plan.plan.filter((e) => e.isCctp)
     const destWalletId = walletIds[destChain as EurcCctpChain]!
 
-    if (cctpEntries.length > 0) {
+    // Burn first and record the result before minting. CCTPx without a FORWARD
+    // request is a direct mint — nothing relays it — so if the mint leg is lost the
+    // burn must still be recoverable from the payment row.
+    async function bridgeLeg(
+      from: EurcCctpChain, fromWalletId: string, to: EurcCctpChain, toWalletId: string, legAmount: string,
+    ) {
+      const burn = await cctpBurn({
+        sourceChain:      from,
+        sourceWalletId:   fromWalletId,
+        destChain:        to,
+        destWalletId:     toWalletId,
+        arcWalletId:      wallet!.circleWalletId,
+        recipientAddress: wallet!.walletAddress, // CCTPx mints to the user's own wallet
+        amount:           legAmount,
+        token:            'EURC',
+      })
+
+      await db.payment.update({
+        where: { id: payment.id },
+        data:  {
+          burnTxHash:       burn.burnTxHash,
+          srcDomain:        burn.srcDomain,
+          receiverWalletId: burn.receiverWalletId,
+          destTransmitter:  burn.destTransmitter,
+        },
+      }).catch(() => { /* recording is best-effort; never fail the burn over it */ })
+
+      await cctpMint({ ...burn, destChain: to })
+    }
+
+    // Direct legs share no source wallet, so they can burn in parallel.
+    const directEntries = cctpEntries.filter((e) => !e.viaHub)
+    const hubEntries    = cctpEntries.filter((e) => e.viaHub)
+
+    if (directEntries.length > 0) {
       await Promise.all(
-        cctpEntries.map(async (entry) => {
+        directEntries.map(async (entry) => {
           const srcChain    = entry.chain as EurcCctpChain
           const srcWalletId = walletIds[srcChain]
           if (!srcWalletId) throw new Error(`No wallet for ${srcChain}`)
-
-          // Burn first and record the result before minting. CCTPx without a
-          // FORWARD request is a direct mint — nothing relays it — so if the mint
-          // leg is lost the burn must still be recoverable from the payment row.
-          const burn = await cctpBurn({
-            sourceChain:      srcChain,
-            sourceWalletId:   srcWalletId,
-            destChain:        destChain as EurcCctpChain,
-            destWalletId,
-            arcWalletId:      wallet.circleWalletId,
-            recipientAddress: wallet.walletAddress, // CCTPx mints to user's own dest wallet
-            amount:           entry.amount,
-            token:            'EURC',
-          })
-
-          await db.payment.update({
-            where: { id: payment.id },
-            data:  {
-              burnTxHash:       burn.burnTxHash,
-              srcDomain:        burn.srcDomain,
-              receiverWalletId: burn.receiverWalletId,
-              destTransmitter:  burn.destTransmitter,
-            },
-          }).catch(() => { /* recording is best-effort; never fail the burn over it */ })
-
-          await cctpMint({ ...burn, destChain: destChain as EurcCctpChain })
+          await bridgeLeg(srcChain, srcWalletId, destChain as EurcCctpChain, destWalletId, entry.amount)
         }),
       )
     }
 
-    // Step 2: Send from dest chain wallet to recipient. Wait for the bridged funds
-    // to land, tolerating only a fee-sized shortfall — paying less than requested
-    // while reporting success would hide a bridge that did not deliver.
-    const requested = parseFloat(amount)
-    const available = await waitForTokenBalance(destWalletId, amount, 'EURC')
-    if (available < requested * 0.99) {
-      throw new Error(
-        `Only ${available.toFixed(6)} EURC is available on the destination chain but ${requested.toFixed(6)} was requested. ` +
-        `Your funds are safe — retry once the bridged amount has settled.`,
-      )
+    // Step 2: Pay the recipient everything that reached the destination chain
+    // directly. Wait for the bridged funds to land, tolerating only a fee-sized
+    // shortfall — paying less than requested while reporting success would hide a
+    // bridge that did not deliver.
+    const hubTotal    = hubEntries.reduce((sum, e) => sum + parseFloat(e.amount), 0)
+    const directTotal = parseFloat((parseFloat(amount) - hubTotal).toFixed(6))
+    let   directTxHash: string | null = null
+
+    if (directTotal >= 0.000001) {
+      const available = await waitForTokenBalance(destWalletId, directTotal.toFixed(6), 'EURC')
+      if (available < directTotal * 0.99) {
+        throw new Error(
+          `Only ${available.toFixed(6)} EURC is available on the destination chain but ${directTotal.toFixed(6)} was requested. ` +
+          `Your funds are safe — retry once the bridged amount has settled.`,
+        )
+      }
+      const result = await sendUsdcPayment({
+        fromWalletId: destWalletId,
+        toAddress:    recipientAddress,
+        amount:       Math.min(directTotal, available).toFixed(6),
+        token:        'EURC',
+      })
+      directTxHash = result.txHash
     }
 
-    const result = await sendUsdcPayment({
-      fromWalletId: destWalletId,
-      toAddress:    recipientAddress,
-      amount:       Math.min(requested, available).toFixed(6),
-      token:        'EURC',
-    })
+    // Step 3: Hand any hub-relayed remainder to the polled two-hop relay. Standard
+    // finality off Ethereum or Base runs ~15 minutes — far past this function's
+    // timeout — so the burn is recorded with hopMeta and /api/payments/[id]/mint
+    // finishes it: mint on Arc, then burn Arc → destination straight to the
+    // recipient. Doing it inline would strand the funds when the request died.
+    if (hubEntries.length > 0) {
+      const hubWalletId = walletIds[HUB_CHAIN as EurcCctpChain]
+      if (!hubWalletId) throw new Error('No Arc wallet to relay through')
+      const dstMeta = SOURCE_CHAIN_META[destChain as EurcCctpChain]
+
+      // At most one leg can need a relay: of the three EURC chains one is the
+      // destination and one is Arc, leaving a single chain that reaches neither
+      // directly. Burn its whole share in one hop.
+      const relayAmount = hubTotal.toFixed(6)
+      const entry       = hubEntries[0]
+      const srcChain    = entry.chain as EurcCctpChain
+      const srcWalletId = walletIds[srcChain]
+      if (!srcWalletId) throw new Error(`No wallet for ${srcChain}`)
+
+      const hop1 = await cctpBurn({
+        sourceChain:      srcChain,
+        sourceWalletId:   srcWalletId,
+        destChain:        HUB_CHAIN as EurcCctpChain,
+        destWalletId:     hubWalletId,
+        arcWalletId:      wallet.circleWalletId,
+        recipientAddress: wallet.walletAddress, // hop 1 lands in the user's own Arc wallet
+        amount:           relayAmount,
+        token:            'EURC',
+      })
+
+      await db.payment.update({
+        where: { id: payment.id },
+        data:  {
+          burnTxHash:       hop1.burnTxHash,
+          srcDomain:        hop1.srcDomain,
+          receiverWalletId: hop1.receiverWalletId,
+          destTransmitter:  hop1.destTransmitter,
+          hopMeta:          JSON.stringify({
+            hop:                   1,
+            arcWalletId:           hubWalletId,
+            finalDestChain:        destChain,
+            finalDestWalletId:     destWalletId,
+            finalDestDomain:       dstMeta.cctpDomain,
+            finalDestTransmitter:  dstMeta.messageTransmitterV2,
+            finalRecipientAddress: recipientAddress,
+            amount:                relayAmount,
+            token:                 'EURC',
+          }),
+        },
+      })
+
+      return NextResponse.json({
+        success:   true,
+        paymentId: payment.id,
+        pending:   true,
+        txHash:    directTxHash,
+      })
+    }
 
     await db.payment.update({
       where: { id: payment.id },
-      data:  { status: 'COMPLETED', txHash: result.txHash },
+      data:  { status: 'COMPLETED', txHash: directTxHash },
     })
 
-    return NextResponse.json({ success: true, paymentId: payment.id, txHash: result.txHash })
+    return NextResponse.json({ success: true, paymentId: payment.id, txHash: directTxHash })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[aggregate-send-eurc]', message)

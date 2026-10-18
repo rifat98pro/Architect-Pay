@@ -240,3 +240,29 @@ model BugReport {
   steps       String?
   createdAt   DateTime @default(now())
 }
+
+// A background consolidation of one chain's balance onto the hub chain. Deposits
+// land wherever the sender chose; sweeping them to Arc makes every later payout
+// free and fast, because Arc is the only source CCTP quotes at zero bps outbound.
+// Rows persist because a burn whose mint never lands would otherwise be stranded.
+model Sweep {
+  id               String   @id @default(cuid())
+  userId           String
+  chain            String
+  token            String   @default("USDC")
+  amount           String
+
+  status           String   @default("BURNED") // BURNED | COMPLETED | FAILED
+  burnTxHash       String?
+  srcDomain        Int?
+  receiverWalletId String?
+  destTransmitter  String?
+  mintTxHash       String?
+  errorMessage     String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId, chain, token])
+}

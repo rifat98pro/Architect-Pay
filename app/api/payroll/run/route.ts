@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { getAllChainBalances, sendUsdcPayment, getOrCreateChainWalletId, getWalletBalances } from '@/lib/circle'
 import { logPayrollRunOnChain } from '@/lib/architect-pay-contract'
 import { cctpTransfer, cctpBurnFast } from '@/lib/cctp'
-import { CCTP_SOURCE_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
+import { CCTP_SOURCE_CHAINS, EURC_CCTP_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
 import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
 
@@ -92,43 +92,50 @@ export async function POST(req: Request) {
     }
   }
 
-  // Check EURC balances per wallet. EURC is paid directly from the wallet on the
-  // employee's chain — Arc employees from the Arc wallet, everyone else from Base.
-  // Payroll never bridges EURC, so an Arc shortfall cannot be covered from Base
-  // or vice versa; each chain is its own budget.
-  const eurcChainBals: Record<string, number> = {}
-
-  // Employees whose chain's EURC balance can't cover them. They fail individually
-  // with a clear reason rather than blocking the whole run — unlike USDC, each EURC
-  // chain is its own budget, so one underfunded chain shouldn't stop everyone else.
+  // EURC is paid out of the hub, exactly like USDC: employees on the hub are sent
+  // directly, everyone else is bridged from it. Arc is the only source CCTPx quotes
+  // at a zero fee, so paying from anywhere else would cost a native-token fee that
+  // gas-sponsored wallets cannot pay.
+  //
+  // Employees the hub can't cover fail individually with a clear reason rather than
+  // blocking the whole run.
   const underfundedEurc = new Map<string, string>()
 
   if (eurcEmps.length > 0) {
-    const [arcEurc, baseEurc] = await Promise.all([
-      getWalletBalances(wallet.circleWalletId).then((b) => parseFloat(b.eurc)).catch(() => 0),
-      getWalletBalances(hubWalletId!).then((b) => parseFloat(b.eurc)).catch(() => 0),
-    ])
-    eurcChainBals['ARC-TESTNET']  = arcEurc
-    eurcChainBals['BASE-SEPOLIA'] = baseEurc
+    const hubEurc = await getWalletBalances(hubWalletId!).then((b) => parseFloat(b.eurc)).catch(() => 0)
 
-    let arcLeft  = arcEurc
-    let baseLeft = baseEurc
+    // What the user sees as their balance is the total across chains. If that total
+    // covers payroll but the hub doesn't yet, the sweep simply hasn't caught up —
+    // which is a wait, not a shortfall, and the message has to say so.
+    const offHubEurc = (await Promise.all(
+      EURC_CCTP_CHAINS
+        .filter((c) => c !== HUB_CHAIN)
+        .map((c) => {
+          const id = chainWalletIds[c as CctpSourceChain]
+          return id ? getWalletBalances(id).then((b) => parseFloat(b.eurc)).catch(() => 0) : Promise.resolve(0)
+        }),
+    )).reduce((s, v) => s + v, 0)
+
+    let left = hubEurc
     for (const e of eurcEmps) {
-      const onArc = (e.preferredChain ?? 'ARC-TESTNET') === 'ARC-TESTNET'
-      const need  = parseFloat(e.salary)
-      if (onArc) {
-        if (arcLeft >= need) arcLeft -= need
-        else underfundedEurc.set(e.id, `Insufficient EURC on Arc — €${need.toFixed(2)} needed, €${Math.max(arcLeft, 0).toFixed(2)} available. Deposit EURC to your Arc wallet.`)
-      } else {
-        if (baseLeft >= need) baseLeft -= need
-        else underfundedEurc.set(e.id, `Insufficient EURC on Base — €${need.toFixed(2)} needed, €${Math.max(baseLeft, 0).toFixed(2)} available. Deposit EURC to your Base wallet.`)
-      }
+      const need = parseFloat(e.salary)
+      if (left >= need) { left -= need; continue }
+      underfundedEurc.set(
+        e.id,
+        offHubEurc > 0
+          ? `€${need.toFixed(2)} needed but only €${Math.max(left, 0).toFixed(2)} has finished settling. €${offHubEurc.toFixed(2)} is still arriving — try again in a few minutes.`
+          : `Insufficient EURC — €${need.toFixed(2)} needed, €${Math.max(left, 0).toFixed(2)} available.`,
+      )
     }
 
     // Only block the run outright if no EURC employee at all can be paid.
     if (underfundedEurc.size === eurcEmps.length && usdcEmps.length === 0) {
       return NextResponse.json(
-        { error: `Insufficient EURC. Need €${totalEurcAmount.toFixed(2)}, have €${arcEurc.toFixed(2)} on Arc and €${baseEurc.toFixed(2)} on Base. EURC is paid from the wallet on each employee's chain and cannot be bridged between them.` },
+        {
+          error: offHubEurc > 0
+            ? `EURC is still settling. €${totalEurcAmount.toFixed(2)} is needed, €${hubEurc.toFixed(2)} has settled and €${offHubEurc.toFixed(2)} is still arriving — try again in a few minutes.`
+            : `Insufficient EURC. Need €${totalEurcAmount.toFixed(2)}, have €${hubEurc.toFixed(2)}.`,
+        },
         { status: 400 },
       )
     }
@@ -179,10 +186,6 @@ export async function POST(req: Request) {
       )
     }
 
-    // Chains we pay EURC from directly, without bridging. Employees stored on any
-    // other chain fall back to Base. Bridging EURC further is configured but unproven,
-    // so it is kept out of the payroll path until a real transfer settles.
-    const EURC_CHAINS = ['ARC-TESTNET', 'BASE-SEPOLIA']
 
     // Step 2: Pay each employee — route by token + preferred chain
     const results = await Promise.allSettled(
@@ -195,16 +198,34 @@ export async function POST(req: Request) {
           const shortfall = underfundedEurc.get(emp.id)
           if (shortfall) throw new Error(shortfall)
 
-          // EURC is never bridged — it is paid directly from the wallet on the
-          // employee's own chain. This is independent of the hub: an Arc employee
-          // is paid from the Arc wallet, everyone else from Base, which is where
-          // the pre-flight above budgeted their balance from.
-          const payChain  = EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA'
-          const payWallet = payChain === 'ARC-TESTNET'
-            ? wallet.circleWalletId
-            : await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, payChain as CctpSourceChain)
+          // EURC exists on only three chains, so an employee who prefers any other
+          // one is paid on the hub — there is no EURC on their chain to receive.
+          const payChain = (EURC_CCTP_CHAINS as readonly string[]).includes(empChain)
+            ? empChain
+            : HUB_CHAIN
 
-          const result = await sendUsdcPayment({ fromWalletId: payWallet, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
+          if (payChain !== HUB_CHAIN) {
+            // Bridge from the hub straight to the employee, same shape as the USDC
+            // path: cron/settle mints and pays out once the attestation lands.
+            const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, payChain as CctpSourceChain)
+            const burn = await cctpBurnFast({
+              sourceChain:      HUB_CHAIN,
+              sourceWalletId:   hubWalletId!,
+              destChain:        payChain as CctpSourceChain,
+              destWalletId,
+              arcWalletId:      wallet.circleWalletId,
+              recipientAddress: wallet.walletAddress,
+              amount:           entry.amount,
+              token:            'EURC',
+            })
+            await db.payrollEntry.update({
+              where: { id: entry.id },
+              data: { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter, paidChain: payChain },
+            })
+            return { entryId: entry.id, txHash: null, asyncCctp: true as const }
+          }
+
+          const result = await sendUsdcPayment({ fromWalletId: hubWalletId!, toAddress: emp.walletAddress, amount: entry.amount, token: 'EURC' })
           await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: result.id, txHash: result.txHash ?? undefined, paidChain: payChain } })
           return { entryId: entry.id, txHash: result.txHash, asyncCctp: false as const }
         }

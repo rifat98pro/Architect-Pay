@@ -3,14 +3,10 @@ import { getUserFromRequest } from '@/lib/auth-server'
 import { db } from '@/lib/db'
 import { sendUsdcPayment, getOrCreateChainWalletId, checkTransaction } from '@/lib/circle'
 import { cctpBurnFast } from '@/lib/cctp'
-import { HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
+import { EURC_CCTP_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 
 export const maxDuration = 60
 
-// Chains we pay EURC from directly, without bridging. Employees stored on any other
-// chain fall back to Base. Bridging EURC further is configured but unproven, so it is
-// kept out of the payroll path until a real cross-chain EURC transfer settles.
-const EURC_CHAINS = ['ARC-TESTNET', 'BASE-SEPOLIA']
 
 export async function POST(req: Request) {
   const user = await getUserFromRequest()
@@ -90,15 +86,35 @@ export async function POST(req: Request) {
         await db.payrollEntry.update({ where: { id: entry.id }, data: { circleTxId: null, txHash: null } })
       }
 
-      // EURC is never bridged — pay directly from the wallet on the employee's own
-      // chain, independent of which chain is the hub.
+      // EURC is paid out of the hub like everything else: direct when the employee
+      // is on it, bridged from it otherwise. EURC exists on only three chains, so an
+      // employee preferring any other one is paid on the hub.
       if (empToken === 'EURC') {
-        const payChain  = EURC_CHAINS.includes(empChain) ? empChain : 'BASE-SEPOLIA'
-        const payWallet = payChain === 'ARC-TESTNET'
-          ? wallet.circleWalletId
-          : await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, payChain as CctpSourceChain)
+        const payChain = (EURC_CCTP_CHAINS as readonly string[]).includes(empChain)
+          ? empChain
+          : HUB_CHAIN
+
+        if (payChain !== HUB_CHAIN) {
+          const destWalletId = await getOrCreateChainWalletId(wallet.id, wallet.walletSetId!, payChain as CctpSourceChain)
+          const burn = await cctpBurnFast({
+            sourceChain:      HUB_CHAIN,
+            sourceWalletId:   hubWalletId,
+            destChain:        payChain as CctpSourceChain,
+            destWalletId,
+            arcWalletId:      wallet.circleWalletId,
+            recipientAddress: wallet.walletAddress,
+            amount:           entry.amount,
+            token:            'EURC',
+          })
+          await db.payrollEntry.update({
+            where: { id: entry.id },
+            data:  { cctpBurnCircleId: burn.burnCircleTxId, srcDomain: burn.srcDomain, receiverWalletId: burn.receiverWalletId, destTransmitter: burn.destTransmitter, errorMessage: null, paidChain: payChain },
+          })
+          return { entryId: entry.id, txHash: null, asyncCctp: true as const }
+        }
+
         const result = await sendUsdcPayment({
-          fromWalletId: payWallet,
+          fromWalletId: hubWalletId,
           toAddress:    emp.walletAddress,
           amount:       entry.amount,
           token:        'EURC',
