@@ -75,6 +75,17 @@ const MAX_UINT256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffff
 // enough when it is effectively unlimited; otherwise re-approve to uint256.max.
 const UNLIMITED_ALLOWANCE = MAX_UINT256 / BigInt(2)
 
+// CCTPx quotes its fee in the source chain's native token, in wei. Circle's API takes
+// the value to attach as a decimal string, so convert.
+function weiToDecimalString(wei: bigint): string {
+  if (wei === BigInt(0)) return '0'
+  const base  = BigInt('1000000000000000000')
+  const whole = wei / base
+  const frac  = (wei % base).toString().padStart(18, '0').replace(/0+$/, '')
+  return frac ? `${whole}.${frac}` : whole.toString()
+}
+
+
 // USDC: CCTP V2 7-arg depositForBurn (TokenMessengerV2)
 const DEPOSIT_FOR_BURN_ABI = {
   type:            'function' as const,
@@ -219,22 +230,56 @@ export async function mintFromAttestation({
 
 // ── EURC CCTPx helpers ────────────────────────────────────────────────────────
 
-async function getCctpxQuote(srcDomain: number, dstDomain: number, amountMicro: bigint): Promise<{
-  signedQuote: `0x${string}`
-}> {
-  // Standard finality (2000) with empty requests → feeTotalAmount = 0, no native token needed
+// CCTPx finality thresholds: 1000 settles in seconds, 2000 waits for source-chain
+// finality (~15 min from an L2 like Base).
+const CCTPX_FAST     = 1000
+const CCTPX_STANDARD = 2000
+
+async function fetchCctpxQuote(
+  srcDomain: number, dstDomain: number, amountMicro: bigint, fast: boolean,
+): Promise<{ signedQuote: `0x${string}`; feeTotalAmount: bigint }> {
   const res = await fetch(
     `${IRIS_API}/v2/quote/cctpx/${EURC_CCTPX_TOKEN_ID}/${srcDomain}/${dstDomain}`,
     {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ amount: amountMicro.toString(), feeToken: '0x0000000000000000000000000000000000000000', requests: [] }),
+      body:    JSON.stringify({
+        amount:   amountMicro.toString(),
+        feeToken: '0x0000000000000000000000000000000000000000',
+        requests: fast ? [{ type: 'PRE_FINALITY' }] : [],
+      }),
     },
   )
   if (!res.ok) throw new Error(`CCTPx quote failed: ${await res.text()}`)
   const data = await res.json() as { signedQuote: `0x${string}`; feeTotalAmount: string }
-  console.log(`[cctp/eurc] CCTPx quote feeTotalAmount: ${data.feeTotalAmount}`)
-  return { signedQuote: data.signedQuote }
+  return { signedQuote: data.signedQuote, feeTotalAmount: BigInt(data.feeTotalAmount ?? '0') }
+}
+
+/**
+ * Quote a CCTPx transfer, preferring fast settlement.
+ *
+ * The fee is charged in the source chain's native token and attached as msg.value.
+ * Our wallets are gas-sponsored and hold no native balance, so fast is only usable
+ * when it quotes free — true for every route out of Arc. Otherwise fall back to
+ * standard, which is slower but is the route we can actually pay for.
+ */
+async function getCctpxQuote(srcDomain: number, dstDomain: number, amountMicro: bigint): Promise<{
+  signedQuote:       `0x${string}`
+  feeTotalAmount:    bigint
+  finalityThreshold: number
+}> {
+  try {
+    const fast = await fetchCctpxQuote(srcDomain, dstDomain, amountMicro, true)
+    if (fast.feeTotalAmount === BigInt(0)) {
+      console.log(`[cctp/eurc] fast finality, no fee: ${srcDomain} -> ${dstDomain}`)
+      return { ...fast, finalityThreshold: CCTPX_FAST }
+    }
+    console.log(`[cctp/eurc] fast quotes ${fast.feeTotalAmount} wei, falling back to standard`)
+  } catch (e) {
+    console.warn('[cctp/eurc] fast quote failed, falling back to standard:', e instanceof Error ? e.message : e)
+  }
+  const std = await fetchCctpxQuote(srcDomain, dstDomain, amountMicro, false)
+  return { ...std, finalityThreshold: CCTPX_STANDARD }
 }
 
 // ── Phase 1: Burn (approve + burn) ────────────────────────────────────────────
@@ -292,7 +337,7 @@ export async function cctpBurn({
       await waitForAllowance(srcMeta.rpcUrl, eurcAddress, eurcOwner, tokenManager, amountMicro)
     }
 
-    const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
+    const { signedQuote, feeTotalAmount, finalityThreshold } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
     const destAddress  = encodePacked(['address'], [recipientAddress as `0x${string}`])
     const transferTxId = await executeContractCall({
@@ -303,12 +348,13 @@ export async function cctpBurn({
         functionName: 'crossChainTransfer',
         args: [
           EURC_CCTPX_TOKEN_ID, amountMicro, dstDomain, destAddress, zeroCaller,
-          2000,
+          finalityThreshold,
           { signedQuote, refundAddress: '0x0000000000000000000000000000000000000000' },
           false, '0x',
         ],
       }),
-      feeLevel: eurcFeeLevel,
+      feeLevel:    eurcFeeLevel,
+      nativeValue: weiToDecimalString(feeTotalAmount),
     })
     const burnTxHash = await waitForTransaction(transferTxId).catch((e: Error) => { throw new Error(`[step2-crossChainTransfer] ${e.message}`) })
     console.log(`[cctp/eurc] burn confirmed: ${burnTxHash}`)
@@ -385,7 +431,7 @@ export async function cctpBurnFast({
     if (!eurcAddress)  throw new Error(`EURC is not supported on ${CHAIN_LABEL[sourceChain] ?? sourceChain}`)
     if (!tokenManager) throw new Error(`EURC bridging is not configured for ${CHAIN_LABEL[sourceChain] ?? sourceChain}`)
 
-    const { signedQuote } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
+    const { signedQuote, feeTotalAmount, finalityThreshold } = await getCctpxQuote(srcMeta.cctpDomain, dstDomain, amountMicro)
 
     // Wait for approve to confirm — burn requires the allowance to be set on-chain
     const eurcFeeLevel  = feeLevelFor(sourceChain)
@@ -415,12 +461,13 @@ export async function cctpBurnFast({
         functionName: 'crossChainTransfer',
         args: [
           EURC_CCTPX_TOKEN_ID, amountMicro, dstDomain, destAddress, zeroCaller,
-          2000,
+          finalityThreshold,
           { signedQuote, refundAddress: '0x0000000000000000000000000000000000000000' },
           false, '0x',
         ],
       }),
-      feeLevel: eurcFeeLevel,
+      feeLevel:    eurcFeeLevel,
+      nativeValue: weiToDecimalString(feeTotalAmount),
     })
 
     console.log(`[cctp/eurc] burn submitted (no-wait): circleId=${burnCircleTxId}`)

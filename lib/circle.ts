@@ -290,11 +290,14 @@ export async function executeContractCall({
   contractAddress,
   callData,
   feeLevel = 'HIGH',
+  nativeValue,
 }: {
   walletId:        string
   contractAddress: string
   callData:        string
   feeLevel?:       'LOW' | 'MEDIUM' | 'HIGH'
+  /** Native token to attach to the call (msg.value), as a decimal string. */
+  nativeValue?:    string
 }): Promise<string> {
   const client = getClient()
 
@@ -306,6 +309,7 @@ export async function executeContractCall({
         walletId,
         contractAddress,
         callData: callData as `0x${string}`,
+        ...(nativeValue && nativeValue !== '0' ? { amount: nativeValue } : {}),
         fee: { type: 'level', config: { feeLevel } },
       })
       break

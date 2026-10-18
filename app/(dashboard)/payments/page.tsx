@@ -151,6 +151,15 @@ export default function PaymentsPage() {
   const availableNum       = parseFloat(availableBalance)
   const insufficientFunds  = amountNum > 0 && amountNum > availableNum
 
+
+  // EURC bridges over CCTPx, whose fast tier is charged in the source chain's native
+  // token. Our wallets are gas-sponsored and hold none, so only Arc — where the fast
+  // fee is zero — settles in seconds; every other source waits for finality.
+  const bridgeEta = (fromChain: string) =>
+    token === 'EURC'
+      ? (fromChain === 'ARC-TESTNET' ? '~15–30 sec' : '~15 min')
+      : '~2–5 min'
+
   const fetchPlan = useCallback(async (amt: string, tkn: 'USDC' | 'EURC', dest: string) => {
     const n = parseFloat(amt)
     if (!n || n <= 0) { setPlan(null); return }
@@ -492,7 +501,7 @@ export default function PaymentsPage() {
                       <span className="font-medium text-blue-200">
                         {token === 'EURC' ? '' : '$'}{parseFloat(entry.amount).toFixed(2)} {token}
                         {entry.isCctp && parseFloat(entry.fee) > 0 && <span className="ml-1 text-blue-500">(~{token === 'EURC' ? '' : '$'}{parseFloat(entry.fee).toFixed(2)} fee)</span>}
-                        {entry.isCctp && parseFloat(entry.fee) === 0 && <span className="ml-1 text-amber-400">(via CCTP, ~2–5 min)</span>}
+                        {entry.isCctp && parseFloat(entry.fee) === 0 && <span className="ml-1 text-amber-400">(bridged, {bridgeEta(entry.chain)})</span>}
                         {!entry.isCctp && <span className="ml-1 text-green-400">(already here)</span>}
                       </span>
                     </div>
@@ -504,10 +513,17 @@ export default function PaymentsPage() {
                       </span>
                     ) : (
                       <span className="text-amber-400">
-                        Then bridged to {DEST_CHAINS.find((c) => c.id === destChain)?.label} via CCTP, ~2–5 min.
+                        Then bridged to {DEST_CHAINS.find((c) => c.id === destChain)?.label}, {bridgeEta(HUB_CHAIN)}.
                       </span>
                     )}
                   </div>
+                  {token === 'EURC' && plan?.some((e) => e.isCctp && e.chain !== 'ARC-TESTNET') && (
+                    <div className="mt-2 rounded-lg border border-amber-800/40 bg-amber-900/10 px-2.5 py-2 text-[11px] leading-relaxed text-amber-300/90">
+                      Moving EURC off Base or Ethereum settles in about 15 minutes. Only
+                      transfers starting on Arc arrive in seconds. The funds are safe the
+                      whole time — the payment completes on its own once it settles.
+                    </div>
+                  )}
                   {parseFloat(planFee) > 0 && (
                     <div className="mt-1 text-xs text-blue-400">
                       Total CCTP fees: ~${parseFloat(planFee).toFixed(2)} USDC
