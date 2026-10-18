@@ -200,15 +200,15 @@ export default function DashboardPage() {
             {
               key:   'card',
               icon:  <CreditCard className="h-5 w-5" />,
-              title: 'Buy with card',
-              body:  'Debit card, Apple Pay or Google Pay',
+              title: 'Deposit Funds',
+              body:  'Debit Card · Apple Pay · Google Pay',
               accent: '#2aabab',
               onClick: () => setMainnetNotice(true),
             },
             {
               key:   'deposit',
               icon:  <ArrowDownCircle className="h-5 w-5" />,
-              title: 'Deposit crypto',
+              title: 'Deposit',
               body:  'Send USDC or EURC from any supported chain',
               accent: '#60a5fa',
               onClick: () => setDepositOpen(true),

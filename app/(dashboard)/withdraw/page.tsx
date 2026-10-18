@@ -4,12 +4,10 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { usePendingPayments } from '@/context/pending-payments-context'
-import { ArrowUpCircle, Loader2, CheckCircle2, XCircle, Layers, Send } from 'lucide-react'
+import { ArrowUpCircle, Loader2, CheckCircle2, XCircle, Send } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
 import ChainSelect from '@/components/chain-select'
-import ChainLogo from '@/components/chain-logo'
 import { cn } from '@/lib/utils'
-import type { AggregatePlanEntry } from '@/lib/aggregate'
 
 const DEST_CHAINS = [
   { id: 'ARC-TESTNET',  label: 'Arc'       },
@@ -57,9 +55,7 @@ export default function WithdrawPage() {
 
   // USDC aggregate plan
   const [planLoading,  setPlanLoading]  = useState(false)
-  const [plan,         setPlan]         = useState<AggregatePlanEntry[] | null>(null)
   const [planFeasible, setPlanFeasible] = useState(true)
-  const [planFee,      setPlanFee]      = useState('0')
 
   const [loading,   setLoading]   = useState(false)
   const [success,   setSuccess]   = useState('')
@@ -97,13 +93,13 @@ export default function WithdrawPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Reset plan + amount on token switch
-  useEffect(() => { setPlan(null); setAmount('') }, [token])
+  // Reset amount on token switch
+  useEffect(() => { setPlanFeasible(true); setAmount('') }, [token])
 
   // Fetch aggregate plan (USDC or EURC)
   const fetchPlan = useCallback(async (amt: string, tkn: 'USDC' | 'EURC', dest: string) => {
     const n = parseFloat(amt)
-    if (!n || n <= 0) { setPlan(null); return }
+    if (!n || n <= 0) { setPlanFeasible(true); return }
     setPlanLoading(true)
     try {
       const url = tkn === 'USDC'
@@ -111,9 +107,7 @@ export default function WithdrawPage() {
         : `/api/payments/aggregate-plan-eurc?amount=${n}&dest=${dest}`
       const res  = await fetch(url)
       const data = await res.json()
-      setPlan(data.plan ?? null)
       setPlanFeasible(data.feasible ?? false)
-      setPlanFee(data.totalFee ?? '0')
     } finally { setPlanLoading(false) }
   }, [])
 
@@ -183,7 +177,7 @@ export default function WithdrawPage() {
         setSuccess('processing')
       }
 
-      setAmount(''); setAddress(''); setNote(''); setPlan(null)
+      setAmount(''); setAddress(''); setNote(''); setPlanFeasible(true)
       const bal = await fetch('/api/wallet/balance').then((r) => r.json())
       setChainBalances(bal.chainBalances ?? {})
       setEurcChainBalances(bal.eurcChainBalances ?? {})
@@ -261,12 +255,6 @@ export default function WithdrawPage() {
             options={(token === 'EURC' ? EURC_CHAINS : DEST_CHAINS).map((c) => ({ value: c.id, label: c.label }))}
             disabled={loading}
           />
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-blue-800/40 bg-blue-900/15 px-3 py-2 text-xs text-blue-400">
-            <Layers className="h-3.5 w-3.5 shrink-0" />
-            {token === 'USDC'
-              ? 'Balances across all supported chains are combined via CCTP and sent to this chain'
-              : 'EURC balances across Arc, Ethereum, and Base are combined via CCTPx and sent to this chain'}
-          </div>
         </div>
 
         {/* Section 2 — Destination wallet */}
@@ -329,44 +317,6 @@ export default function WithdrawPage() {
             >
               Use max ({token === 'USDC' ? `$${totalUsdcBalance.toFixed(2)}` : `€${totalEurcBalance.toFixed(2)}`} {token})
             </button>
-          )}
-
-          {/* Aggregate funding plan (USDC + EURC) */}
-          {amount && parseFloat(amount) > 0 && (
-            <div className="mt-4 rounded-xl border border-blue-800/50 bg-blue-900/15 p-4">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-300">
-                <Layers className="h-4 w-4" /> Funding plan
-              </div>
-              {planLoading ? (
-                <div className="flex items-center gap-2 text-xs text-blue-400">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Computing…
-                </div>
-              ) : !planFeasible ? (
-                <p className="text-xs text-red-400">Insufficient total balance across all chains.</p>
-              ) : plan ? (
-                <div className="space-y-1.5">
-                  {plan.map((entry) => (
-                    <div key={entry.chain} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5 text-blue-400">
-                        <ChainLogo chain={entry.chain} size={14} />
-                        {entry.label}
-                      </div>
-                      <span className="font-medium text-blue-200">
-                        {token === 'EURC' ? '€' : '$'}{parseFloat(entry.amount).toFixed(2)} {token}
-                        {entry.isCctp
-                          ? <span className="ml-1 text-blue-500">(~${parseFloat(entry.fee).toFixed(2)} fee)</span>
-                          : <span className="ml-1 text-green-400">(instant)</span>}
-                      </span>
-                    </div>
-                  ))}
-                  {parseFloat(planFee) > 0 && (
-                    <div className="mt-2 border-t border-blue-800/50 pt-2 text-xs text-blue-400">
-                      Total platform fees: ~{token === 'USDC' ? '$' : ''}{parseFloat(planFee).toFixed(2)} {token}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </div>
           )}
 
           {/* Note */}
