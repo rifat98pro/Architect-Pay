@@ -515,9 +515,9 @@ export default function PaymentsPage() {
           <div
             className="w-full max-w-sm rounded-2xl p-6"
             style={{
-              background: 'linear-gradient(160deg, #0c1a2e 0%, #081422 100%)',
+              background: 'var(--ap-modal)',
               border:     '1px solid rgba(42,171,171,0.2)',
-              boxShadow:  '0 24px 64px rgba(0,0,0,0.6)',
+              boxShadow:  'var(--ap-modal-shadow)',
             }}
           >
             <div className="mb-5 flex items-center gap-3">

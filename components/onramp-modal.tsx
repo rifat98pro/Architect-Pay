@@ -59,15 +59,15 @@ export default function OnrampModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'var(--ap-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
         className="w-full max-w-md overflow-hidden rounded-2xl"
         style={{
-          background: 'linear-gradient(160deg, #0c1a2e 0%, #081422 100%)',
-          border:     '1px solid rgba(42,171,171,0.18)',
-          boxShadow:  '0 24px 64px rgba(0,0,0,0.6)',
+          background: 'var(--ap-modal)',
+          border:     'var(--ap-modal-border)',
+          boxShadow:  'var(--ap-modal-shadow)',
         }}
       >
         {/* Header */}
