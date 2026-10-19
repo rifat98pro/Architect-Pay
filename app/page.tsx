@@ -99,7 +99,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed" style={{ color: '#666' }}>
-            Global payroll and stablecoin payments for businesses. One USDC and EURC balance, however many chains your team is spread across. No networks to pick, no gas to hold.built on Arc.
+            Global payroll and stablecoin payments for businesses. One USDC and EURC balance, however many chains your team is spread across. No networks to pick, no gas to hold, built on Arc.
           </p>
 
           <div className="flex items-center gap-4">
