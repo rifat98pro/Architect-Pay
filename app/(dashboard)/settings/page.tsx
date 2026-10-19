@@ -29,6 +29,28 @@ export default function SettingsPage() {
   const [saving,       setSaving]       = useState(false)
   const [avatarSaving, setAvatarSaving] = useState(false)
 
+  // Checked as you type rather than only on save, so a clash is obvious before
+  // you have filled in the rest of the form.
+  const [nameState, setNameState] = useState<'idle' | 'checking' | 'ok' | 'taken'>('idle')
+  const [nameNote,  setNameNote]  = useState('')
+
+  useEffect(() => {
+    const value = username.trim()
+    if (!value) { setNameState('idle'); setNameNote(''); return }
+
+    setNameState('checking')
+    const t = setTimeout(() => {
+      fetch(`/api/users/check-username?username=${encodeURIComponent(value)}`)
+        .then((r) => r.json())
+        .then((d) => {
+          setNameState(d.available ? 'ok' : 'taken')
+          setNameNote(d.reason ?? '')
+        })
+        .catch(() => { setNameState('idle'); setNameNote('') })
+    }, 400)
+    return () => clearTimeout(t)
+  }, [username])
+
   // An account made through Google has no password yet, so the form asks to set
   // one rather than to confirm an old one that does not exist.
   const [hasPassword,  setHasPassword]  = useState<boolean | null>(null)
@@ -288,7 +310,13 @@ export default function SettingsPage() {
                 maxLength={30}
               />
             </div>
-            {username && (
+            {username && nameState === 'checking' && (
+              <p className="mt-1.5 text-xs text-gray-500">Checking…</p>
+            )}
+            {username && nameState === 'taken' && (
+              <p className="mt-1.5 text-xs text-red-400">{nameNote}</p>
+            )}
+            {username && nameState === 'ok' && (
               <p className="mt-1.5 text-xs text-gray-500">
                 Others can pay you as <span className="text-brand-400">@{username}</span>
               </p>
@@ -300,7 +328,7 @@ export default function SettingsPage() {
             <div className="font-mono text-sm" style={{ color: theme === 'light' ? '#324862' : '#c5d3ed' }}>{user?.email}</div>
           </div>
 
-          <button type="submit" disabled={saving} className="btn-primary w-full flex items-center justify-center gap-2">
+          <button type="submit" disabled={saving || nameState === 'taken' || nameState === 'checking'} className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {saving ? 'Saving...' : 'Save changes'}
           </button>

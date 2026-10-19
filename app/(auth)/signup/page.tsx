@@ -21,6 +21,25 @@ export default function SignupPage() {
   // step 1 fields
   const [name, setName]         = useState('')
   const [username, setUsername] = useState('')
+
+  // Checked while typing so a clash shows here, not after the email code round
+  // trip. The signup route still enforces it — this is only the early warning.
+  const [nameState, setNameState] = useState<'idle' | 'checking' | 'ok' | 'taken'>('idle')
+  const [nameNote,  setNameNote]  = useState('')
+
+  useEffect(() => {
+    const value = username.trim()
+    if (!value) { setNameState('idle'); setNameNote(''); return }
+
+    setNameState('checking')
+    const t = setTimeout(() => {
+      fetch(`/api/users/check-username?username=${encodeURIComponent(value)}`)
+        .then((r) => r.json())
+        .then((d) => { setNameState(d.available ? 'ok' : 'taken'); setNameNote(d.reason ?? '') })
+        .catch(() => { setNameState('idle'); setNameNote('') })
+    }, 400)
+    return () => clearTimeout(t)
+  }, [username])
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw]     = useState(false)
@@ -135,7 +154,15 @@ export default function SignupPage() {
                     maxLength={20}
                     className={inputClass}
                   />
-                  <p className="mt-1 text-xs text-gray-600">3–20 chars, letters/numbers/underscores</p>
+                  {nameState === 'taken' ? (
+                    <p className="mt-1 text-xs text-red-400">{nameNote}</p>
+                  ) : nameState === 'ok' ? (
+                    <p className="mt-1 text-xs text-green-400">Username available</p>
+                  ) : (
+                    <p className="mt-1 text-xs text-gray-600">
+                      {nameState === 'checking' ? 'Checking…' : '3–20 chars, letters/numbers/underscores'}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-gray-400">Email</label>
@@ -161,7 +188,7 @@ export default function SignupPage() {
 
                 {error && <p className="text-xs text-red-400">{error}</p>}
 
-                <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-500 disabled:opacity-60">
+                <button type="submit" disabled={loading || nameState === 'taken' || nameState === 'checking'} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-500 disabled:opacity-60">
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   {loading ? 'Sending code…' : 'Continue'}
                 </button>

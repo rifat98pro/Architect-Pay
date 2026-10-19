@@ -1,6 +1,6 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { signIn, signOut, useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [showPw, setShowPw]     = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
+  const { data: session }       = useSession()
 
   // NextAuth redirects failures back here as ?error=Code. Left unread the user
   // sees a bare code in the address bar and an apparently blank form.
@@ -30,8 +31,13 @@ export default function LoginPage() {
     window.history.replaceState({}, '', '/login')
   }, [])
 
+  // Auth.js attaches an OAuth account to whoever is *currently signed in* rather
+  // than switching accounts. Starting a Google sign-in on top of a live session
+  // therefore linked the chosen Gmail to the old account and left the user in it.
+  // Clearing the session first makes this a sign-in rather than a link.
   async function handleGoogle() {
     setLoading(true)
+    if (session) await signOut({ redirect: false })
     await signIn('google', { callbackUrl: '/dashboard' })
   }
 
