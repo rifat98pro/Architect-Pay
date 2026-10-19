@@ -34,3 +34,6 @@ yarn-error.log*
 .vercel
 
 .vercel
+
+# `vercel env pull` writes production secrets here
+.env.vercel

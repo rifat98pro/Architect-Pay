@@ -1,7 +1,7 @@
 # ⬡ Architect Pay
 
 > **Gasless multi-chain stablecoin payroll on Arc mainnet.**
-> Pay your team in USDC or EURC across seven chains — each employee picks their own chain and token, one run pays everyone.
+> Pay your team in USDC or EURC across six chains — each employee picks their own chain and token, one run pays everyone.
 
 ![Network](https://img.shields.io/badge/Network-Arc%20Mainnet-00e5a0?style=for-the-badge)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636?style=for-the-badge&logo=solidity)
@@ -16,7 +16,7 @@
 
 Paying a distributed team in stablecoins normally means juggling a separate wallet, gas token and bridge for every chain your people want to be paid on. Architect Pay removes that entirely.
 
-Add your employees, let each one choose the chain and token they want to be paid in, then hit **Run Payroll**. Architect Pay aggregates your balance across chains, bridges what it needs over CCTP V2, and delivers to everyone in parallel — in USDC or EURC, across Arc, Ethereum, Base, Arbitrum, Optimism, Polygon and Avalanche.
+Add your employees, let each one choose the chain and token they want to be paid in, then hit **Run Payroll**. Architect Pay aggregates your balance across chains, bridges what it needs over CCTP V2, and delivers to everyone in parallel — in USDC or EURC, across Arc, Base, Arbitrum, Optimism, Polygon and Avalanche.
 
 Nobody — not you, not your employees — ever holds a native gas token. Every transaction is sponsored through Circle Gas Station.
 
@@ -40,7 +40,7 @@ Running on **Arc mainnet**. Example settlements:
 - **Per-Employee Chain & Token** — Each person picks where and in what they get paid; one run settles all of it
 - **USDC and EURC** — Full support for both, including EURC bridging through Arc's CrossChainTokenService
 - **Gasless Everywhere** — Circle Gas Station sponsors every transaction on every chain
-- **Seven Chains** — Arc, Ethereum, Base, Arbitrum, Optimism, Polygon, Avalanche
+- **Six Chains** — Arc, Base, Arbitrum, Optimism, Polygon, Avalanche
 - **Multi-Chain Aggregation** — Automatically pulls from whichever chains hold your balance to cover a run
 - **Self-Healing Settlement** — Payments survive bundler and paymaster failures without manual retry
 - **Stablecoin Swaps** — Convert between USDC and EURC in-app
@@ -72,15 +72,15 @@ Running on **Arc mainnet**. Example settlements:
         ▼                 ▼                 ▼
 ┌───────────────┐  ┌──────────────────┐  ┌──────────────────┐
 │  Circle SCA   │  │  Circle CCTP V2  │  │  Neon PostgreSQL │
-│  Wallets      │  │  7-chain USDC    │  │  Users, wallets  │
+│  Wallets      │  │  6-chain USDC    │  │  Users, wallets  │
 │  ERC-4337     │  │  + Arc CCTPx     │  │  employees, runs │
 │  Gas Station  │  │  for EURC        │  │  Prisma ORM      │
 └───────────────┘  └──────────────────┘  └──────────────────┘
                           │
-   ┌──────────┬───────────┼───────────┬──────────┬──────────┐
-   ▼          ▼           ▼           ▼          ▼          ▼
-  Arc    Ethereum      Base      Arbitrum   Optimism   Polygon
-                                                       Avalanche
+   ┌──────────┬───────────┼───────────┬──────────┐
+   ▼          ▼           ▼           ▼          ▼
+  Arc       Base      Arbitrum   Optimism   Polygon
+                                            Avalanche
 ```
 
 ---
@@ -90,7 +90,7 @@ Running on **Arc mainnet**. Example settlements:
 | Product | Usage |
 |---------|-------|
 | **Developer-Controlled SCA Wallets** | Every user gets a smart contract wallet — gasless, no seed phrase |
-| **Gas Station** | Sponsors transaction fees on all seven chains so nobody holds native tokens |
+| **Gas Station** | Sponsors transaction fees on all six chains so nobody holds native tokens |
 | **CCTP V2** | Cross-chain USDC settlement, with Arc as domain 26 in both directions |
 | **Arc CrossChainTokenService (CCTPx)** | EURC bridging to and from Arc |
 | **USDC & EURC on Arc** | Primary settlement assets |
