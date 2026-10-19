@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useTheme } from '@/context/theme-context'
-import { Loader2, Check, Camera, Trash2 } from 'lucide-react'
+import { Loader2, Check, Camera, Trash2, KeyRound } from 'lucide-react'
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -28,6 +28,48 @@ export default function SettingsPage() {
   const [loading,      setLoading]      = useState(true)
   const [saving,       setSaving]       = useState(false)
   const [avatarSaving, setAvatarSaving] = useState(false)
+
+  // An account made through Google has no password yet, so the form asks to set
+  // one rather than to confirm an old one that does not exist.
+  const [hasPassword,  setHasPassword]  = useState<boolean | null>(null)
+  const [currentPw,    setCurrentPw]    = useState('')
+  const [newPw,        setNewPw]        = useState('')
+  const [confirmPw,    setConfirmPw]    = useState('')
+  const [pwSaving,     setPwSaving]     = useState(false)
+  const [pwError,      setPwError]      = useState('')
+  const [pwDone,       setPwDone]       = useState('')
+
+  useEffect(() => {
+    fetch('/api/account/password')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setHasPassword(!!d.hasPassword) })
+      .catch(() => {})
+  }, [])
+
+  async function savePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPwError(''); setPwDone('')
+    if (newPw !== confirmPw) { setPwError('Passwords do not match'); return }
+    if (newPw.length < 8)    { setPwError('At least 8 characters');  return }
+
+    setPwSaving(true)
+    try {
+      const res = await fetch('/api/account/password', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ currentPassword: currentPw || undefined, newPassword: newPw }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Could not update password')
+      setHasPassword(true)
+      setCurrentPw(''); setNewPw(''); setConfirmPw('')
+      setPwDone('Password saved. You can now sign in with your username or email.')
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : 'Could not update password')
+    } finally {
+      setPwSaving(false)
+    }
+  }
   const [error,        setError]        = useState('')
   const [success,      setSuccess]      = useState('')
   const [avatarError,  setAvatarError]  = useState('')
@@ -261,6 +303,86 @@ export default function SettingsPage() {
           <button type="submit" disabled={saving} className="btn-primary w-full flex items-center justify-center gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {saving ? 'Saving...' : 'Save changes'}
+          </button>
+        </form>
+      </div>
+
+      {/* Password — every account can sign in both ways. Google works regardless;
+          setting a password here adds username/email sign-in on top of it. */}
+      <div
+        className="mt-6 rounded-2xl border p-6"
+        style={{
+          background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+          borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)',
+        }}
+      >
+        <div className="mb-1 flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-brand-400" />
+          <h2 className="text-base font-semibold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
+            {hasPassword ? 'Change password' : 'Set a password'}
+          </h2>
+        </div>
+        <p className="mb-4 text-xs" style={{ color: theme === 'light' ? '#637d96' : '#45607a' }}>
+          {hasPassword
+            ? 'Sign in with your username or email, or keep using Google — both work.'
+            : 'Your account was created with Google. Set a password to also sign in with your username or email.'}
+        </p>
+
+        <form onSubmit={savePassword} className="space-y-3">
+          {hasPassword && (
+            <input
+              type="password"
+              value={currentPw}
+              onChange={(e) => setCurrentPw(e.target.value)}
+              placeholder="Current password"
+              autoComplete="current-password"
+              className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
+              style={{
+                background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+                borderColor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)',
+                color:       theme === 'light' ? '#0b1e47' : '#ffffff',
+              }}
+            />
+          )}
+          <input
+            type="password"
+            value={newPw}
+            onChange={(e) => setNewPw(e.target.value)}
+            placeholder={hasPassword ? 'New password' : 'Password'}
+            autoComplete="new-password"
+            minLength={8}
+            className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
+            style={{
+              background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+              borderColor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)',
+              color:       theme === 'light' ? '#0b1e47' : '#ffffff',
+            }}
+          />
+          <input
+            type="password"
+            value={confirmPw}
+            onChange={(e) => setConfirmPw(e.target.value)}
+            placeholder="Confirm password"
+            autoComplete="new-password"
+            minLength={8}
+            className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
+            style={{
+              background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
+              borderColor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)',
+              color:       theme === 'light' ? '#0b1e47' : '#ffffff',
+            }}
+          />
+
+          {pwError && <p className="text-xs text-red-400">{pwError}</p>}
+          {pwDone  && <p className="text-xs text-green-400">{pwDone}</p>}
+
+          <button
+            type="submit"
+            disabled={pwSaving || !newPw || !confirmPw}
+            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {pwSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            {pwSaving ? 'Saving...' : hasPassword ? 'Update password' : 'Set password'}
           </button>
         </form>
       </div>

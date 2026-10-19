@@ -16,7 +16,13 @@ export async function POST(req: NextRequest) {
 
   const user = await db.user.findUnique({ where: { email } })
   // Always return success so we don't reveal if an email is registered
-  if (!user || !user.passwordHash) return NextResponse.json({ sent: true })
+  // Only the account's existence matters, not whether it already has a password.
+  // Requiring one here silently refused the reset email to exactly the people who
+  // needed it most: accounts created through Google, which have no password yet.
+  // The reset route sets passwordHash either way, so this doubles as "set one".
+  // The response stays identical for unknown addresses so this cannot be used to
+  // discover who has an account.
+  if (!user) return NextResponse.json({ sent: true })
 
   // Rate-limit: one reset per 60s
   const recent = await db.passwordResetToken.findFirst({
