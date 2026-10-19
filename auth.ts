@@ -17,6 +17,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // register a second Gmail is signed straight back into the first one with no
       // indication it happened.
       authorization: { params: { prompt: 'select_account' } },
+
+      // Link Google to an existing email/password account with the same address.
+      // NextAuth calls this dangerous because for a provider that does not verify
+      // email ownership it is an account-takeover vector. Google does verify it,
+      // and anyone controlling that mailbox could already take the account over
+      // through password reset — so this adds no new exposure, and without it a
+      // user who registered with a password is simply locked out of the Google
+      // button with an OAuthAccountNotLinked code and no explanation.
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       credentials: {

@@ -3,7 +3,7 @@
 import { signIn } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
@@ -13,6 +13,22 @@ export default function LoginPage() {
   const [showPw, setShowPw]     = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
+
+  // NextAuth redirects failures back here as ?error=Code. Left unread the user
+  // sees a bare code in the address bar and an apparently blank form.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('error')
+    if (!code) return
+    setError(
+      code === 'OAuthAccountNotLinked'
+        ? 'That email is already registered with a password. Sign in with your password below.'
+        : code === 'AccessDenied'
+          ? 'Sign-in was cancelled.'
+          : 'Could not sign you in. Please try again.',
+    )
+    if (code === 'OAuthAccountNotLinked') setTab('email')
+    window.history.replaceState({}, '', '/login')
+  }, [])
 
   async function handleGoogle() {
     setLoading(true)
@@ -70,6 +86,12 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {error && (
+            <p className="mb-3 rounded-lg border border-red-900/40 bg-red-900/15 px-3 py-2 text-xs leading-relaxed text-red-300">
+              {error}
+            </p>
+          )}
+
           {tab === 'google' ? (
             <button
               onClick={handleGoogle}
@@ -123,7 +145,6 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-              {error && <p className="text-xs text-red-400">{error}</p>}
               <button
                 type="submit"
                 disabled={loading}
