@@ -1,7 +1,7 @@
 # ⬡ Architect Pay
 
-> **Gasless multi-chain stablecoin payroll on Arc mainnet.**
-> Pay your team in USDC or EURC across six chains — each employee picks their own chain and token, one run pays everyone.
+> **Gasless stablecoin payroll, settled on Arc.**
+> One USDC balance and one EURC balance. Deposit from any of six networks, pay anyone on any of them — the chains stay out of your way.
 
 ![Network](https://img.shields.io/badge/Network-Arc%20Mainnet-00e5a0?style=for-the-badge)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636?style=for-the-badge&logo=solidity)
@@ -16,7 +16,9 @@
 
 Paying a distributed team in stablecoins normally means juggling a separate wallet, gas token and bridge for every chain your people want to be paid on. Architect Pay removes that entirely.
 
-Add your employees, let each one choose the chain and token they want to be paid in, then hit **Run Payroll**. Architect Pay aggregates your balance across chains, bridges what it needs over CCTP V2, and delivers to everyone in parallel — in USDC or EURC, across Arc, Base, Arbitrum, Optimism, Polygon and Avalanche.
+You see **one USDC balance and one EURC balance** — no networks, no per-chain wallets. Deposit from Arc, Base, Arbitrum, Optimism, Polygon or Avalanche and the funds consolidate onto Arc on their own. Add your employees, let each one pick the chain and token they want to be paid in, and hit **Run Payroll**: every payout leaves Arc and lands where that person asked for it.
+
+Arc is the hub for a concrete reason. Circle quotes CCTP at **zero basis points outbound from Arc to every destination**, while routing chain-to-chain directly costs 1–1.3 bps a leg. Settling everything through Arc is simply the cheapest and fastest way to fan payments out.
 
 Nobody — not you, not your employees — ever holds a native gas token. Every transaction is sponsored through Circle Gas Station.
 
@@ -37,11 +39,12 @@ Running on **Arc mainnet**. Example settlements:
 
 ## Features
 
+- **One Balance Per Token** — No chain pickers, no per-network balances; USDC and EURC, and that's the whole mental model
+- **Automatic Settlement to Arc** — Deposits on any supported network consolidate onto Arc in the background, usually inside a minute
 - **Per-Employee Chain & Token** — Each person picks where and in what they get paid; one run settles all of it
 - **USDC and EURC** — Full support for both, including EURC bridging through Arc's CrossChainTokenService
 - **Gasless Everywhere** — Circle Gas Station sponsors every transaction on every chain
-- **Six Chains** — Arc, Base, Arbitrum, Optimism, Polygon, Avalanche
-- **Multi-Chain Aggregation** — Automatically pulls from whichever chains hold your balance to cover a run
+- **Six Networks** — Arc, Base, Arbitrum, Optimism, Polygon, Avalanche
 - **Self-Healing Settlement** — Payments survive bundler and paymaster failures without manual retry
 - **Stablecoin Swaps** — Convert between USDC and EURC in-app
 - **Username Payments** — Send to `@handle` instead of a 42-character address
@@ -97,6 +100,47 @@ Running on **Arc mainnet**. Example settlements:
 
 ---
 
+## How Money Moves
+
+```
+Deposit on any supported network
+        │
+        ▼
+Counted in your balance immediately — spendable right away
+        │
+        ▼
+Swept onto Arc in the background (CCTP V2 / CCTPx)
+   · triggered when a balance is read, with a daily cron as backstop
+   · ~1 min for USDC · up to ~20 min for EURC (hard finality)
+   · burn recorded before it confirms, so a slow bridge never strands funds
+        │
+        ▼
+Every payout leaves Arc → 0 bps outbound to any destination
+```
+
+Sweeping is an optimisation, never a precondition. Funds are spendable the moment
+they land, because the payment planner can still source from any chain — the sweep
+just makes later payouts cheaper and faster.
+
+---
+
+## Fees
+
+| | |
+|---|---|
+| Gas, every network | **Free** — sponsored by Circle Gas Station |
+| Deposits | **Free**, no minimum |
+| Swaps (USDC ↔ EURC) | **Free** |
+| Transfers on Arc | **Free** |
+| Transfers to another network | **0.01%**, minimum $0.01 |
+| Payroll | **0.01% per payout** on non-Arc employees, min $0.01 each; Arc payouts free |
+| Minimum withdrawal | **$1.00**, and only when leaving Arc |
+
+Circle's CCTP also takes a small protocol fee on cross-chain transfers, deducted
+from the amount sent.
+
+---
+
 ## Payroll Flow
 
 ```
@@ -106,13 +150,13 @@ User clicks "Run Payroll"
 1. Pre-flight — verify balances cover payroll + fees before spending gas
         │
         ▼
-2. Aggregate — pull USDC from other chains into the hub wallet via CCTP V2
+2. Aggregate — top the Arc hub up from any chain still holding a balance
         │
         ▼
 3. Fan out — for each employee, by their chosen chain and token:
         │
-        ├── Same chain as hub  → direct transfer
-        └── Different chain    → CCTP burn, settled asynchronously
+        ├── Paid on Arc        → direct transfer, instant and free
+        └── Paid anywhere else → CCTP burn from Arc, settled asynchronously
         │
         ▼
 4. Settle — poll Iris for attestation, mint on the destination, pay the employee
@@ -249,4 +293,4 @@ MIT — feel free to fork and build on top of Architect Pay.
 
 ---
 
-Built with ⬡ on Arc mainnet · Circle SCA Wallets · CCTP V2 · Gas Station
+Built with Circle on Arc mainnet · SCA Wallets · CCTP V2 · Gas Station
