@@ -32,8 +32,8 @@ function SectionLabel({ step, title, subtitle }: { step: number; title: string; 
         {step}
       </div>
       <div>
-        <div className="text-sm font-semibold text-gray-200">{title}</div>
-        {subtitle && <div className="text-xs text-gray-500 mt-0.5">{subtitle}</div>}
+        <div className="text-sm font-semibold text-[var(--ap-text-2)]">{title}</div>
+        {subtitle && <div className="text-xs text-[var(--ap-text-3)] mt-0.5">{subtitle}</div>}
       </div>
     </div>
   )
@@ -203,9 +203,9 @@ export default function WithdrawPage() {
       <div>
         <div className="flex items-center gap-3 mb-1">
           <ArrowUpCircle className="h-6 w-6 text-brand-400" />
-          <h1 className="text-2xl font-bold text-white">Withdraw</h1>
+          <h1 className="text-2xl font-bold text-[var(--ap-text-1)]">Withdraw</h1>
         </div>
-        <p className="text-sm text-gray-500">Send USDC or EURC to an external wallet address</p>
+        <p className="text-sm text-[var(--ap-text-3)]">Send USDC or EURC to an external wallet address</p>
       </div>
 
       {/* Alerts */}
@@ -235,7 +235,7 @@ export default function WithdrawPage() {
       <form onSubmit={handleWithdraw} className="space-y-3">
 
         {/* Token toggle */}
-        <div className="flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
+        <div className="flex gap-1 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] p-1">
           {(['USDC', 'EURC'] as const).map((t) => (
             <button
               key={t}
@@ -243,7 +243,7 @@ export default function WithdrawPage() {
               onClick={() => setToken(t)}
               className={cn(
                 'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all',
-                token === t ? 'bg-brand-500/15 text-brand-400 shadow-sm' : 'text-gray-500 hover:text-gray-300',
+                token === t ? 'bg-brand-500/15 text-brand-400 shadow-sm' : 'text-[var(--ap-text-3)] hover:text-[var(--ap-text-2)]',
               )}
             >
               <TokenLogo token={t} size={16} />{t}
@@ -252,7 +252,7 @@ export default function WithdrawPage() {
         </div>
 
         {/* Section 1 — Destination chain */}
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-5">
           <SectionLabel
             step={1}
             title="Destination Chain"
@@ -267,14 +267,14 @@ export default function WithdrawPage() {
         </div>
 
         {/* Section 2 — Destination wallet */}
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-5">
           <SectionLabel step={2} title="Destination Wallet" subtitle="External wallet address to receive funds" />
           <input
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value.trim())}
             placeholder="0x..."
-            className="w-full rounded-xl border bg-gray-800 px-3 py-2.5 font-mono text-sm text-white placeholder-gray-600 outline-none transition focus:border-brand-500/50"
+            className="w-full rounded-xl border bg-[var(--ap-input-bg)] px-3 py-2.5 font-mono text-sm text-[var(--ap-text-1)] placeholder-[var(--ap-text-3)] outline-none transition focus:border-brand-500/50"
             style={{ borderColor: address && !validAddress ? 'rgba(239,68,68,0.5)' : 'rgb(55,65,81)' }}
           />
           {address && !validAddress && (
@@ -283,7 +283,7 @@ export default function WithdrawPage() {
         </div>
 
         {/* Section 3 — Amount */}
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-5">
           <SectionLabel
             step={3}
             title="Amount"
@@ -300,13 +300,13 @@ export default function WithdrawPage() {
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className={`w-full rounded-xl border py-3.5 pl-4 pr-20 text-xl font-semibold text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 bg-gray-800 ${
-                insufficientFunds ? 'border-red-500/60' : 'border-gray-700'
+              className={`w-full rounded-xl border py-3.5 pl-4 pr-20 text-xl font-semibold text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50 bg-[var(--ap-input-bg)] ${
+                insufficientFunds ? 'border-red-500/60' : 'border-[var(--ap-border)]'
               }`}
               placeholder="0.00"
               required
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm font-semibold text-gray-400">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm font-semibold text-[var(--ap-text-3)]">
               <TokenLogo token={token} size={16} />{token}
             </span>
           </div>
@@ -320,7 +320,7 @@ export default function WithdrawPage() {
 
           {amount && !insufficientFunds && !belowMinimum && parseFloat(quotedFee) > 0 && (
             <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="text-gray-500">Platform fee (0.01%, min {token === 'USDC' ? '$' : '€'}0.01)</span>
+              <span className="text-[var(--ap-text-3)]">Platform fee (0.01%, min {token === 'USDC' ? '$' : '€'}0.01)</span>
               <span className="text-amber-400">
                 {token === 'USDC' ? '$' : '€'}{parseFloat(quotedFee).toFixed(2)} {token}
               </span>
@@ -346,14 +346,14 @@ export default function WithdrawPage() {
 
           {/* Note */}
           <div className="mt-4">
-            <label className="mb-1.5 block text-xs font-medium text-gray-500">
-              Note <span className="text-gray-600">(optional)</span>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--ap-text-3)]">
+              Note <span className="text-[var(--ap-text-3)]">(optional)</span>
             </label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50"
+              className="w-full rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-4 py-2.5 text-sm text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50"
               placeholder='e.g. "Exchange withdrawal"'
               maxLength={100}
             />

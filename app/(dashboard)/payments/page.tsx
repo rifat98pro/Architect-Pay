@@ -30,8 +30,8 @@ function SectionLabel({ step, title, subtitle }: { step: number; title: string; 
         {step}
       </div>
       <div>
-        <div className="text-sm font-semibold text-gray-200">{title}</div>
-        {subtitle && <div className="text-xs text-gray-500 mt-0.5">{subtitle}</div>}
+        <div className="text-sm font-semibold text-[var(--ap-text-2)]">{title}</div>
+        {subtitle && <div className="text-xs text-[var(--ap-text-3)] mt-0.5">{subtitle}</div>}
       </div>
     </div>
   )
@@ -268,8 +268,8 @@ export default function PaymentsPage() {
   return (
     <div className="max-w-xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Send Payment</h1>
-        <p className="mt-0.5 text-sm text-gray-500">Transfer USDC or EURC across any chain · <span className="text-brand-400 font-medium">Zero gas fees</span></p>
+        <h1 className="text-2xl font-bold text-[var(--ap-text-1)]">Send Payment</h1>
+        <p className="mt-0.5 text-sm text-[var(--ap-text-3)]">Transfer USDC or EURC across any chain · <span className="text-brand-400 font-medium">Zero gas fees</span></p>
       </div>
 
       <form onSubmit={handleSend} className="space-y-3">
@@ -315,17 +315,17 @@ export default function PaymentsPage() {
         )}
 
         {/* Section 1 — Token + Destination */}
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-5">
           <SectionLabel step={1} title="Token & Destination" subtitle="Choose token type and which chain recipient gets funds on" />
 
           {/* Token tabs */}
-          <div className="mb-4 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
+          <div className="mb-4 flex gap-1 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] p-1">
             {(['USDC', 'EURC'] as const).map((t) => (
               <button
                 key={t} type="button" onClick={() => setToken(t)}
                 className={cn(
                   'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all',
-                  token === t ? 'bg-brand-500/15 text-brand-400 shadow-sm' : 'text-gray-500 hover:text-gray-300',
+                  token === t ? 'bg-brand-500/15 text-brand-400 shadow-sm' : 'text-[var(--ap-text-3)] hover:text-[var(--ap-text-2)]',
                 )}
               >
                 <TokenLogo token={t} size={16} />{t}
@@ -335,7 +335,7 @@ export default function PaymentsPage() {
 
           {/* Destination */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-500">Recipient receives on</label>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--ap-text-3)]">Recipient receives on</label>
             <ChainSelect
               value={destChain}
               onChange={setDestChain}
@@ -346,10 +346,10 @@ export default function PaymentsPage() {
         </div>
 
         {/* Section 2 — Recipient */}
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-5">
           <SectionLabel step={2} title="Recipient" />
 
-          <div className="mb-4 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
+          <div className="mb-4 flex gap-1 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] p-1">
             {([
               { id: 'wallet',   label: 'Wallet address', icon: Wallet },
               { id: 'username', label: 'Architect Pay Username', icon: AtSign },
@@ -358,7 +358,7 @@ export default function PaymentsPage() {
                 key={id} type="button" onClick={() => setRecipientMode(id)}
                 className={cn(
                   'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all',
-                  recipientMode === id ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300',
+                  recipientMode === id ? 'bg-brand-500/15 text-brand-400' : 'text-[var(--ap-text-3)] hover:text-[var(--ap-text-2)]',
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />{lbl}
@@ -378,20 +378,20 @@ export default function PaymentsPage() {
             />
           ) : (
             <div>
-              <div className="flex overflow-hidden rounded-xl border border-gray-700 bg-gray-800 focus-within:border-brand-500/50">
-                <span className="flex items-center border-r border-gray-700 bg-gray-800/70 px-3 text-sm text-gray-500">@</span>
+              <div className="flex overflow-hidden rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] focus-within:border-brand-500/50">
+                <span className="flex items-center border-r border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-3 text-sm text-[var(--ap-text-3)]">@</span>
                 <input
                   type="text"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                  className="flex-1 bg-transparent px-3 py-2.5 text-white outline-none placeholder:text-gray-600"
+                  className="flex-1 bg-transparent px-3 py-2.5 text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)]"
                   placeholder="username"
                   autoComplete="off"
                   required
                 />
               </div>
               {lookupState === 'loading' && (
-                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                <div className="mt-2 flex items-center gap-2 text-xs text-[var(--ap-text-3)]">
                   <Loader2 className="h-3 w-3 animate-spin" /> Looking up user…
                 </div>
               )}
@@ -405,10 +405,10 @@ export default function PaymentsPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">{resolvedName}</span>
+                      <span className="text-sm font-semibold text-[var(--ap-text-1)]">{resolvedName}</span>
                       <span className="rounded-full bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand-400">Architect Pay</span>
                     </div>
-                    <div className="mt-0.5 font-mono text-xs text-gray-500">
+                    <div className="mt-0.5 font-mono text-xs text-[var(--ap-text-3)]">
                       @{usernameInput} · {resolvedAddress.slice(0, 8)}…{resolvedAddress.slice(-6)}
                     </div>
                   </div>
@@ -425,7 +425,7 @@ export default function PaymentsPage() {
         </div>
 
         {/* Section 3 — Amount */}
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-5">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-5">
           <SectionLabel
             step={3}
             title="Amount"
@@ -438,13 +438,13 @@ export default function PaymentsPage() {
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className={`w-full rounded-xl border py-3.5 pl-4 pr-20 text-xl font-semibold text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 bg-gray-800 ${
-                insufficientFunds ? 'border-red-500/60' : 'border-gray-700'
+              className={`w-full rounded-xl border py-3.5 pl-4 pr-20 text-xl font-semibold text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50 bg-[var(--ap-input-bg)] ${
+                insufficientFunds ? 'border-red-500/60' : 'border-[var(--ap-border)]'
               }`}
               placeholder="0.00"
               required
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm font-semibold text-gray-400">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm font-semibold text-[var(--ap-text-3)]">
               <TokenLogo token={token} size={16} />{token}
             </span>
           </div>
@@ -468,14 +468,14 @@ export default function PaymentsPage() {
 
           {/* Optional label */}
           <div className="mt-4">
-            <label className="mb-1.5 block text-xs font-medium text-gray-500">
-              Note <span className="text-gray-600">(optional)</span>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--ap-text-3)]">
+              Note <span className="text-[var(--ap-text-3)]">(optional)</span>
             </label>
             <input
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50"
+              className="w-full rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-4 py-2.5 text-sm text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50"
               placeholder='e.g. "March salary"'
               maxLength={100}
             />
@@ -525,16 +525,16 @@ export default function PaymentsPage() {
                 <ShieldCheck className="h-5 w-5 text-brand-400" />
               </div>
               <div>
-                <h3 className="font-bold text-white">Confirm Transaction</h3>
-                <p className="text-xs text-gray-500">Double-check before sending</p>
+                <h3 className="font-bold text-[var(--ap-text-1)]">Confirm Transaction</h3>
+                <p className="text-xs text-[var(--ap-text-3)]">Double-check before sending</p>
               </div>
             </div>
 
-            <div className="mb-5 space-y-3 rounded-xl border border-gray-700/50 bg-gray-800/40 p-4">
+            <div className="mb-5 space-y-3 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] p-4">
               {/* Amount */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Amount</span>
-                <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                <span className="text-xs text-[var(--ap-text-3)]">Amount</span>
+                <span className="flex items-center gap-1.5 text-sm font-bold text-[var(--ap-text-1)]">
                   <TokenLogo token={token} size={16} />
                   {token === 'EURC' ? '' : '$'}{amount} {token}
                 </span>
@@ -542,15 +542,15 @@ export default function PaymentsPage() {
 
               {/* Route */}
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-gray-500 shrink-0">Route</span>
-                <span className="flex items-center justify-end gap-1 text-xs text-gray-300 flex-wrap">
+                <span className="text-xs text-[var(--ap-text-3)] shrink-0">Route</span>
+                <span className="flex items-center justify-end gap-1 text-xs text-[var(--ap-text-2)] flex-wrap">
                   to <ChainLogo chain={destChain} size={13} />{selectedDestChain.label}
                 </span>
               </div>
 
               {/* Fee */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Fee</span>
+                <span className="text-xs text-[var(--ap-text-3)]">Fee</span>
                 <span className="text-xs text-amber-400">
                   {token === 'EURC' ? '' : '$'}{parseFloat(quotedFee).toFixed(2)} {token}
                 </span>
@@ -560,13 +560,13 @@ export default function PaymentsPage() {
               {/* Label */}
               {label && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Note</span>
-                  <span className="text-xs text-gray-300">{label}</span>
+                  <span className="text-xs text-[var(--ap-text-3)]">Note</span>
+                  <span className="text-xs text-[var(--ap-text-2)]">{label}</span>
                 </div>
               )}
 
               {/* Divider */}
-              <div className="my-1 border-t border-gray-700" />
+              <div className="my-1 border-t border-[var(--ap-border)]" />
 
               {/* Recipient — full address highlighted */}
               <div>
@@ -586,7 +586,7 @@ export default function PaymentsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirming(false)}
-                className="flex-1 rounded-xl border border-gray-700 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 transition"
+                className="flex-1 rounded-xl border border-[var(--ap-border)] py-2.5 text-sm font-medium text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] transition"
               >
                 Go Back
               </button>

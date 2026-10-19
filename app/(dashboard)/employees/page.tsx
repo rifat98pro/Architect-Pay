@@ -140,10 +140,10 @@ export default function EmployeesPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-1 text-2xl font-bold text-white">
+      <h1 className="mb-1 text-2xl font-bold text-[var(--ap-text-1)]">
         {business ? business.name : 'All Employees'}
       </h1>
-      <p className="mb-6 text-sm text-gray-400">
+      <p className="mb-6 text-sm text-[var(--ap-text-3)]">
         {business
           ? `Managing employees for ${business.name}. Select a business from the sidebar to switch.`
           : 'Showing all employees across businesses. Select a business from the sidebar to filter.'}
@@ -151,7 +151,7 @@ export default function EmployeesPage() {
 
       {/* Add Employee */}
       <div className="card mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-gray-300">Add Employee</h2>
+        <h2 className="mb-4 text-sm font-semibold text-[var(--ap-text-2)]">Add Employee</h2>
         {error && (
           <div className="mb-3 rounded-lg bg-red-900/30 px-4 py-2 text-sm text-red-400">{error}</div>
         )}
@@ -183,18 +183,18 @@ export default function EmployeesPage() {
             title="Valid EVM address"
             required
           />
-          <div className="flex items-center rounded-lg border border-gray-700 bg-gray-900 overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
-            <span className="pl-4 pr-1 text-sm text-gray-500 shrink-0 select-none">$</span>
+          <div className="flex items-center rounded-lg border border-[var(--ap-border)] bg-[var(--ap-card)] overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
+            <span className="pl-4 pr-1 text-sm text-[var(--ap-text-3)] shrink-0 select-none">$</span>
             <input
               type="text"
               inputMode="decimal"
               placeholder="0.00"
               value={salary}
               onChange={(e) => setSalary(e.target.value)}
-              className="flex-1 min-w-0 bg-transparent outline-none text-sm text-white placeholder:text-gray-500 py-2.5 pr-4"
+              className="flex-1 min-w-0 bg-transparent outline-none text-sm text-[var(--ap-text-1)] placeholder:text-[var(--ap-text-3)] py-2.5 pr-4"
               required
             />
-            <span className="pr-3.5 text-sm text-gray-500 shrink-0 select-none">USDC</span>
+            <span className="pr-3.5 text-sm text-[var(--ap-text-3)] shrink-0 select-none">USDC</span>
           </div>
           <button
             type="submit"
@@ -213,16 +213,16 @@ export default function EmployeesPage() {
           <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
         </div>
       ) : employees.length === 0 ? (
-        <div className="card py-12 text-center text-sm text-gray-500">
+        <div className="card py-12 text-center text-sm text-[var(--ap-text-3)]">
           No employees yet. Add your first employee above.
         </div>
       ) : (
         <div className="card overflow-hidden p-0">
-          <div className="flex items-center justify-between border-b border-gray-800 px-5 py-3">
-            <span className="text-sm font-medium text-gray-400">{employees.length} employee{employees.length !== 1 ? 's' : ''}</span>
-            <span className="text-sm font-semibold text-white">Total payroll: ${totalSalary} USDC</span>
+          <div className="flex items-center justify-between border-b border-[var(--ap-border)] px-5 py-3">
+            <span className="text-sm font-medium text-[var(--ap-text-3)]">{employees.length} employee{employees.length !== 1 ? 's' : ''}</span>
+            <span className="text-sm font-semibold text-[var(--ap-text-1)]">Total payroll: ${totalSalary} USDC</span>
           </div>
-          <div className="divide-y divide-gray-800">
+          <div className="divide-y divide-[var(--ap-border)]">
             {employees.map((emp) =>
               editingId === emp.id && editState ? (
                 // ── Edit row ──────────────────────────────────────────────
@@ -254,17 +254,17 @@ export default function EmployeesPage() {
                       placeholder="Wallet address (0x...)"
                       className="input-base font-mono text-xs"
                     />
-                    <div className="flex items-center rounded-lg border border-gray-700 bg-gray-900 overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
-                      <span className="pl-3.5 pr-1 text-sm text-gray-500 shrink-0 select-none">$</span>
+                    <div className="flex items-center rounded-lg border border-[var(--ap-border)] bg-[var(--ap-card)] overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
+                      <span className="pl-3.5 pr-1 text-sm text-[var(--ap-text-3)] shrink-0 select-none">$</span>
                       <input
                         type="text"
                         inputMode="decimal"
                         value={editState.salary}
                         onChange={(e) => setEditState({ ...editState, salary: e.target.value })}
                         placeholder="0.00"
-                        className="flex-1 min-w-0 bg-transparent outline-none text-sm text-white placeholder:text-gray-500 py-2.5 pr-3"
+                        className="flex-1 min-w-0 bg-transparent outline-none text-sm text-[var(--ap-text-1)] placeholder:text-[var(--ap-text-3)] py-2.5 pr-3"
                       />
-                      <span className="pr-3.5 text-sm text-gray-500 shrink-0 select-none">USDC</span>
+                      <span className="pr-3.5 text-sm text-[var(--ap-text-3)] shrink-0 select-none">USDC</span>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -292,15 +292,15 @@ export default function EmployeesPage() {
                     {emp.name[0].toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-white">{emp.name}</div>
+                    <div className="font-medium text-[var(--ap-text-1)]">{emp.name}</div>
                     {emp.role && (
                       <div className="text-xs font-medium text-brand-400">{emp.role}</div>
                     )}
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-xs text-gray-500">{truncateAddress(emp.walletAddress, 8)}</span>
+                      <span className="font-mono text-xs text-[var(--ap-text-3)]">{truncateAddress(emp.walletAddress, 8)}</span>
                       <button
                         onClick={() => copyAddress(emp.id, emp.walletAddress)}
-                        className="rounded p-0.5 text-gray-600 transition hover:text-brand-400"
+                        className="rounded p-0.5 text-[var(--ap-text-3)] transition hover:text-brand-400"
                         title="Copy wallet address"
                       >
                         {copiedId === emp.id
@@ -310,18 +310,18 @@ export default function EmployeesPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold text-white">${parseFloat(emp.salary).toFixed(2)}</div>
-                    <div className="text-xs text-gray-500">per run</div>
+                    <div className="font-semibold text-[var(--ap-text-1)]">${parseFloat(emp.salary).toFixed(2)}</div>
+                    <div className="text-xs text-[var(--ap-text-3)]">per run</div>
                   </div>
                   <button
                     onClick={() => startEdit(emp)}
-                    className="ml-1 rounded-lg p-1.5 text-gray-600 transition hover:bg-brand-500/10 hover:text-brand-400"
+                    className="ml-1 rounded-lg p-1.5 text-[var(--ap-text-3)] transition hover:bg-brand-500/10 hover:text-brand-400"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(emp.id)}
-                    className="rounded-lg p-1.5 text-gray-600 transition hover:bg-red-900/20 hover:text-red-400"
+                    className="rounded-lg p-1.5 text-[var(--ap-text-3)] transition hover:bg-red-900/20 hover:text-red-400"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

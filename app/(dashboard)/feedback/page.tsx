@@ -22,8 +22,8 @@ function SuccessState({ title, body, onReset, resetLabel }: {
         <CheckCircle2 className="h-8 w-8 text-green-400" />
       </div>
       <div>
-        <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="mt-1 text-sm text-gray-400">{body}</p>
+        <p className="text-lg font-semibold text-[var(--ap-text-1)]">{title}</p>
+        <p className="mt-1 text-sm text-[var(--ap-text-3)]">{body}</p>
       </div>
       <button onClick={onReset} className="mt-1 text-sm font-medium text-brand-400 hover:underline">
         {resetLabel}
@@ -95,19 +95,19 @@ export default function FeedbackPage() {
     <div className="max-w-xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Feedback &amp; Support</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-[var(--ap-text-1)]">Feedback &amp; Support</h1>
+        <p className="mt-0.5 text-sm text-[var(--ap-text-3)]">
           Help us improve Architect Pay — we read every submission.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="mb-5 flex gap-1 rounded-xl border border-gray-700/60 bg-gray-900/60 p-1">
+      <div className="mb-5 flex gap-1 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-1">
         <button
           onClick={() => { setTab('feedback'); setFbDone(false) }}
           className={cn(
             'flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all',
-            tab === 'feedback' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300',
+            tab === 'feedback' ? 'bg-brand-500/15 text-brand-400' : 'text-[var(--ap-text-3)] hover:text-[var(--ap-text-2)]',
           )}
         >
           <Sparkles className="h-4 w-4" /> Send Feedback
@@ -116,7 +116,7 @@ export default function FeedbackPage() {
           onClick={() => { setTab('bug'); setBgDone(false) }}
           className={cn(
             'flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all',
-            tab === 'bug' ? 'bg-brand-500/15 text-brand-400' : 'text-gray-500 hover:text-gray-300',
+            tab === 'bug' ? 'bg-brand-500/15 text-brand-400' : 'text-[var(--ap-text-3)] hover:text-[var(--ap-text-2)]',
           )}
         >
           <Bug className="h-4 w-4" /> Report a Bug
@@ -125,7 +125,7 @@ export default function FeedbackPage() {
 
       {/* Feedback form */}
       {tab === 'feedback' && (
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-6">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-6">
           {fbDone ? (
             <SuccessState
               title="Thanks for your feedback!"
@@ -142,30 +142,30 @@ export default function FeedbackPage() {
               )}
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-300">Category</label>
+                <label className="mb-1.5 block text-sm font-medium text-[var(--ap-text-2)]">Category</label>
                 <div className="relative">
                   <select
                     value={category}
                     onChange={(e) => setFeedbackForm({ category: e.target.value })}
-                    className="w-full appearance-none rounded-xl border border-gray-700 bg-gray-800 py-2.5 pl-4 pr-10 text-sm text-white outline-none focus:border-brand-500/50"
+                    className="w-full appearance-none rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] py-2.5 pl-4 pr-10 text-sm text-[var(--ap-text-1)] outline-none focus:border-brand-500/50"
                   >
                     {CATEGORIES.map((c) => (
                       <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ap-text-3)]" />
                 </div>
               </div>
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-300">Your feedback</label>
-                  <span className="text-xs text-gray-600">{message.length}/2000</span>
+                  <label className="text-sm font-medium text-[var(--ap-text-2)]">Your feedback</label>
+                  <span className="text-xs text-[var(--ap-text-3)]">{message.length}/2000</span>
                 </div>
                 <textarea
                   value={message}
                   onChange={(e) => setFeedbackForm({ message: e.target.value })}
-                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[140px] resize-y"
+                  className="w-full rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-4 py-3 text-sm text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50 min-h-[140px] resize-y"
                   placeholder="Tell us what you think, what you'd like to see, or anything on your mind…"
                   maxLength={2000}
                   required
@@ -188,7 +188,7 @@ export default function FeedbackPage() {
 
       {/* Bug report form */}
       {tab === 'bug' && (
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 p-6">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-6">
           {bgDone ? (
             <SuccessState
               title="Bug report received!"
@@ -205,12 +205,12 @@ export default function FeedbackPage() {
               )}
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-300">What went wrong?</label>
+                <label className="mb-1.5 block text-sm font-medium text-[var(--ap-text-2)]">What went wrong?</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setFeedbackForm({ title: e.target.value })}
-                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50"
+                  className="w-full rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-4 py-2.5 text-sm text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50"
                   placeholder='e.g. "Payment stuck on Processing"'
                   maxLength={150}
                   required
@@ -220,13 +220,13 @@ export default function FeedbackPage() {
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-300">Describe the issue</label>
-                  <span className="text-xs text-gray-600">{description.length}/3000</span>
+                  <label className="text-sm font-medium text-[var(--ap-text-2)]">Describe the issue</label>
+                  <span className="text-xs text-[var(--ap-text-3)]">{description.length}/3000</span>
                 </div>
                 <textarea
                   value={description}
                   onChange={(e) => setFeedbackForm({ description: e.target.value })}
-                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[120px] resize-y"
+                  className="w-full rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-4 py-3 text-sm text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50 min-h-[120px] resize-y"
                   placeholder="What were you doing when it happened? What did you expect?"
                   maxLength={3000}
                   required
@@ -235,13 +235,13 @@ export default function FeedbackPage() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Steps to reproduce <span className="text-gray-600 font-normal">(optional)</span>
+                <label className="mb-1.5 block text-sm font-medium text-[var(--ap-text-2)]">
+                  Steps to reproduce <span className="text-[var(--ap-text-3)] font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={steps}
                   onChange={(e) => setFeedbackForm({ steps: e.target.value })}
-                  className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-brand-500/50 min-h-[90px] resize-y"
+                  className="w-full rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-4 py-3 text-sm text-[var(--ap-text-1)] outline-none placeholder:text-[var(--ap-text-3)] focus:border-brand-500/50 min-h-[90px] resize-y"
                   placeholder={'1. Go to Send Payment\n2. Enter amount\n3. Click Send\n4. …'}
                   maxLength={2000}
                 />
@@ -261,9 +261,9 @@ export default function FeedbackPage() {
       )}
 
       {/* Footer note */}
-      <div className="mt-4 flex items-center gap-2 rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-3">
-        <MessageSquare className="h-4 w-4 shrink-0 text-gray-600" />
-        <p className="text-xs text-gray-600">
+      <div className="mt-4 flex items-center gap-2 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-card)] px-4 py-3">
+        <MessageSquare className="h-4 w-4 shrink-0 text-[var(--ap-text-3)]" />
+        <p className="text-xs text-[var(--ap-text-3)]">
           You can also reach us via the community Discord or open a GitHub issue for public bugs.
         </p>
       </div>

@@ -113,19 +113,19 @@ export default function SupportPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Support Center</h1>
-        <p className="mt-0.5 text-sm text-gray-500">Find answers or contact our team.</p>
+        <h1 className="text-2xl font-bold text-[var(--ap-text-1)]">Support Center</h1>
+        <p className="mt-0.5 text-sm text-[var(--ap-text-3)]">Find answers or contact our team.</p>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ap-text-3)]" />
         <input
           type="text"
           placeholder="Search for answers…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setActiveCategory(null) }}
-          className="w-full rounded-xl border bg-gray-900/60 py-3 pl-11 pr-4 text-sm text-white placeholder-gray-600 outline-none transition focus:border-brand-500/50"
+          className="w-full rounded-xl border bg-[var(--ap-card)] py-3 pl-11 pr-4 text-sm text-[var(--ap-text-1)] placeholder-[var(--ap-text-3)] outline-none transition focus:border-brand-500/50"
           style={{ borderColor: 'rgba(255,255,255,0.08)' }}
         />
       </div>
@@ -147,19 +147,19 @@ export default function SupportPage() {
               <div className="mb-2.5 inline-flex rounded-lg p-2" style={{ background: cat.color + '15' }}>
                 <span style={{ color: cat.color }}>{cat.icon}</span>
               </div>
-              <div className="text-xs font-semibold text-white">{cat.title}</div>
-              <div className="mt-0.5 text-xs leading-relaxed text-gray-500">{cat.desc}</div>
+              <div className="text-xs font-semibold text-[var(--ap-text-1)]">{cat.title}</div>
+              <div className="mt-0.5 text-xs leading-relaxed text-[var(--ap-text-3)]">{cat.desc}</div>
             </button>
           )
         })}
       </div>
 
       {/* FAQ */}
-      <div className="overflow-hidden rounded-2xl border border-gray-700/50 bg-gray-900/60">
-        <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
+      <div className="overflow-hidden rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)]">
+        <div className="flex items-center justify-between border-b border-[var(--ap-border)] px-5 py-4">
           <div className="flex items-center gap-2">
             <LifeBuoy className="h-4 w-4 text-brand-400" />
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-[var(--ap-text-1)]">
               {activeCategory
                 ? CATEGORIES.find((c) => c.faqs[0] === activeCategory)?.title
                 : search ? `Results for "${search}"` : 'Frequently Asked Questions'}
@@ -168,7 +168,7 @@ export default function SupportPage() {
           {(activeCategory || search) && (
             <button
               onClick={() => { setActiveCategory(null); setSearch('') }}
-              className="text-xs text-gray-500 hover:text-white transition-colors"
+              className="text-xs text-[var(--ap-text-3)] hover:text-[var(--ap-text-1)] transition-colors"
             >
               Clear filter
             </button>
@@ -177,25 +177,25 @@ export default function SupportPage() {
 
         {filteredFaqs.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-5 py-12 text-center">
-            <AlertCircle className="h-8 w-8 text-gray-700" />
-            <p className="text-sm text-gray-500">No results found. Try a different search or submit a ticket below.</p>
+            <AlertCircle className="h-8 w-8 text-[var(--ap-text-3)]" />
+            <p className="text-sm text-[var(--ap-text-3)]">No results found. Try a different search or submit a ticket below.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-800/60">
+          <div className="divide-y divide-[var(--ap-border)]">
             {filteredFaqs.map((faq, i) => {
               const isOpen = openFaq === i
               return (
                 <div key={i}>
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : i)}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-gray-800/30"
+                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-[var(--ap-row-hover)]"
                   >
-                    <span className="text-sm font-medium text-white">{faq.q}</span>
-                    <ChevronDown className={cn('h-4 w-4 shrink-0 text-gray-500 transition-transform', isOpen && 'rotate-180')} />
+                    <span className="text-sm font-medium text-[var(--ap-text-1)]">{faq.q}</span>
+                    <ChevronDown className={cn('h-4 w-4 shrink-0 text-[var(--ap-text-3)] transition-transform', isOpen && 'rotate-180')} />
                   </button>
                   {isOpen && (
-                    <div className="border-t border-gray-800/60 bg-gray-800/20 px-5 py-4">
-                      <p className="text-sm leading-relaxed text-gray-400">{faq.a}</p>
+                    <div className="border-t border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-5 py-4">
+                      <p className="text-sm leading-relaxed text-[var(--ap-text-3)]">{faq.a}</p>
                     </div>
                   )}
                 </div>
@@ -210,7 +210,7 @@ export default function SupportPage() {
         href="https://discord.gg/e3uZqjpRCp"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-between rounded-2xl border border-gray-700/50 bg-gray-900/60 px-6 py-5 transition hover:border-[#5865F2]/40 hover:bg-[#5865F2]/5 group"
+        className="flex items-center justify-between rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] px-6 py-5 transition hover:border-[#5865F2]/40 hover:bg-[#5865F2]/5 group"
       >
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: 'rgba(88,101,242,0.15)' }}>
@@ -219,11 +219,11 @@ export default function SupportPage() {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Still need help? Join our Discord</p>
-            <p className="text-xs text-gray-500 mt-0.5">Get support from the Architect Pay community and team.</p>
+            <p className="text-sm font-semibold text-[var(--ap-text-1)]">Still need help? Join our Discord</p>
+            <p className="text-xs text-[var(--ap-text-3)] mt-0.5">Get support from the Architect Pay community and team.</p>
           </div>
         </div>
-        <ExternalLink className="h-4 w-4 text-gray-600 group-hover:text-[#5865F2] transition-colors shrink-0" />
+        <ExternalLink className="h-4 w-4 text-[var(--ap-text-3)] group-hover:text-[#5865F2] transition-colors shrink-0" />
       </a>
 
       {/* Quick links */}
@@ -238,7 +238,7 @@ export default function SupportPage() {
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between rounded-xl border px-4 py-3 text-xs font-medium text-gray-400 transition hover:border-brand-500/30 hover:text-white"
+            className="flex items-center justify-between rounded-xl border px-4 py-3 text-xs font-medium text-[var(--ap-text-3)] transition hover:border-brand-500/30 hover:text-[var(--ap-text-1)]"
             style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}
           >
             {link.label}

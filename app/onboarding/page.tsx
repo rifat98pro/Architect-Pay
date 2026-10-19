@@ -23,16 +23,23 @@ export default function OnboardingPage() {
     if (!loading && !user) router.push('/login')
   }, [loading, user, router])
 
+  // Ask the account, not the browser. The old localStorage flag meant an existing
+  // user signing in from a different browser — or after clearing site data — was
+  // walked through onboarding as though they had just registered.
   useEffect(() => {
-    try {
-      if (localStorage.getItem('ap_onboarded') === 'yes') {
-        router.replace('/dashboard')
-      }
-    } catch {}
-  }, [router])
+    if (loading || !user) return
+    let cancelled = false
+    fetch('/api/auth/onboarded')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.onboarded) router.replace('/dashboard') })
+      .catch(() => { /* first run or offline — show the tour rather than block */ })
+    return () => { cancelled = true }
+  }, [loading, user, router])
 
   function finish() {
-    try { localStorage.setItem('ap_onboarded', 'yes') } catch {}
+    // Fire and forget: the tour is over either way, and a failed write only means
+    // it is offered once more.
+    fetch('/api/auth/onboarded', { method: 'POST' }).catch(() => {})
     router.push('/dashboard')
   }
 

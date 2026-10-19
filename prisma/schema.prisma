@@ -77,6 +77,11 @@ model User {
   username      String?   @unique
   displayName   String?
 
+  // Set when the account finishes the welcome tour. Lives on the user, not in
+  // localStorage: a returning account signing in from another browser must not be
+  // walked through onboarding again.
+  onboardedAt   DateTime?
+
   createdAt DateTime @default(now())
 
   accounts     Account[]

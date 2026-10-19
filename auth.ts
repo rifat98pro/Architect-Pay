@@ -12,6 +12,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId:     process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Always show the account chooser. Without this Google silently reuses
+      // whichever account the browser is already signed into, so someone trying to
+      // register a second Gmail is signed straight back into the first one with no
+      // indication it happened.
+      authorization: { params: { prompt: 'select_account' } },
     }),
     Credentials({
       credentials: {

@@ -71,14 +71,14 @@ export default function OnrampModal({
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--ap-border)] px-5 py-4">
           <div>
-            <h2 className="text-base font-bold text-white">Deposit Funds</h2>
-            <p className="text-xs text-gray-500">Debit card, Apple Pay, or Google Pay</p>
+            <h2 className="text-base font-bold text-[var(--ap-text-1)]">Deposit Funds</h2>
+            <p className="text-xs text-[var(--ap-text-3)]">Debit card, Apple Pay, or Google Pay</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-xl border border-gray-700 p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition"
+            className="rounded-xl border border-[var(--ap-border)] p-1.5 text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] hover:text-[var(--ap-text-1)] transition"
           >
             <X className="h-4 w-4" />
           </button>
@@ -97,7 +97,7 @@ export default function OnrampModal({
               <p className="text-center text-sm text-red-400">{error}</p>
               <button
                 onClick={onClose}
-                className="rounded-xl border border-gray-700 px-4 py-2 text-sm text-gray-400 hover:bg-gray-800 transition"
+                className="rounded-xl border border-[var(--ap-border)] px-4 py-2 text-sm text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] transition"
               >
                 Close
               </button>

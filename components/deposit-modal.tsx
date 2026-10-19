@@ -98,12 +98,12 @@ export default function DepositModal({
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">Deposit</h2>
-            <p className="text-xs text-gray-500">Send tokens to your wallet address below</p>
+            <h2 className="text-lg font-bold text-[var(--ap-text-1)]">Deposit</h2>
+            <p className="text-xs text-[var(--ap-text-3)]">Send tokens to your wallet address below</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-xl border border-gray-700 p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition"
+            className="rounded-xl border border-[var(--ap-border)] p-1.5 text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] hover:text-[var(--ap-text-1)] transition"
           >
             <X className="h-4 w-4" />
           </button>
@@ -111,8 +111,8 @@ export default function DepositModal({
 
         {/* Step 1 — Token */}
         <div className="mb-3">
-          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">1. Select Token</div>
-          <div className="flex gap-1 rounded-xl border border-gray-700/60 bg-gray-800/50 p-1">
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--ap-text-3)]">1. Select Token</div>
+          <div className="flex gap-1 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] p-1">
             {(['USDC', 'EURC'] as const).map((t) => (
               <button
                 key={t}
@@ -121,7 +121,7 @@ export default function DepositModal({
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all ${
                   token === t
                     ? 'bg-brand-500/15 text-brand-400 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-300'
+                    : 'text-[var(--ap-text-3)] hover:text-[var(--ap-text-2)]'
                 }`}
               >
                 <TokenLogo token={t} size={16} />{t}
@@ -132,26 +132,26 @@ export default function DepositModal({
 
         {/* Step 2 — Network */}
         <div className="mb-4">
-          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">2. Select Network</div>
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--ap-text-3)]">2. Select Network</div>
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setDropdownOpen((o) => !o)}
-              className="flex w-full items-center gap-2.5 rounded-xl border border-gray-700 bg-gray-800/60 px-3 py-2.5 text-sm text-white transition hover:border-gray-600"
+              className="flex w-full items-center gap-2.5 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-3 py-2.5 text-sm text-[var(--ap-text-1)] transition hover:border-[var(--ap-border)]"
             >
               <ChainLogo chain={selectedChain.id} size={18} />
               <span className="flex-1 text-left font-medium">{selectedChain.label}</span>
-              <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-4 w-4 text-[var(--ap-text-3)] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
             {dropdownOpen && (
-              <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-2xl">
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[var(--ap-border)] bg-[var(--ap-card)] shadow-2xl">
                 {chains.map((c) => (
                   <button
                     key={c.id}
                     type="button"
                     onClick={() => { setChainId(c.id); setDropdownOpen(false) }}
                     className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition ${
-                      c.id === chainId ? 'bg-brand-500/10 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      c.id === chainId ? 'bg-brand-500/10 text-white' : 'text-[var(--ap-text-2)] hover:bg-[var(--ap-row-hover)]'
                     }`}
                   >
                     <ChainLogo chain={c.id} size={18} />
@@ -167,9 +167,9 @@ export default function DepositModal({
               are spendable the moment they land, but they settle onto Arc in the
               background so later payouts are instant and free. */}
           {chainId !== HUB_CHAIN && (
-            <div className="mt-2 flex items-start gap-2 rounded-xl border border-gray-700/60 bg-gray-800/40 px-3 py-2.5">
-              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
-              <p className="text-xs text-gray-400 leading-relaxed">
+            <div className="mt-2 flex items-start gap-2 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-3 py-2.5">
+              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ap-text-3)]" />
+              <p className="text-xs text-[var(--ap-text-3)] leading-relaxed">
                 Deposits on {selectedChain.label} take {settlementEta} to finish settling.
                 You can spend them as soon as they arrive.
               </p>
@@ -187,9 +187,9 @@ export default function DepositModal({
 
         {/* Step 3 — Address */}
         <div className="mb-4">
-          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">3. Send to This Address</div>
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--ap-text-3)]">3. Send to This Address</div>
           <div className="mb-3 flex justify-center">
-            <div className="rounded-xl border border-gray-700/60 bg-white p-3">
+            <div className="rounded-xl border border-[var(--ap-border)] bg-white p-3">
               {address ? (
                 <QRCodeSVG value={address} size={150} bgColor="#ffffff" fgColor="#0a0f1e" level="M" />
               ) : (
@@ -197,14 +197,14 @@ export default function DepositModal({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800/60 px-3 py-2.5">
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-3 py-2.5">
             <span className="flex flex-1 items-center gap-2 min-w-0">
               <ChainLogo chain={selectedChain.id} size={14} />
-              <span className="truncate font-mono text-xs text-gray-200">{address ?? 'Loading…'}</span>
+              <span className="truncate font-mono text-xs text-[var(--ap-text-2)]">{address ?? 'Loading…'}</span>
             </span>
             <button
               onClick={copy}
-              className="shrink-0 rounded-lg p-1 text-gray-500 hover:bg-gray-700 hover:text-brand-400 transition"
+              className="shrink-0 rounded-lg p-1 text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] hover:text-brand-400 transition"
             >
               {copied ? <CheckCheck className="h-4 w-4 text-brand-400" /> : <Copy className="h-4 w-4" />}
             </button>
@@ -213,8 +213,8 @@ export default function DepositModal({
 
         {/* Username section */}
         {username && (
-          <div className="border-t border-gray-800 pt-4">
-            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
+          <div className="border-t border-[var(--ap-border)] pt-4">
+            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--ap-text-3)]">
               <AtSign className="h-3 w-3" />
               Receive from Architect Pay Users
             </div>
@@ -222,7 +222,7 @@ export default function DepositModal({
               <span className="flex-1 font-mono text-sm font-semibold text-brand-400">@{username}</span>
               <button
                 onClick={copyUsername}
-                className="shrink-0 rounded-lg p-1 text-gray-500 hover:bg-gray-700 hover:text-brand-400 transition"
+                className="shrink-0 rounded-lg p-1 text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] hover:text-brand-400 transition"
               >
                 {copiedUsername ? <CheckCheck className="h-4 w-4 text-brand-400" /> : <Copy className="h-4 w-4" />}
               </button>

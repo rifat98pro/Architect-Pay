@@ -11,13 +11,13 @@ import TokenLogo from '@/components/token-logo'
 type Direction = 'eurc-to-usdc' | 'usdc-to-eurc'
 type Chain = 'ARC-TESTNET' | 'BASE-SEPOLIA'
 
-type BalMap = Record<Chain, { usdc: string; eurc: string }>
+type BalMap = { usdc: string; eurc: string }
 
 function TokenPill({ token }: { token: 'USDC' | 'EURC' }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-gray-700/50 bg-gray-800/80 px-3 py-2.5">
+    <div className="flex items-center gap-2 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] px-3 py-2.5">
       <TokenLogo token={token} size={28} />
-      <div className="text-sm font-semibold leading-none text-white">{token}</div>
+      <div className="text-sm font-semibold leading-none text-[var(--ap-text-1)]">{token}</div>
     </div>
   )
 }
@@ -51,10 +51,7 @@ export default function SwapPage() {
   const RATE_CACHE_TTL = 60_000
 
   const [swapCache, setSwapCache] = useFeatureState('swap-cache', {
-    bals: {
-      'ARC-TESTNET':  { usdc: '0', eurc: '0' },
-      'BASE-SEPOLIA': { usdc: '0', eurc: '0' },
-    } as BalMap,
+    bals: { usdc: '0', eurc: '0' } as BalMap,
     eurcUsd:      null as number | null,
     balFetchedAt: 0,
     rateFetchedAt: 0,
@@ -74,15 +71,15 @@ export default function SwapPage() {
     try {
       const res  = await fetch('/api/wallet/balance')
       const data = await res.json()
+      // Sum every chain and add anything mid-sweep, exactly as the dashboard does.
+      // Reading only the hub made this screen disagree with the dashboard whenever
+      // a deposit had not finished consolidating.
+      const sum = (m: Record<string, string> | undefined) =>
+        Object.values(m ?? {}).reduce((t, v) => t + parseFloat(v || '0'), 0)
+
       const next: BalMap = {
-        'ARC-TESTNET':  {
-          usdc: parseFloat(data.chainBalances?.['ARC-TESTNET']      ?? '0').toFixed(2),
-          eurc: parseFloat(data.eurcChainBalances?.['ARC-TESTNET']  ?? '0').toFixed(2),
-        },
-        'BASE-SEPOLIA': {
-          usdc: parseFloat(data.chainBalances?.['BASE-SEPOLIA']     ?? '0').toFixed(2),
-          eurc: parseFloat(data.eurcChainBalances?.['BASE-SEPOLIA'] ?? '0').toFixed(2),
-        },
+        usdc: (sum(data.chainBalances)     + parseFloat(data.inFlightUsdc ?? '0')).toFixed(2),
+        eurc: (sum(data.eurcChainBalances) + parseFloat(data.inFlightEurc ?? '0')).toFixed(2),
       }
       setBals(next)
       setSwapCache({ bals: next, balFetchedAt: Date.now() })
@@ -125,8 +122,8 @@ export default function SwapPage() {
 
   const tokenIn  = direction === 'eurc-to-usdc' ? 'EURC' : 'USDC'
   const tokenOut = direction === 'eurc-to-usdc' ? 'USDC' : 'EURC'
-  const inBal    = direction === 'eurc-to-usdc' ? bals[srcChain].eurc  : bals[srcChain].usdc
-  const outBal   = direction === 'eurc-to-usdc' ? bals[destChain].usdc : bals[destChain].eurc
+  const inBal    = direction === 'eurc-to-usdc' ? bals.eurc : bals.usdc
+  const outBal   = direction === 'eurc-to-usdc' ? bals.usdc : bals.eurc
 
   function flip() {
     setDirection(direction === 'eurc-to-usdc' ? 'usdc-to-eurc' : 'eurc-to-usdc')
@@ -175,8 +172,8 @@ export default function SwapPage() {
 
         {/* Header */}
         <div className="mb-4 flex items-center justify-between px-1">
-          <h1 className="text-lg font-semibold text-white">Swap</h1>
-          <button className="rounded-lg p-2 text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
+          <h1 className="text-lg font-semibold text-[var(--ap-text-1)]">Swap</h1>
+          <button className="rounded-lg p-2 text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] hover:text-[var(--ap-text-2)] transition">
             <Settings className="h-4 w-4" />
           </button>
         </div>
@@ -219,8 +216,8 @@ export default function SwapPage() {
 
         <form onSubmit={handleSwap}>
           {/* You pay panel */}
-          <div className="rounded-2xl border border-gray-700/60 bg-gray-900/80 p-4">
-            <div className="mb-3 text-xs font-medium text-gray-500">You pay</div>
+          <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-4">
+            <div className="mb-3 text-xs font-medium text-[var(--ap-text-3)]">You pay</div>
             <div className="flex items-center gap-3">
               <input
                 type="text"
@@ -229,12 +226,12 @@ export default function SwapPage() {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
                 disabled={loading}
-                className="flex-1 bg-transparent text-3xl font-semibold text-white placeholder-gray-700 outline-none w-0 min-w-0"
+                className="flex-1 bg-transparent text-3xl font-semibold text-[var(--ap-text-1)] placeholder-[var(--ap-text-3)] outline-none w-0 min-w-0"
               />
               <TokenPill token={tokenIn} />
             </div>
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-[var(--ap-text-3)]">
                 {amountNum > 0 ? `≈ $${payUsd.toFixed(2)}` : '$0.00'}
               </span>
               <button
@@ -259,23 +256,23 @@ export default function SwapPage() {
               type="button"
               onClick={flip}
               disabled={loading}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-gray-950 bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition shadow-lg"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-gray-950 bg-[var(--ap-input-bg)] text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] hover:text-[var(--ap-text-1)] transition shadow-lg"
             >
               <ArrowDown className="h-4 w-4" />
             </button>
           </div>
 
           {/* You receive panel */}
-          <div className="rounded-2xl border border-gray-700/60 bg-gray-900/80 p-4">
-            <div className="mb-3 text-xs font-medium text-gray-500">You receive</div>
+          <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-4">
+            <div className="mb-3 text-xs font-medium text-[var(--ap-text-3)]">You receive</div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 text-3xl font-semibold text-gray-400 w-0 min-w-0 truncate">
+              <div className="flex-1 text-3xl font-semibold text-[var(--ap-text-3)] w-0 min-w-0 truncate">
                 {amountNum > 0 ? `≈ ${amountOut.toFixed(4)}` : '0'}
               </div>
               <TokenPill token={tokenOut} />
             </div>
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-[var(--ap-text-3)]">
                 {rateLoading
                   ? 'Fetching rate...'
                   : direction === 'eurc-to-usdc'
@@ -283,7 +280,7 @@ export default function SwapPage() {
                     : `1 USDC ≈ ${(1 / rate).toFixed(4)} EURC · live rate`
                 }
               </span>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-[var(--ap-text-3)]">
                 Balance: {balLoading ? '...' : outBal} {tokenOut}
               </span>
             </div>
@@ -314,7 +311,7 @@ export default function SwapPage() {
 
         <button
           onClick={fetchBalances}
-          className="mt-4 flex w-full items-center justify-center gap-1.5 text-xs text-gray-600 hover:text-gray-400 transition"
+          className="mt-4 flex w-full items-center justify-center gap-1.5 text-xs text-[var(--ap-text-3)] hover:text-[var(--ap-text-2)] transition"
         >
           <RefreshCw className="h-3 w-3" /> Refresh balances
         </button>

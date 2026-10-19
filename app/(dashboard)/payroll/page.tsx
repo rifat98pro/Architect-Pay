@@ -247,50 +247,50 @@ export default function PayrollPage() {
     <div className="max-w-4xl">
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Payroll</h1>
-        <p className="mt-1 text-sm text-gray-500">Review and run payroll for your team.</p>
+        <h1 className="text-2xl font-bold text-[var(--ap-text-1)]">Payroll</h1>
+        <p className="mt-1 text-sm text-[var(--ap-text-3)]">Review and run payroll for your team.</p>
       </div>
 
       {/* Business selector */}
       {businesses.length === 0 ? (
-        <div className="mb-6 rounded-2xl border border-dashed border-gray-700 px-6 py-8 text-center">
-          <Building2 className="mx-auto mb-3 h-8 w-8 text-gray-700" />
-          <p className="text-sm text-gray-400">No businesses found. <a href="/businesses" className="text-brand-400 hover:underline">Create one first</a> to run payroll.</p>
+        <div className="mb-6 rounded-2xl border border-dashed border-[var(--ap-border)] px-6 py-8 text-center">
+          <Building2 className="mx-auto mb-3 h-8 w-8 text-[var(--ap-text-3)]" />
+          <p className="text-sm text-[var(--ap-text-3)]">No businesses found. <a href="/businesses" className="text-brand-400 hover:underline">Create one first</a> to run payroll.</p>
         </div>
       ) : (
         <div className="mb-6 flex items-center gap-3">
-          <label className="shrink-0 text-sm font-medium text-gray-400">Business</label>
+          <label className="shrink-0 text-sm font-medium text-[var(--ap-text-3)]">Business</label>
           <div className="relative flex-1 max-w-xs">
             <select
               value={businessId}
               onChange={(e) => setBusinessId(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-gray-700 bg-gray-900 px-4 py-2.5 pr-9 text-sm text-white focus:border-brand-500 focus:outline-none"
+              className="w-full appearance-none rounded-xl border border-[var(--ap-border)] bg-[var(--ap-card)] px-4 py-2.5 pr-9 text-sm text-[var(--ap-text-1)] focus:border-brand-500 focus:outline-none"
             >
               <option value="">Select a business</option>
               {businesses.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ap-text-3)]" />
           </div>
         </div>
       )}
 
       {/* Stats grid */}
       <div className="mb-6 grid grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-gray-700/60 bg-gray-900/60 px-5 py-4">
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] px-5 py-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[var(--ap-text-3)]">
             <Users className="h-3.5 w-3.5" /> Employees
           </div>
-          <div className="text-2xl font-bold text-white">{employees.length}</div>
+          <div className="text-2xl font-bold text-[var(--ap-text-1)]">{employees.length}</div>
         </div>
-        <div className="rounded-2xl border border-gray-700/60 bg-gray-900/60 px-5 py-4">
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] px-5 py-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[var(--ap-text-3)]">
             <DollarSign className="h-3.5 w-3.5" /> Total payout
           </div>
-          {totalUsdcSalary > 0 && <div className="text-xl font-bold text-white">${totalUsdcSalary.toFixed(2)} <span className="text-sm font-semibold text-gray-400">USDC</span></div>}
-          {totalEurcSalary > 0 && <div className="text-xl font-bold text-white">€{totalEurcSalary.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span></div>}
-          {totalSalary === 0 && <div className="text-2xl font-bold text-white">$0.00</div>}
+          {totalUsdcSalary > 0 && <div className="text-xl font-bold text-[var(--ap-text-1)]">${totalUsdcSalary.toFixed(2)} <span className="text-sm font-semibold text-[var(--ap-text-3)]">USDC</span></div>}
+          {totalEurcSalary > 0 && <div className="text-xl font-bold text-[var(--ap-text-1)]">€{totalEurcSalary.toFixed(2)} <span className="text-sm font-semibold text-[var(--ap-text-3)]">EURC</span></div>}
+          {totalSalary === 0 && <div className="text-2xl font-bold text-[var(--ap-text-1)]">$0.00</div>}
           {feeCount > 0 ? (
             <div className="mt-1 text-xs text-amber-500/70">
               + {usdcFee > 0 && `$${usdcFee.toFixed(2)}`}{usdcFee > 0 && eurcFee > 0 && ' · '}{eurcFee > 0 && `€${eurcFee.toFixed(2)}`} fee
@@ -300,15 +300,15 @@ export default function PayrollPage() {
             <div className="mt-1 text-xs text-green-500/70">No fee — everyone is paid on Arc</div>
           )}
         </div>
-        <div className="rounded-2xl border border-gray-700/60 bg-gray-900/60 px-5 py-4">
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+        <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] px-5 py-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[var(--ap-text-3)]">
             <Wallet className="h-3.5 w-3.5" /> Your balance
           </div>
-          <div className={`text-xl font-bold ${usdcOk ? 'text-white' : 'text-red-400'}`}>
-            ${totalUsdcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">USDC</span>
+          <div className={`text-xl font-bold ${usdcOk ? 'text-[var(--ap-text-1)]' : 'text-red-400'}`}>
+            ${totalUsdcBalance.toFixed(2)} <span className="text-sm font-semibold text-[var(--ap-text-3)]">USDC</span>
           </div>
-          <div className={`text-xl font-bold ${eurcOk ? 'text-white' : 'text-red-400'}`}>
-            €{totalEurcBalance.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span>
+          <div className={`text-xl font-bold ${eurcOk ? 'text-[var(--ap-text-1)]' : 'text-red-400'}`}>
+            €{totalEurcBalance.toFixed(2)} <span className="text-sm font-semibold text-[var(--ap-text-3)]">EURC</span>
           </div>
         </div>
       </div>
@@ -330,10 +330,10 @@ export default function PayrollPage() {
       )}
 
       {!businessId && businesses.length > 0 && (
-        <p className="mb-4 text-sm text-gray-500">Select a business above to preview payroll.</p>
+        <p className="mb-4 text-sm text-[var(--ap-text-3)]">Select a business above to preview payroll.</p>
       )}
       {businessId && employees.length === 0 && !loading && (
-        <p className="mb-4 text-sm text-gray-500">
+        <p className="mb-4 text-sm text-[var(--ap-text-3)]">
           No employees in this business. <a href="/businesses" className="text-brand-400 hover:underline">Add employees</a> to run payroll.
         </p>
       )}
@@ -373,13 +373,13 @@ export default function PayrollPage() {
         const nextPayday = nextDate?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 
         return (
-          <div className="mb-8 rounded-2xl border border-gray-700/50 bg-gray-900/60 overflow-hidden">
+          <div className="mb-8 rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] overflow-hidden">
 
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-700/50 px-5 py-4">
+            <div className="flex items-center justify-between border-b border-[var(--ap-border)] px-5 py-4">
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-brand-400" />
-                <span className="text-sm font-semibold text-white">Payroll Schedule</span>
+                <span className="text-sm font-semibold text-[var(--ap-text-1)]">Payroll Schedule</span>
               </div>
               <div className="flex items-center gap-3">
                 {savingSched && <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-400" />}
@@ -391,7 +391,7 @@ export default function PayrollPage() {
                     >
                       Edit
                     </button>
-                    <span className="text-gray-700">·</span>
+                    <span className="text-[var(--ap-text-3)]">·</span>
                     <button onClick={removeSchedule} className="text-xs text-red-400 hover:underline">
                       Remove
                     </button>
@@ -402,13 +402,13 @@ export default function PayrollPage() {
 
             {/* Active schedule summary — Gusto style stat row */}
             {scheduleDay && !editingSched && (
-              <div className="grid grid-cols-2 divide-x divide-gray-700/50 border-b border-gray-700/50">
+              <div className="grid grid-cols-2 divide-x divide-gray-700/50 border-b border-[var(--ap-border)]">
                 <div className="px-5 py-4">
-                  <div className="mb-1 text-xs font-medium text-gray-500">Runs every month on</div>
-                  <div className="text-xl font-bold text-white">Day {scheduleDay}</div>
+                  <div className="mb-1 text-xs font-medium text-[var(--ap-text-3)]">Runs every month on</div>
+                  <div className="text-xl font-bold text-[var(--ap-text-1)]">Day {scheduleDay}</div>
                 </div>
                 <div className="px-5 py-4">
-                  <div className="mb-1 text-xs font-medium text-gray-500">Next payday</div>
+                  <div className="mb-1 text-xs font-medium text-[var(--ap-text-3)]">Next payday</div>
                   <div className="text-base font-bold text-brand-400">{nextPayday}</div>
                 </div>
               </div>
@@ -418,12 +418,12 @@ export default function PayrollPage() {
             {(editingSched || !scheduleDay) && (
               <div className="p-5">
                 {!scheduleDay && (
-                  <p className="mb-4 text-sm text-gray-500">
+                  <p className="mb-4 text-sm text-[var(--ap-text-3)]">
                     No schedule set — pick a day below to automate monthly payroll.
                   </p>
                 )}
 
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Select payday</p>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--ap-text-3)]">Select payday</p>
                 <div className="grid grid-cols-7 gap-1.5">
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                     <button
@@ -434,7 +434,7 @@ export default function PayrollPage() {
                       className={`flex h-9 w-full items-center justify-center rounded-lg text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed
                         ${pendingDay === d
                           ? 'bg-brand-500 text-navy-950 shadow-[0_0_14px_rgba(42,171,171,0.4)]'
-                          : 'border border-gray-700 bg-gray-800/50 text-gray-400 hover:border-brand-500/40 hover:bg-brand-500/10 hover:text-white'
+                          : 'border border-[var(--ap-border)] bg-[var(--ap-input-bg)] text-[var(--ap-text-3)] hover:border-brand-500/40 hover:bg-brand-500/10 hover:text-[var(--ap-text-1)]'
                         }`}
                     >
                       {d}
@@ -454,18 +454,18 @@ export default function PayrollPage() {
                   {editingSched && scheduleDay && (
                     <button
                       onClick={() => { setPendingDay(scheduleDay); setEditingSched(false) }}
-                      className="rounded-xl border border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 transition"
+                      className="rounded-xl border border-[var(--ap-border)] px-4 py-2.5 text-sm font-medium text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] transition"
                     >
                       Cancel
                     </button>
                   )}
                   {pendingDay && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-[var(--ap-text-3)]">
                       Day {pendingDay} selected
                     </span>
                   )}
                 </div>
-                <p className="mt-3 text-xs text-gray-600">
+                <p className="mt-3 text-xs text-[var(--ap-text-3)]">
                   Capped at day 28 to work every month including February · Triggers at midnight UTC
                 </p>
               </div>
@@ -493,21 +493,21 @@ export default function PayrollPage() {
                 <ShieldCheck className="h-5 w-5 text-brand-400" />
               </div>
               <div>
-                <h3 className="font-bold text-white">Confirm Payroll Run</h3>
-                <p className="text-xs text-gray-500">Double-check before sending</p>
+                <h3 className="font-bold text-[var(--ap-text-1)]">Confirm Payroll Run</h3>
+                <p className="text-xs text-[var(--ap-text-3)]">Double-check before sending</p>
               </div>
             </div>
 
-            <div className="mb-5 space-y-3 rounded-xl border border-gray-700/50 bg-gray-800/40 p-4">
+            <div className="mb-5 space-y-3 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] p-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Employees</span>
-                <span className="text-sm font-semibold text-white">{employees.length}</span>
+                <span className="text-xs text-[var(--ap-text-3)]">Employees</span>
+                <span className="text-sm font-semibold text-[var(--ap-text-1)]">{employees.length}</span>
               </div>
 
               {totalUsdcSalary > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">USDC payout</span>
-                  <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                  <span className="text-xs text-[var(--ap-text-3)]">USDC payout</span>
+                  <span className="flex items-center gap-1.5 text-sm font-bold text-[var(--ap-text-1)]">
                     <TokenLogo token="USDC" size={14} />
                     ${totalUsdcSalary.toFixed(2)} USDC
                   </span>
@@ -516,8 +516,8 @@ export default function PayrollPage() {
 
               {totalEurcSalary > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">EURC payout</span>
-                  <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                  <span className="text-xs text-[var(--ap-text-3)]">EURC payout</span>
+                  <span className="flex items-center gap-1.5 text-sm font-bold text-[var(--ap-text-1)]">
                     <TokenLogo token="EURC" size={14} />
                     €{totalEurcSalary.toFixed(2)} EURC
                   </span>
@@ -526,7 +526,7 @@ export default function PayrollPage() {
 
               {(usdcFee > 0 || eurcFee > 0) && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Platform fee (0.01%, min 0.01 each)</span>
+                  <span className="text-xs text-[var(--ap-text-3)]">Platform fee (0.01%, min 0.01 each)</span>
                   <span className="text-xs text-amber-400">
                     {usdcFee > 0 && `$${usdcFee.toFixed(2)} USDC`}
                     {usdcFee > 0 && eurcFee > 0 && ' · '}
@@ -535,7 +535,7 @@ export default function PayrollPage() {
                 </div>
               )}
 
-              <div className="my-1 border-t border-gray-700" />
+              <div className="my-1 border-t border-[var(--ap-border)]" />
 
               <div className="flex items-start gap-1.5 text-xs text-amber-400 font-medium">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
@@ -546,7 +546,7 @@ export default function PayrollPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirming(false)}
-                className="flex-1 rounded-xl border border-gray-700 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 transition"
+                className="flex-1 rounded-xl border border-[var(--ap-border)] py-2.5 text-sm font-medium text-[var(--ap-text-3)] hover:bg-[var(--ap-row-hover)] transition"
               >
                 Go Back
               </button>
@@ -564,43 +564,43 @@ export default function PayrollPage() {
 
       {/* History */}
       <div>
-        <h2 className="mb-4 text-sm font-semibold text-gray-300">Payroll History</h2>
+        <h2 className="mb-4 text-sm font-semibold text-[var(--ap-text-2)]">Payroll History</h2>
 
         {loading ? (
           <div className="flex h-24 items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
           </div>
         ) : runs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-700 py-12 text-center">
-            <p className="text-sm text-gray-600">No payroll runs yet.</p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--ap-border)] py-12 text-center">
+            <p className="text-sm text-[var(--ap-text-3)]">No payroll runs yet.</p>
           </div>
         ) : (
-          <div className="rounded-2xl border border-gray-700/60 overflow-hidden">
+          <div className="rounded-2xl border border-[var(--ap-border)] overflow-hidden">
             {/* Table header */}
-            <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 border-b border-gray-700/60 bg-gray-900/60 px-6 py-3 text-xs font-medium uppercase tracking-wide text-gray-500">
+            <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 border-b border-[var(--ap-border)] bg-[var(--ap-card)] px-6 py-3 text-xs font-medium uppercase tracking-wide text-[var(--ap-text-3)]">
               <span className="w-6" />
               <span>Date</span>
               <span>Status</span>
               <span className="text-right">Amount</span>
             </div>
 
-            <div className="divide-y divide-gray-800/60 bg-gray-900/40">
+            <div className="divide-y divide-[var(--ap-border)] bg-[var(--ap-card)]">
               {runs.map((run) => {
                 const open = expanded === run.id
                 return (
                   <div key={run.id}>
                     <button
                       onClick={() => setExpanded(open ? null : run.id)}
-                      className="grid w-full grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-4 text-left hover:bg-gray-800/20 transition"
+                      className="grid w-full grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-4 text-left hover:bg-[var(--ap-row-hover)] transition"
                     >
-                      <div className="w-6 flex items-center justify-center text-gray-600">
+                      <div className="w-6 flex items-center justify-center text-[var(--ap-text-3)]">
                         {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-white">
+                        <div className="text-sm font-medium text-[var(--ap-text-1)]">
                           {new Date(run.createdAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-[var(--ap-text-3)]">
                           {new Date(run.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} · {run.entries.length} payments
                         </div>
                       </div>
@@ -626,8 +626,8 @@ export default function PayrollPage() {
                           const eurcTotal = run.entries.filter((e) => e.employee.preferredToken === 'EURC').reduce((s, e) => s + parseFloat(e.amount), 0)
                           return (
                             <>
-                              {usdcTotal > 0 && <div className="text-sm font-semibold text-white">${usdcTotal.toFixed(2)} <span className="text-xs text-gray-500">USDC</span></div>}
-                              {eurcTotal > 0 && <div className="text-sm font-semibold text-white">€{eurcTotal.toFixed(2)} <span className="text-xs text-gray-500">EURC</span></div>}
+                              {usdcTotal > 0 && <div className="text-sm font-semibold text-[var(--ap-text-1)]">${usdcTotal.toFixed(2)} <span className="text-xs text-[var(--ap-text-3)]">USDC</span></div>}
+                              {eurcTotal > 0 && <div className="text-sm font-semibold text-[var(--ap-text-1)]">€{eurcTotal.toFixed(2)} <span className="text-xs text-[var(--ap-text-3)]">EURC</span></div>}
                             </>
                           )
                         })()}
@@ -635,15 +635,15 @@ export default function PayrollPage() {
                     </button>
 
                     {open && (
-                      <div className="border-t border-gray-800/40 bg-gray-950/30">
-                        <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-2 text-xs font-medium uppercase tracking-wide text-gray-600">
+                      <div className="border-t border-[var(--ap-border)] bg-gray-950/30">
+                        <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-2 text-xs font-medium uppercase tracking-wide text-[var(--ap-text-3)]">
                           <span className="w-6" />
                           <span>Employee</span>
                           <span>Status</span>
                           <span className="text-right">Amount</span>
                         </div>
                         {run.entries.map((entry) => (
-                          <div key={entry.id} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-3 border-t border-gray-800/30">
+                          <div key={entry.id} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-3 border-t border-[var(--ap-border)]">
                             <div className="w-6 flex items-center justify-center">
                               {entry.status === 'COMPLETED'
                                 ? <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
@@ -653,8 +653,8 @@ export default function PayrollPage() {
                               }
                             </div>
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-white">{entry.employee.name}</div>
-                              <div className="font-mono text-xs text-gray-600">{truncateAddress(entry.employee.walletAddress, 6)}</div>
+                              <div className="text-sm font-medium text-[var(--ap-text-1)]">{entry.employee.name}</div>
+                              <div className="font-mono text-xs text-[var(--ap-text-3)]">{truncateAddress(entry.employee.walletAddress, 6)}</div>
                               {entry.errorMessage && <div className="text-xs text-red-400 mt-0.5">{entry.errorMessage}</div>}
                             </div>
                             <div>
@@ -666,7 +666,7 @@ export default function PayrollPage() {
                               }
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-semibold text-white">{(entry.employee.preferredToken ?? 'USDC') === 'EURC' ? '€' : '$'}{parseFloat(entry.amount).toFixed(2)}</div>
+                              <div className="text-sm font-semibold text-[var(--ap-text-1)]">{(entry.employee.preferredToken ?? 'USDC') === 'EURC' ? '€' : '$'}{parseFloat(entry.amount).toFixed(2)}</div>
                               {entry.txHash && (
                                 <a
                                   href={`${ARC_EXPLORER}/tx/${entry.txHash}`}
