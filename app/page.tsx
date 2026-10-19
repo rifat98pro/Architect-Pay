@@ -137,7 +137,7 @@ export default function LandingPage() {
           {[
             { value: 'USDC & EURC', label: 'Stablecoins supported'  },
             { value: '0.01%',       label: 'Platform fee'            },
-            { value: 'Instant',     label: 'Same-chain transfers'    },
+            { value: 'Instant + 0 fees', label: 'Arc → Arc transfers' },
           ].map((s) => (
             <div key={s.label}>
               <div className="text-2xl font-bold" style={{ color: '#2aabab' }}>{s.value}</div>
