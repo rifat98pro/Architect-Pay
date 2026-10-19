@@ -364,7 +364,7 @@ GET /api/swap/history`}</CodeBlock>
                 },
                 {
                   q: 'Is there a fee?',
-                  a: 'Same-chain transfers: free. Cross-chain transfers: 0.01% platform fee (minimum $0.01), plus Circle CCTP has no additional fee at standard finality.',
+                  a: 'A 0.01% platform fee (minimum $0.01) applies when funds leave Arc: payments and withdrawals to another network, and payroll per employee paid off Arc. Deposits, swaps, transfers on Arc and all gas are free. Minimum withdrawal is $1 when leaving Arc; withdrawals to Arc and all deposits have no minimum. Circle’s CCTP also takes a small protocol fee on cross-chain transfers, deducted from the amount sent.',
                 },
                 {
                   q: 'Do I choose which chain a payment comes from?',

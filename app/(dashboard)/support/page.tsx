@@ -51,17 +51,17 @@ const FAQS = [
   {
     id: 'getting-started',
     q: 'Do I need MetaMask or a seed phrase?',
-    a: 'No. Architect Pay uses Circle Developer-Controlled Wallets — your wallet is provisioned automatically when you sign up. Gas fees are sponsored by Circle Gas Station so you never need to hold ETH.',
+    a: 'No. Architect Pay uses Circle Developer-Controlled Wallets — your wallet is provisioned automatically when you sign up. Gas fees are sponsored by Circle Gas Station, so you never need to hold a native token on any network.',
   },
   {
     id: 'payments',
     q: 'How long do cross-chain transfers take?',
-    a: 'Cross-chain transfers via Circle CCTP typically settle in 2–3 minutes. Arc → Arc payments are instant with zero fee.',
+    a: 'Transfers to another network settle in about 20 to 60 seconds for USDC. EURC takes longer, up to around 15 minutes, because it waits for hard finality. Payments on Arc are instant and free.',
   },
   {
     id: 'payments',
     q: 'What is the platform fee?',
-    a: 'Architect Pay charges a 0.01% platform fee on cross-chain payments, cross-chain swaps, and payroll runs. Same-chain transfers are always free with no platform fee.',
+    a: '0.01% (minimum $0.01) when money leaves Arc — payments and withdrawals to another network, and payroll charged per employee paid off Arc. Everything else is free: deposits, swaps, anything landing on Arc, and all gas. Minimum withdrawal is $1 when leaving Arc; withdrawals to Arc and all deposits have no minimum.',
   },
   {
     id: 'payments',

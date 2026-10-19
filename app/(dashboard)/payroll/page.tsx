@@ -7,6 +7,8 @@ import { useAuth } from '@/context/auth-context'
 import { Play, CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, ChevronDown, ChevronRight, Building2, Users, DollarSign, Wallet, Calendar, ShieldCheck, RefreshCw } from 'lucide-react'
 import TokenLogo from '@/components/token-logo'
 import { truncateAddress } from '@/lib/utils'
+import { calcFee } from '@/lib/fees'
+import { HUB_CHAIN } from '@/lib/cctp-chains'
 
 const ARC_EXPLORER = 'https://explorer.arc.io'
 
@@ -65,7 +67,7 @@ export default function PayrollPage() {
   const [savingSched,   setSavingSched]   = useState(false)
   const [chainBalances,     setChainBalances]     = useState<Record<string, string>>({})
   const [eurcChainBalances, setEurcChainBalances] = useState<Record<string, string>>({})
-  const [employees,         setEmployees]         = useState<{ id: string; salary: string; preferredToken?: string }[]>([])
+  const [employees,         setEmployees]         = useState<{ id: string; salary: string; preferredToken?: string; preferredChain?: string | null }[]>([])
   const [runs,          setRuns]          = useState<PayrollRun[]>([])
   const [loading,       setLoading]       = useState(true)
   const [running,       setRunning]       = useState(false)
@@ -196,6 +198,14 @@ export default function PayrollPage() {
   const eurcEmps       = employees.filter((e) => e.preferredToken === 'EURC')
   const totalUsdcSalary = usdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalEurcSalary = eurcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
+
+  // Mirrors the server: one fee per employee paid off Arc, each with its own $0.01
+  // minimum. Employees on Arc are a local send and cost nothing, so a flat
+  // percentage of the payroll total would overstate the fee and miss the minimum.
+  const offArc   = (e: { preferredChain?: string | null }) => (e.preferredChain ?? HUB_CHAIN) !== HUB_CHAIN
+  const usdcFee  = usdcEmps.filter(offArc).reduce((s, e) => s + calcFee(parseFloat(e.salary)), 0)
+  const eurcFee  = eurcEmps.filter(offArc).reduce((s, e) => s + calcFee(parseFloat(e.salary)), 0)
+  const feeCount = [...usdcEmps, ...eurcEmps].filter(offArc).length
   const totalSalary    = totalUsdcSalary + totalEurcSalary
   const totalUsdcBalance = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
   // Balances are one pot per token. Which chain each employee is paid from is the
@@ -281,7 +291,14 @@ export default function PayrollPage() {
           {totalUsdcSalary > 0 && <div className="text-xl font-bold text-white">${totalUsdcSalary.toFixed(2)} <span className="text-sm font-semibold text-gray-400">USDC</span></div>}
           {totalEurcSalary > 0 && <div className="text-xl font-bold text-white">€{totalEurcSalary.toFixed(2)} <span className="text-sm font-semibold text-gray-400">EURC</span></div>}
           {totalSalary === 0 && <div className="text-2xl font-bold text-white">$0.00</div>}
-          <div className="mt-1 text-xs text-amber-500/70">+0.01% platform fee</div>
+          {feeCount > 0 ? (
+            <div className="mt-1 text-xs text-amber-500/70">
+              + {usdcFee > 0 && `$${usdcFee.toFixed(2)}`}{usdcFee > 0 && eurcFee > 0 && ' · '}{eurcFee > 0 && `€${eurcFee.toFixed(2)}`} fee
+              {' '}({feeCount} payout{feeCount === 1 ? '' : 's'} off Arc)
+            </div>
+          ) : (
+            <div className="mt-1 text-xs text-green-500/70">No fee — everyone is paid on Arc</div>
+          )}
         </div>
         <div className="rounded-2xl border border-gray-700/60 bg-gray-900/60 px-5 py-4">
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
@@ -507,10 +524,14 @@ export default function PayrollPage() {
                 </div>
               )}
 
-              {totalUsdcSalary > 0 && (
+              {(usdcFee > 0 || eurcFee > 0) && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Platform fee (0.01%)</span>
-                  <span className="text-xs text-amber-400">~${(totalUsdcSalary * 0.0001).toFixed(4)} USDC</span>
+                  <span className="text-xs text-gray-500">Platform fee (0.01%, min 0.01 each)</span>
+                  <span className="text-xs text-amber-400">
+                    {usdcFee > 0 && `$${usdcFee.toFixed(2)} USDC`}
+                    {usdcFee > 0 && eurcFee > 0 && ' · '}
+                    {eurcFee > 0 && `€${eurcFee.toFixed(2)} EURC`}
+                  </span>
                 </div>
               )}
 

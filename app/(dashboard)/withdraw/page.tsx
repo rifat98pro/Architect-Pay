@@ -8,6 +8,8 @@ import { ArrowUpCircle, Loader2, CheckCircle2, XCircle, Send } from 'lucide-reac
 import TokenLogo from '@/components/token-logo'
 import ChainSelect from '@/components/chain-select'
 import { cn } from '@/lib/utils'
+import { MIN_WITHDRAWAL } from '@/lib/fees'
+import { HUB_CHAIN } from '@/lib/cctp-chains'
 
 const DEST_CHAINS = [
   { id: 'ARC-TESTNET',  label: 'Arc'       },
@@ -54,6 +56,9 @@ export default function WithdrawPage() {
   // USDC aggregate plan
   const [planLoading,  setPlanLoading]  = useState(false)
   const [planFeasible, setPlanFeasible] = useState(true)
+  // Quoted by the plan endpoint, never computed here — the $0.01 minimum makes a
+  // naive percentage understate every small withdrawal.
+  const [quotedFee, setQuotedFee]       = useState('0')
 
   const [loading,   setLoading]   = useState(false)
   const [success,   setSuccess]   = useState('')
@@ -106,6 +111,7 @@ export default function WithdrawPage() {
       const res  = await fetch(url)
       const data = await res.json()
       setPlanFeasible(data.feasible ?? false)
+      setQuotedFee(data.quotedFee ?? '0')
     } finally { setPlanLoading(false) }
   }, [])
 
@@ -145,9 +151,14 @@ export default function WithdrawPage() {
   const amountNum         = parseFloat(amount || '0')
   const insufficientFunds = amountNum > 0 && amountNum > availableBalance
   const validAddress      = /^0x[a-fA-F0-9]{40}$/.test(address)
+  // Only a withdrawal that leaves Arc has a floor: it costs a bridge on top of the
+  // transfer. Staying on Arc is a direct send, so any amount goes. Deposits have no
+  // minimum either — money coming in is never turned away.
+  const leavesArc         = destChain !== HUB_CHAIN
+  const belowMinimum      = leavesArc && amountNum > 0 && amountNum < MIN_WITHDRAWAL
 
-  const canSend = validAddress && amountNum > 0 && !insufficientFunds && !loading && !pendingId
-    && planFeasible && !planLoading
+  const canSend = validAddress && amountNum > 0 && !insufficientFunds && !belowMinimum
+    && !loading && !pendingId && planFeasible && !planLoading
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault()
@@ -307,6 +318,22 @@ export default function WithdrawPage() {
             </div>
           )}
 
+          {amount && !insufficientFunds && !belowMinimum && parseFloat(quotedFee) > 0 && (
+            <div className="mt-2 flex items-center justify-between text-xs">
+              <span className="text-gray-500">Platform fee (0.01%, min {token === 'USDC' ? '$' : '€'}0.01)</span>
+              <span className="text-amber-400">
+                {token === 'USDC' ? '$' : '€'}{parseFloat(quotedFee).toFixed(2)} {token}
+              </span>
+            </div>
+          )}
+
+          {belowMinimum && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-400">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+              Minimum {token === 'USDC' ? '$' : '€'}{MIN_WITHDRAWAL.toFixed(2)} {token} when withdrawing off Arc. Withdrawals to Arc have no minimum.
+            </div>
+          )}
+
           {amount && !insufficientFunds && (
             <button
               type="button"
@@ -350,7 +377,9 @@ export default function WithdrawPage() {
             ? 'Processing…'
             : insufficientFunds
               ? 'Insufficient funds'
-              : `Withdraw${amount ? ` ${token === 'USDC' ? `$${amount}` : `€${amount}`}` : ''} ${token}`}
+              : belowMinimum
+                ? `Minimum ${token === 'USDC' ? '$' : '€'}${MIN_WITHDRAWAL.toFixed(2)}`
+                : `Withdraw${amount ? ` ${token === 'USDC' ? `$${amount}` : `€${amount}`}` : ''} ${token}`}
         </button>
       </form>
     </div>

@@ -285,7 +285,13 @@ export default function LandingPage() {
               {
                 label: 'Deposits',
                 price: 'Free',
-                note:  'From any of the six supported networks.',
+                note:  'From any of the six supported networks. No minimum — send any amount.',
+                good:  true,
+              },
+              {
+                label: 'Swaps',
+                price: 'Free',
+                note:  'USDC to EURC and back, at the live rate.',
                 good:  true,
               },
               {
@@ -297,12 +303,17 @@ export default function LandingPage() {
               {
                 label: 'Transfers to a non-Arc network',
                 price: '0.01%',
-                note:  'Platform fee, minimum $0.01 per transfer. A $500 payment costs 5 cents.',
+                note:  'Platform fee, minimum $0.01 per transfer. A $500 payment costs 5 cents. Applies to payments and withdrawals alike.',
               },
               {
                 label: 'Payroll',
                 price: '0.01% per payout',
                 note:  'Charged per employee paid on a non-Arc network, minimum $0.01 each. Employees paid on Arc are free.',
+              },
+              {
+                label: 'Minimum withdrawal',
+                price: '$1.00',
+                note:  'Only when withdrawing to a network other than Arc. Withdrawals to Arc have no minimum, and neither do deposits.',
               },
             ].map((row, i) => (
               <div
