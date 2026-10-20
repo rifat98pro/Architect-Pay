@@ -5,7 +5,7 @@ import { HUB_CHAIN } from '@/lib/cctp-chains'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { formatUSDC, truncateAddress } from '@/lib/utils'
-import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CreditCard, Rocket, Building2, Users, Banknote, X, ChevronRight } from 'lucide-react'
+import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CreditCard, Rocket, Building2, Users, Banknote, X } from 'lucide-react'
 import DepositModal from '@/components/deposit-modal'
 import OnrampModal from '@/components/onramp-modal'
 import { useTheme } from '@/context/theme-context'
@@ -225,7 +225,7 @@ export default function DashboardPage() {
             <button
               key={action.key}
               onClick={action.onClick}
-              className="group flex flex-col items-start gap-3 rounded-2xl border p-4 text-left transition hover:-translate-y-0.5"
+              className="group flex flex-col items-center gap-3 rounded-2xl border p-4 text-center transition hover:-translate-y-0.5"
               style={{
                 background:  theme === 'light' ? '#ffffff' : 'rgba(18,32,49,0.6)',
                 borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)',
@@ -237,14 +237,8 @@ export default function DashboardPage() {
               >
                 {action.icon}
               </span>
-              <span className="flex w-full items-center justify-between gap-2">
-                <span className="text-sm font-semibold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
-                  {action.title}
-                </span>
-                <ChevronRight
-                  className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5"
-                  style={{ color: theme === 'light' ? '#8694a1' : '#45607a' }}
-                />
+              <span className="text-sm font-semibold" style={{ color: theme === 'light' ? '#0b1e47' : '#ffffff' }}>
+                {action.title}
               </span>
               <span className="text-xs leading-relaxed" style={{ color: theme === 'light' ? '#637d96' : '#8faab8' }}>
                 {action.body}
