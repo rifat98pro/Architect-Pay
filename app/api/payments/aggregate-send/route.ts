@@ -8,15 +8,20 @@ import { cctpTransfer } from '@/lib/cctp'
 import { CCTP_SOURCE_CHAINS, HUB_CHAIN, type CctpSourceChain } from '@/lib/cctp-chains'
 import { computeAggregatePlan } from '@/lib/aggregate'
 import { calcFee, FEE_RECIPIENT } from '@/lib/fees'
+import { resolvePaymentRecipient, executeInternalArcPayment } from '@/lib/recipient-resolver'
 import { z } from 'zod'
 
 export const maxDuration = 300
 
 const schema = z.object({
-  recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  amount: z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
-  destChain: z.enum(CCTP_SOURCE_CHAINS).default('BASE-SEPOLIA'),
-  label: z.string().max(100).optional(),
+  recipientAddress:  z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+  recipientUsername: z.string().max(50).optional(),
+  isUsername:        z.boolean().optional(),
+  amount:            z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0),
+  destChain:         z.enum(CCTP_SOURCE_CHAINS).default('BASE-SEPOLIA'),
+  label:             z.string().max(100).optional(),
+}).refine((d) => d.recipientAddress || d.recipientUsername, {
+  message: 'Recipient address or username is required',
 })
 
 export async function POST(req: NextRequest) {
@@ -32,8 +37,52 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const { recipientAddress, amount, destChain, label } = parsed.data
-  const targetAmount = parseFloat(amount)
+  const { amount, label } = parsed.data
+
+  let resolved
+  try {
+    resolved = await resolvePaymentRecipient({
+      recipientUsername:  parsed.data.recipientUsername,
+      recipientAddress:   parsed.data.recipientAddress,
+      requestedDestChain: parsed.data.destChain,
+      isUsernamePayment:  parsed.data.isUsername,
+    })
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Invalid recipient' },
+      { status: 400 },
+    )
+  }
+
+  // ── Internal Architect Pay payment: always settles on Arc, no cross-chain or fees ──
+  if (resolved.isInternal) {
+    try {
+      const result = await executeInternalArcPayment({
+        senderUserId:     user.id,
+        recipientAddress: resolved.targetAddress,
+        recipientLabel:   label ?? (resolved.targetUsername ? `@${resolved.targetUsername}` : null),
+        amount,
+        token:            'USDC',
+      })
+      return NextResponse.json({
+        success:   true,
+        paymentId: result.paymentId,
+        txHash:    result.txHash,
+        destChain: 'ARC-TESTNET',
+        internal:  true,
+      })
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : 'Internal payment failed' },
+        { status: 400 },
+      )
+    }
+  }
+
+  // ── External wallet payment: existing multi-chain routing flow ──────────────────────
+  const recipientAddress = resolved.targetAddress
+  const destChain        = resolved.destChain as CctpSourceChain
+  const targetAmount     = parseFloat(amount)
 
   const wallet = await db.wallet.findUnique({
     where:   { userId: user.id },

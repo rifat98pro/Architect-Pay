@@ -9,11 +9,13 @@ import { truncateAddress } from '@/lib/utils'
 import { useBusiness } from '@/context/business-context'
 
 interface Employee {
-  id:            string
-  name:          string
-  walletAddress: string
-  salary:        string
-  role:          string | null
+  id:                 string
+  name:               string
+  walletAddress:      string
+  salary:             string
+  role:               string | null
+  isArchitectPayUser?: boolean
+  username?:          string | null
 }
 
 interface EditState {
@@ -175,12 +177,11 @@ export default function EmployeesPage() {
           />
           <input
             type="text"
-            placeholder="Wallet address (0x...)"
+            placeholder="Wallet address (0x...) or @username"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             className="input-base font-mono text-xs"
-            pattern="^0x[a-fA-F0-9]{40}$"
-            title="Valid EVM address"
+            title="Valid EVM address or Architect Pay username"
             required
           />
           <div className="flex items-center rounded-lg border border-[var(--ap-border)] bg-[var(--ap-card)] overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
@@ -251,7 +252,7 @@ export default function EmployeesPage() {
                       type="text"
                       value={editState.walletAddress}
                       onChange={(e) => setEditState({ ...editState, walletAddress: e.target.value })}
-                      placeholder="Wallet address (0x...)"
+                      placeholder="Wallet address (0x...) or @username"
                       className="input-base font-mono text-xs"
                     />
                     <div className="flex items-center rounded-lg border border-[var(--ap-border)] bg-[var(--ap-card)] overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition">
@@ -292,7 +293,14 @@ export default function EmployeesPage() {
                     {emp.name[0].toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-[var(--ap-text-1)]">{emp.name}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-[var(--ap-text-1)]">{emp.name}</div>
+                      {emp.isArchitectPayUser && (
+                        <span className="rounded-md bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand-400">
+                          Architect Pay {emp.username ? `@${emp.username}` : ''} · Arc
+                        </span>
+                      )}
+                    </div>
                     {emp.role && (
                       <div className="text-xs font-medium text-brand-400">{emp.role}</div>
                     )}

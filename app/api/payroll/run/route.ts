@@ -57,12 +57,17 @@ export async function POST(req: Request) {
   const totalUsdcAmount = usdcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalEurcAmount = eurcEmps.reduce((s, e) => s + parseFloat(e.salary), 0)
   const totalAmount   = totalUsdcAmount + totalEurcAmount
-  // The fee is per cross-chain payout, not per run: a payroll that bridges to six
-  // chains costs six times what one does. Employees paid on the hub are a local
-  // send and carry nothing. Each payout takes its own minimum, so ten small
-  // cross-chain salaries are ten minimums rather than one.
-  const isCrossChainEmp = (e: { preferredChain: string | null }) =>
-    (e.preferredChain ?? HUB_CHAIN) !== HUB_CHAIN
+  const internalWallets = await db.wallet.findMany({
+    where:   { walletAddress: { in: employees.map((e) => e.walletAddress) } },
+    select:  { walletAddress: true },
+  })
+  const internalWalletSet = new Set(internalWallets.map((w) => w.walletAddress.toLowerCase()))
+
+  // Architect Pay users always settle on Arc with zero cross-chain fee.
+  const isCrossChainEmp = (e: { walletAddress: string; preferredChain: string | null }) => {
+    if (internalWalletSet.has(e.walletAddress.toLowerCase())) return false
+    return (e.preferredChain ?? HUB_CHAIN) !== HUB_CHAIN
+  }
 
   const usdcFee = usdcEmps.filter(isCrossChainEmp)
     .reduce((sum, e) => sum + calcFee(parseFloat(e.salary)), 0)
@@ -206,10 +211,12 @@ export async function POST(req: Request) {
       run.entries.map(async (entry) => {
         const emp        = employees.find((e) => e.id === entry.employeeId)!
         const empToken   = (emp.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
-        // An employee saved against a chain we no longer route on is paid on the
-        // hub rather than failing. Their stored preference predates the chain being
-        // retired, and one stale row must not take down the whole run.
-        const storedChain = emp.preferredChain ?? HUB_CHAIN
+        const isInternal = internalWalletSet.has(emp.walletAddress.toLowerCase())
+
+        // An internal Architect Pay user is always paid on Arc.
+        // For external employees, an employee saved against a chain we no longer route on is paid on the
+        // hub rather than failing.
+        const storedChain = isInternal ? HUB_CHAIN : (emp.preferredChain ?? HUB_CHAIN)
         const empChain    = ((CCTP_SOURCE_CHAINS as readonly string[]).includes(storedChain)
           ? storedChain
           : HUB_CHAIN) as CctpSourceChain

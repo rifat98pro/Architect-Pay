@@ -36,8 +36,10 @@ export async function GET(req: NextRequest) {
 
   // Quote the fee here rather than letting the client recompute it — the $0.01
   // minimum makes a naive percentage understate every small payment.
-  const destChain    = req.nextUrl.searchParams.get('dest') ?? HUB_CHAIN
-  const isCrossChain = destChain !== HUB_CHAIN
+  // Internal username payments always settle on Arc with 0 fee.
+  const isUsername   = req.nextUrl.searchParams.get('isUsername') === 'true'
+  const destChain    = isUsername ? HUB_CHAIN : (req.nextUrl.searchParams.get('dest') ?? HUB_CHAIN)
+  const isCrossChain = !isUsername && destChain !== HUB_CHAIN
   const percentFee   = isCrossChain ? calcFee(amount) : 0
 
   return NextResponse.json({

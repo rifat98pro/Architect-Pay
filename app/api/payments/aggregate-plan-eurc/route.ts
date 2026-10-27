@@ -13,8 +13,9 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const amountStr = req.nextUrl.searchParams.get('amount')
-  const destChain = req.nextUrl.searchParams.get('dest') ?? 'ARC-TESTNET'
-  const amount    = parseFloat(amountStr ?? '0')
+  const isUsername = req.nextUrl.searchParams.get('isUsername') === 'true'
+  const destChain  = isUsername ? 'ARC-TESTNET' : (req.nextUrl.searchParams.get('dest') ?? 'ARC-TESTNET')
+  const amount     = parseFloat(amountStr ?? '0')
 
   if (!amount || amount <= 0) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
 
   // Quote the fee here rather than letting the client recompute it — see the USDC
   // plan route for why.
-  const isCrossChain = destChain !== HUB_CHAIN
+  const isCrossChain = !isUsername && destChain !== HUB_CHAIN
   const percentFee   = isCrossChain ? calcFee(amount) : 0
 
   return NextResponse.json({

@@ -5,11 +5,13 @@ import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
 
+import { normalizeUsername } from '@/lib/recipient-resolver'
+
 const editSchema = z.object({
-  name:          z.string().min(1).max(100).optional(),
-  walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address').optional(),
-  salary:        z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0).optional(),
-  role:          z.string().max(100).optional(),
+  name:           z.string().min(1).max(100).optional(),
+  walletAddress:  z.string().min(1).max(100).optional(),
+  salary:         z.string().regex(/^\d+(\.\d{1,6})?$/).refine((v) => parseFloat(v) > 0).optional(),
+  role:           z.string().max(100).optional(),
   preferredChain: z.string().max(50).optional(),
   preferredToken: z.enum(['USDC', 'EURC']).optional(),
 })
@@ -33,7 +35,35 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const updated = await db.employee.update({ where: { id }, data: parsed.data })
+  const updateData = { ...parsed.data }
+
+  if (updateData.walletAddress) {
+    const raw = updateData.walletAddress.trim()
+    if (raw.startsWith('@') || !raw.startsWith('0x')) {
+      const username = normalizeUsername(raw)
+      const targetUser = await db.user.findUnique({
+        where:   { username },
+        include: { wallet: true },
+      })
+      if (!targetUser || !targetUser.wallet) {
+        return NextResponse.json({ error: `Architect Pay user "@${username}" not found or has no active wallet.` }, { status: 400 })
+      }
+      updateData.walletAddress  = targetUser.wallet.walletAddress
+      updateData.preferredChain = 'ARC-TESTNET'
+    } else {
+      if (!/^0x[a-fA-F0-9]{40}$/.test(raw)) {
+        return NextResponse.json({ error: 'Invalid EVM wallet address' }, { status: 400 })
+      }
+      const internalWallet = await db.wallet.findFirst({
+        where: { walletAddress: { equals: raw, mode: 'insensitive' } },
+      })
+      if (internalWallet) {
+        updateData.preferredChain = 'ARC-TESTNET'
+      }
+    }
+  }
+
+  const updated = await db.employee.update({ where: { id }, data: updateData })
   return NextResponse.json({ employee: updated })
 }
 

@@ -14,5 +14,26 @@ export async function GET() {
     take:    50,
   })
 
-  return NextResponse.json({ payments })
+  // Augment with recipient user profile if recipient is an Architect Pay user
+  const addresses = payments.map((p) => p.recipientAddress)
+  const wallets = await db.wallet.findMany({
+    where:   { walletAddress: { in: addresses } },
+    include: { user: { select: { username: true, displayName: true, name: true, image: true } } },
+  })
+  const walletMap = new Map(wallets.map((w) => [w.walletAddress.toLowerCase(), w]))
+
+  const augmented = payments.map((p) => {
+    const w = walletMap.get(p.recipientAddress.toLowerCase())
+    return {
+      ...p,
+      recipientUser: w ? {
+        username:    w.user.username,
+        displayName: w.user.displayName ?? w.user.name ?? w.user.username,
+        image:       w.user.image,
+      } : null,
+      isInternal: !!w,
+    }
+  })
+
+  return NextResponse.json({ payments: augmented })
 }

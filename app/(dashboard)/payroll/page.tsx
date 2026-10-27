@@ -524,13 +524,20 @@ export default function PayrollPage() {
                 </div>
               )}
 
-              {(usdcFee > 0 || eurcFee > 0) && (
+              {(usdcFee > 0 || eurcFee > 0) ? (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--ap-text-3)]">Platform fee (0.01%, min 0.01 each)</span>
+                  <span className="text-xs text-[var(--ap-text-3)]">Platform fee</span>
                   <span className="text-xs text-amber-400">
                     {usdcFee > 0 && `$${usdcFee.toFixed(2)} USDC`}
                     {usdcFee > 0 && eurcFee > 0 && ' · '}
                     {eurcFee > 0 && `€${eurcFee.toFixed(2)} EURC`}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--ap-text-3)]">Platform fee</span>
+                  <span className="text-xs font-semibold text-emerald-400">
+                    Free ($0.00) · Arc Settlement
                   </span>
                 </div>
               )}

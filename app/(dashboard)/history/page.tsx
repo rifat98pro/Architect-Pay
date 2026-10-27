@@ -40,6 +40,12 @@ interface Payment {
   burnTxHash:       string | null
   createdAt:        string
   updatedAt:        string
+  isInternal?:      boolean
+  recipientUser?: {
+    username:    string | null
+    displayName: string | null
+    image:       string | null
+  } | null
   sender?: {
     username:    string | null
     displayName: string | null
@@ -361,8 +367,15 @@ function HistoryPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium text-white">
-                        {p.recipientLabel ?? truncateAddress(p.recipientAddress, 6)}
+                        {p.recipientUser?.username
+                          ? `@${p.recipientUser.username}`
+                          : p.recipientLabel ?? truncateAddress(p.recipientAddress, 6)}
                       </span>
+                      {p.isInternal && (
+                        <span className="shrink-0 rounded-md bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-brand-400">
+                          Arc Internal
+                        </span>
+                      )}
                       {p.recipientLabel?.toLowerCase().includes('withdrawal') && (
                         <span className="shrink-0 rounded-md bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-400">
                           Withdrawal
@@ -374,7 +387,9 @@ function HistoryPage() {
                           hub, so naming a source chain would describe plumbing, not the payment. */}
                       <span className="text-xs text-gray-500">to</span>
                       <ChainLogo chain={p.destChain} size={12} />
-                      <span className="text-xs text-gray-500">{p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}</span>
+                      <span className="text-xs text-gray-500">
+                        {p.destChain === 'ARC-TESTNET' ? 'Arc Hub' : p.destChain.replace('-TESTNET','').replace('-SEPOLIA','').replace('-AMOY','').replace('-FUJI','')}
+                      </span>
                       <span className="text-gray-700">·</span>
                       <span className="font-mono text-xs text-gray-600">{truncateAddress(p.recipientAddress, 5)}</span>
                       <span className="text-gray-700">·</span>

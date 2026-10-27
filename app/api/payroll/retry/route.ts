@@ -48,11 +48,18 @@ export async function POST(req: Request) {
 
   await db.payrollRun.update({ where: { id: run.id }, data: { status: 'PROCESSING' } })
 
+  const internalWallets = await db.wallet.findMany({
+    where:   { walletAddress: { in: failedEntries.map((e) => e.employee.walletAddress) } },
+    select:  { walletAddress: true },
+  })
+  const internalWalletSet = new Set(internalWallets.map((w) => w.walletAddress.toLowerCase()))
+
   const results = await Promise.allSettled(
     failedEntries.map(async (entry) => {
-      const emp      = entry.employee
-      const empToken = (emp.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
-      const empChain = (emp.preferredChain ?? HUB_CHAIN) as CctpSourceChain
+      const emp        = entry.employee
+      const empToken   = (emp.preferredToken ?? 'USDC') as 'USDC' | 'EURC'
+      const isInternal = internalWalletSet.has(emp.walletAddress.toLowerCase())
+      const empChain   = (isInternal ? HUB_CHAIN : (emp.preferredChain ?? HUB_CHAIN)) as CctpSourceChain
 
       // Relay already minted: FAILED_ON_ONCHAIN means Circle's relay processed receiveMessage
       // before our bundler did. Funds are on receiverWalletId — skip re-burn, just send.

@@ -64,7 +64,12 @@ export default function PaymentsPage() {
   const setToken            = (v: 'USDC' | 'EURC')  => setPayForm({ token: v })
   const setAmount           = (v: string)            => setPayForm({ amount: v })
   const setLabel            = (v: string)            => setPayForm({ label: v })
-  const setRecipientMode    = (v: RecipientMode)     => setPayForm({ recipientMode: v, walletAddress: '', usernameInput: '' })
+  const setRecipientMode    = (v: RecipientMode)     => setPayForm({
+    recipientMode: v,
+    destChain:     v === 'username' ? 'ARC-TESTNET' : 'BASE-SEPOLIA',
+    walletAddress: '',
+    usernameInput: '',
+  })
   const setWalletAddress    = (v: string)            => setPayForm({ walletAddress: v })
   const setUsernameInput    = (v: string)            => setPayForm({ usernameInput: v })
   const setSuccess          = (v: string)            => setPayForm({ success: v })
@@ -132,23 +137,35 @@ export default function PaymentsPage() {
     return () => clearTimeout(t)
   }, [usernameInput])
 
-  const recipientAddress  = recipientMode === 'wallet' ? walletAddress : resolvedAddress
-  const selectedDestChain = DEST_CHAINS.find((c) => c.id === destChain)!
+  const isUsername        = recipientMode === 'username'
+  const effectiveDestChain = isUsername ? 'ARC-TESTNET' : destChain
+  const recipientAddress  = isUsername ? resolvedAddress : walletAddress
+  const selectedDestChain = DEST_CHAINS.find((c) => c.id === effectiveDestChain) ?? DEST_CHAINS[0]
   const EURC_CHAINS       = ['ARC-TESTNET', 'BASE-SEPOLIA']
   const totalBalance      = Object.values(chainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  // Every EURC balance is spendable to every EURC destination. CCTPx quotes a zero
-  // fee on any route with Arc at one end, and Arc is where every balance settles.
   const totalEurcBalance  = Object.values(eurcChainBalances).reduce((s, v) => s + parseFloat(v), 0)
-  const availableBalance  = token === 'EURC' ? totalEurcBalance.toFixed(2) : totalBalance.toFixed(2)
+  const arcUsdcBalance    = parseFloat(chainBalances['ARC-TESTNET'] ?? '0')
+  const arcEurcBalance    = parseFloat(eurcChainBalances['ARC-TESTNET'] ?? '0')
+
+  // Username payments draw directly from the sender's Arc account; external wallet payments aggregate
+  const availableBalance  = isUsername
+    ? (token === 'EURC' ? arcEurcBalance.toFixed(2) : arcUsdcBalance.toFixed(2))
+    : (token === 'EURC' ? totalEurcBalance.toFixed(2) : totalBalance.toFixed(2))
+
   const filteredDestChains = token === 'EURC' ? DEST_CHAINS.filter((c) => EURC_CHAINS.includes(c.id)) : DEST_CHAINS
   const amountNum          = parseFloat(amount || '0')
   const availableNum       = parseFloat(availableBalance)
   const insufficientFunds  = amountNum > 0 && amountNum > availableNum
 
-
-  const fetchPlan = useCallback(async (amt: string, tkn: 'USDC' | 'EURC', dest: string) => {
+  const fetchPlan = useCallback(async (amt: string, tkn: 'USDC' | 'EURC', dest: string, isUser: boolean) => {
     const n = parseFloat(amt)
-    if (!n || n <= 0) { setPlanFeasible(true); return }
+    if (!n || n <= 0) { setPlanFeasible(true); setQuotedFee('0'); return }
+    if (isUser) {
+      // Internal Arc payments carry zero fee and require no multi-chain planning
+      setPlanFeasible(true)
+      setQuotedFee('0')
+      return
+    }
     setPlanLoading(true)
     try {
       const url = tkn === 'EURC'
@@ -163,15 +180,14 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    const t = setTimeout(() => fetchPlan(amount, token, destChain), 500)
+    const t = setTimeout(() => fetchPlan(amount, token, effectiveDestChain, isUsername), 500)
     return () => clearTimeout(t)
-  }, [amount, token, destChain, user?.id, fetchPlan])
-
+  }, [amount, token, effectiveDestChain, isUsername, user?.id, fetchPlan])
 
   useEffect(() => {
-    if (token === 'EURC' && !EURC_CHAINS.includes(destChain)) setDestChain('BASE-SEPOLIA')
+    if (!isUsername && token === 'EURC' && !EURC_CHAINS.includes(destChain)) setDestChain('BASE-SEPOLIA')
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token])
+  }, [token, isUsername])
 
   const canSend = recipientMode === 'wallet'
     ? /^0x[a-fA-F0-9]{40}$/.test(walletAddress)
@@ -236,12 +252,18 @@ export default function PaymentsPage() {
       const res  = await fetch(endpoint, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ recipientAddress, amount, label, destChain }),
+        body:    JSON.stringify({
+          recipientAddress,
+          recipientUsername: isUsername ? usernameInput : undefined,
+          amount,
+          label,
+          destChain: effectiveDestChain,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Payment failed')
 
-      const isEurcCrossChain = token === 'EURC'
+      const isEurcCrossChain = !isUsername && token === 'EURC'
 
       // Clear form fields first — success state is set after so it survives the clear
       clearPayForm(); setResolvedAddress(''); setResolvedName('')
@@ -255,7 +277,11 @@ export default function PaymentsPage() {
         addPending(data.paymentId)
         startPolling(data.paymentId, isEurcCrossChain)
       } else {
-        setSuccess(`${amount} ${token} sent successfully!`)
+        if (isUsername) {
+          setSuccess(`Successfully sent ${token === 'EURC' ? '€' : '$'}${amount} ${token} directly to @${usernameInput} on Arc!`)
+        } else {
+          setSuccess(`${amount} ${token} sent successfully!`)
+        }
       }
       const bal = await fetch('/api/wallet/balance').then((r) => r.json())
       setChainBalances(bal.chainBalances ?? {})
@@ -316,7 +342,11 @@ export default function PaymentsPage() {
 
         {/* Section 1 — Token + Destination */}
         <div className="rounded-2xl border border-[var(--ap-border)] bg-[var(--ap-card)] p-5">
-          <SectionLabel step={1} title="Token & Destination" subtitle="Choose token type and which chain recipient gets funds on" />
+          <SectionLabel
+            step={1}
+            title={isUsername ? "Token" : "Token & Destination"}
+            subtitle={isUsername ? "Choose token type. Payment settles directly on Arc." : "Choose token type and which chain recipient gets funds on"}
+          />
 
           {/* Token tabs */}
           <div className="mb-4 flex gap-1 rounded-xl border border-[var(--ap-border)] bg-[var(--ap-input-bg)] p-1">
@@ -333,16 +363,26 @@ export default function PaymentsPage() {
             ))}
           </div>
 
-          {/* Destination */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--ap-text-3)]">Recipient receives on</label>
-            <ChainSelect
-              value={destChain}
-              onChange={setDestChain}
-              disabled={loading}
-              options={filteredDestChains.map((c) => ({ value: c.id, label: c.label }))}
-            />
-          </div>
+          {/* Destination: only choose when recipient is an external wallet */}
+          {!isUsername ? (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[var(--ap-text-3)]">Recipient receives on</label>
+              <ChainSelect
+                value={destChain}
+                onChange={setDestChain}
+                disabled={loading}
+                options={filteredDestChains.map((c) => ({ value: c.id, label: c.label }))}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between rounded-xl border border-brand-500/20 bg-brand-500/5 px-3.5 py-2.5 text-xs">
+              <span className="text-[var(--ap-text-3)]">Settlement Network:</span>
+              <span className="flex items-center gap-1.5 font-semibold text-brand-400">
+                <ChainLogo chain="ARC-TESTNET" size={14} />
+                Arc Settlement Hub (Zero gas fees)
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Section 2 — Recipient */}
@@ -486,7 +526,7 @@ export default function PaymentsPage() {
         {loading && (
           <div className="flex items-start gap-3 rounded-xl border border-blue-800/40 bg-blue-900/15 px-4 py-3 text-sm text-blue-300">
             <Loader2 className="mt-0.5 h-4 w-4 animate-spin shrink-0" />
-            Initiating cross-chain transfer…
+            {isUsername ? 'Processing internal Arc payment…' : 'Initiating cross-chain transfer…'}
           </div>
         )}
 
@@ -499,7 +539,7 @@ export default function PaymentsPage() {
             ? <Loader2 className="h-4 w-4 animate-spin" />
             : <ShieldCheck className="h-4 w-4" />}
           {loading
-            ? 'Sending…'
+            ? (isUsername ? 'Sending on Arc…' : 'Sending…')
             : insufficientFunds
               ? 'Insufficient funds'
               : `Review & Send ${amount ? (token === 'EURC' ? amount : `$${amount}`) : ''} ${token}`}
@@ -526,7 +566,9 @@ export default function PaymentsPage() {
               </div>
               <div>
                 <h3 className="font-bold text-[var(--ap-text-1)]">Confirm Transaction</h3>
-                <p className="text-xs text-[var(--ap-text-3)]">Double-check before sending</p>
+                <p className="text-xs text-[var(--ap-text-3)]">
+                  {isUsername ? 'Internal Architect Pay transfer on Arc' : 'Double-check before sending'}
+                </p>
               </div>
             </div>
 
@@ -543,19 +585,30 @@ export default function PaymentsPage() {
               {/* Route */}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-[var(--ap-text-3)] shrink-0">Route</span>
-                <span className="flex items-center justify-end gap-1 text-xs text-[var(--ap-text-2)] flex-wrap">
-                  to <ChainLogo chain={destChain} size={13} />{selectedDestChain.label}
-                </span>
+                {isUsername ? (
+                  <span className="flex items-center justify-end gap-1.5 text-xs font-semibold text-brand-400">
+                    <ChainLogo chain="ARC-TESTNET" size={13} /> Arc Internal Transfer
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-end gap-1 text-xs text-[var(--ap-text-2)] flex-wrap">
+                    to <ChainLogo chain={destChain} size={13} />{selectedDestChain.label}
+                  </span>
+                )}
               </div>
 
               {/* Fee */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[var(--ap-text-3)]">Fee</span>
-                <span className="text-xs text-amber-400">
-                  {token === 'EURC' ? '' : '$'}{parseFloat(quotedFee).toFixed(2)} {token}
-                </span>
+                {isUsername ? (
+                  <span className="text-xs font-semibold text-emerald-400">
+                    Free ($0.00) · Internal
+                  </span>
+                ) : (
+                  <span className="text-xs text-amber-400">
+                    {token === 'EURC' ? '' : '$'}{parseFloat(quotedFee).toFixed(2)} {token}
+                  </span>
+                )}
               </div>
-
 
               {/* Label */}
               {label && (
@@ -568,18 +621,29 @@ export default function PaymentsPage() {
               {/* Divider */}
               <div className="my-1 border-t border-[var(--ap-border)]" />
 
-              {/* Recipient — full address highlighted */}
+              {/* Recipient */}
               <div>
-                <div className="mb-1.5 flex items-center gap-1.5 text-xs text-amber-400 font-medium">
-                  <AlertTriangle className="h-3 w-3 shrink-0" />
-                  Recipient address — verify carefully
+                <div className={cn(
+                  "mb-1.5 flex items-center gap-1.5 text-xs font-medium",
+                  isUsername ? "text-brand-400" : "text-amber-400"
+                )}>
+                  {isUsername ? <CheckCircle2 className="h-3 w-3 shrink-0" /> : <AlertTriangle className="h-3 w-3 shrink-0" />}
+                  {isUsername ? "Recipient (Arc Account)" : "Recipient address — verify carefully"}
                 </div>
-                <div className="select-all break-all rounded-lg border border-amber-600/50 bg-[#1c0f00] px-3 py-2.5 font-mono text-xs leading-relaxed text-amber-200">
+                {isUsername && (
+                  <div className="mb-1 text-xs font-semibold text-[var(--ap-text-1)] flex items-center gap-1.5">
+                    {resolvedName || usernameInput}
+                    <span className="text-[11px] font-normal text-[var(--ap-text-3)]">(@{usernameInput})</span>
+                  </div>
+                )}
+                <div className={cn(
+                  "select-all break-all rounded-lg px-3 py-2.5 font-mono text-xs leading-relaxed",
+                  isUsername
+                    ? "border border-brand-500/30 bg-brand-500/10 text-brand-300"
+                    : "border border-amber-600/50 bg-[#1c0f00] text-amber-200"
+                )}>
                   {recipientAddress}
                 </div>
-                {resolvedName && (
-                  <div className="mt-1 text-xs text-green-400">{resolvedName}</div>
-                )}
               </div>
             </div>
 
