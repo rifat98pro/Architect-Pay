@@ -52,6 +52,7 @@ export default function LandingPage() {
             <a href="#developer" className="transition-colors hover:text-white">Developers</a>
             <a href="#pricing"   className="transition-colors hover:text-white">Pricing</a>
             <a href="#use-cases" className="transition-colors hover:text-white">Use Cases</a>
+            <Link href="/metrics" className="transition-colors font-medium text-[#2aabab] hover:text-[#4dd4ce]">Metrics</Link>
             <Link href="/docs"   className="transition-colors hover:text-white">Docs</Link>
             <a href="#socials"   className="transition-colors hover:text-white">Socials</a>
           </nav>
@@ -144,6 +145,43 @@ export default function LandingPage() {
               <div className="mt-0.5 text-xs" style={{ color: '#555' }}>{s.label}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Verified Metrics / Traction Banner ────────────────────────────── */}
+      <section id="metrics" className="border-b px-6 py-16" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'linear-gradient(180deg, rgba(11,30,71,0.25) 0%, rgba(0,0,0,0) 100%)' }}>
+        <div className="mx-auto max-w-5xl">
+          <div
+            className="flex flex-col md:flex-row items-center justify-between gap-8 rounded-3xl border p-8 md:p-10"
+            style={{
+              borderColor: 'rgba(42,171,171,0.25)',
+              background: 'linear-gradient(135deg, rgba(11,30,71,0.5) 0%, rgba(6,14,40,0.7) 100%)',
+              boxShadow: '0 4px 30px rgba(0,0,0,0.5)',
+            }}
+          >
+            <div className="max-w-xl text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-[#2aabab] mb-3">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                Verified Traction Dashboard
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white">
+                Transparent Product Activity &amp; On-Chain Metrics
+              </h2>
+              <p className="mt-2 text-sm text-gray-400 leading-relaxed">
+                Explore real-time verified transaction volume, multi-chain settlement activity, active businesses, and completed payroll batches powered by Circle CCTP on Arc Mainnet.
+              </p>
+            </div>
+            <Link
+              href="/metrics"
+              className="flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-black transition-all hover:opacity-90 flex-shrink-0"
+              style={{ background: '#2aabab', boxShadow: '0 0 25px rgba(42,171,171,0.3)' }}
+            >
+              View Public Metrics <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -599,6 +637,7 @@ export default function LandingPage() {
             <span>Architect Pay · Global payroll & stablecoin payments · Powered by Circle CCTP</span>
           </div>
           <div className="flex items-center gap-5">
+            <Link href="/metrics" className="transition-colors text-[#2aabab] hover:text-[#4dd4ce]">Metrics</Link>
             <Link href="/terms"   className="transition-colors hover:text-white">Terms</Link>
             <Link href="/privacy" className="transition-colors hover:text-white">Privacy</Link>
             <a href="https://x.com/architectpay" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Twitter</a>
