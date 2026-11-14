@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import {
   ArrowRight, Wallet, Globe, Users, Zap, Shield, Code2,
   ChevronRight, Banknote, Building2, CheckCircle2,
-  Calendar,
+  Calendar, Menu, X as CloseIcon,
 } from 'lucide-react'
 
 function XLogo({ size = 20 }: { size?: number }) {
@@ -25,6 +25,7 @@ const HERO_LINES = [
 
 export default function LandingPage() {
   const [activeIdx, setActiveIdx] = useState(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -32,6 +33,31 @@ export default function LandingPage() {
     }, 1600)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileMenuOpen])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false)
+      }
+    }
+    if (mobileMenuOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileMenuOpen])
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: '#000', color: '#e2eaf4' }}>
@@ -57,13 +83,86 @@ export default function LandingPage() {
             <a href="#socials"   className="transition-colors hover:text-white">Socials</a>
           </nav>
 
-          <Link
-            href="/signup"
-            className="flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-black transition-all hover:opacity-90"
-            style={{ background: '#2aabab' }}
-          >
-            Launch App <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/signup"
+              className="flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-black transition-all hover:opacity-90"
+              style={{ background: '#2aabab' }}
+            >
+              Launch App <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition-all md:hidden"
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="landing-mobile-menu"
+            >
+              {mobileMenuOpen ? <CloseIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile dropdown / drawer */}
+        <div
+          id="landing-mobile-menu"
+          className={`border-b border-white/10 bg-[#060e28]/95 px-6 py-6 backdrop-blur-2xl transition-all duration-300 md:hidden ${
+            mobileMenuOpen ? 'max-h-96 opacity-100 overflow-y-auto' : 'max-h-0 opacity-0 overflow-hidden py-0 border-none'
+          }`}
+        >
+          <div className="flex flex-col space-y-4 text-sm font-medium text-gray-300">
+            <a
+              href="#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="transition-colors hover:text-[#2aabab]"
+            >
+              Features
+            </a>
+            <a
+              href="#developer"
+              onClick={() => setMobileMenuOpen(false)}
+              className="transition-colors hover:text-[#2aabab]"
+            >
+              Developers
+            </a>
+            <a
+              href="#pricing"
+              onClick={() => setMobileMenuOpen(false)}
+              className="transition-colors hover:text-[#2aabab]"
+            >
+              Pricing
+            </a>
+            <a
+              href="#use-cases"
+              onClick={() => setMobileMenuOpen(false)}
+              className="transition-colors hover:text-[#2aabab]"
+            >
+              Use Cases
+            </a>
+            <Link
+              href="/metrics"
+              onClick={() => setMobileMenuOpen(false)}
+              className="font-semibold text-[#2aabab] transition-colors hover:text-[#4dd4ce]"
+            >
+              Live Metrics &amp; Analytics
+            </Link>
+            <Link
+              href="/docs"
+              onClick={() => setMobileMenuOpen(false)}
+              className="transition-colors hover:text-[#2aabab]"
+            >
+              Documentation
+            </Link>
+            <a
+              href="#socials"
+              onClick={() => setMobileMenuOpen(false)}
+              className="transition-colors hover:text-[#2aabab]"
+            >
+              Community &amp; Socials
+            </a>
+          </div>
         </div>
       </header>
 

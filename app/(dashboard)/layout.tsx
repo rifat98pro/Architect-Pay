@@ -4,9 +4,9 @@ import { AppStateProvider } from '@/context/app-state-context'
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppStateProvider>
-      <div className="flex min-h-screen" data-scope="dashboard">
+      <div className="flex min-h-screen flex-col md:flex-row" data-scope="dashboard">
         <Nav />
-        <main className="flex-1 overflow-y-auto p-8" style={{ backgroundColor: 'var(--ap-main)', transition: 'background-color 0.25s ease' }}>{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8" style={{ backgroundColor: 'var(--ap-main)', transition: 'background-color 0.25s ease' }}>{children}</main>
       </div>
     </AppStateProvider>
   )
