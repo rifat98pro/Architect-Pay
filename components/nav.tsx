@@ -33,7 +33,7 @@ const navItems = [
   { href: '/employees',  label: 'Employees',    icon: Users,           color: '#06b6d4' },
   { href: '/payroll',    label: 'Payroll',       icon: Banknote,        color: '#10b981' },
   { href: '/swap',       label: 'Swap',          icon: ArrowUpDown,     color: '#6366f1' },
-  { href: '/withdraw',   label: 'Bridge',        icon: ArrowLeftRight,  color: '#ec4899' },
+
   { href: '/history',    label: 'History',       icon: History,         color: '#f59e0b' },
   { href: '/settings',   label: 'Settings',      icon: Settings,        color: '#64748b' },
   { href: '/feedback',   label: 'Feedback',      icon: MessageSquare,   color: '#a855f7' },
